@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism Trading Engine — Angel One SmartAPI</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg2: #0f1218;
+    --bg3: #141820;
+    --card: #161b25;
+    --card2: #1c2335;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --dim: #3d4455;
+    --green: #00d68f;
+    --green2: #00a86b;
+    --red: #ff4d6d;
+    --red2: #c93050;
+    --amber: #f5a623;
+    --amber2: #c27d0e;
+    --blue: #4d9de0;
+    --blue2: #2d7fc4;
+    --purple: #8b5cf6;
+    --cyan: #06b6d4;
+    --font: 'Sora', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; min-height: 100vh; }
+
+  /* ── Layout ── */
+  .layout { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 52px 1fr; min-height: 100vh; }
+  .topbar { grid-column: 1/-1; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; gap: 16px; z-index: 10; }
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); padding: 16px 0; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; }
+  .main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Topbar ── */
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 28px; height: 28px; background: linear-gradient(135deg, var(--purple), var(--blue)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; }
+  .logo-text { font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .market-time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .market-time span { color: var(--green); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.2)} }
+
+  /* ── Sidebar ── */
+  .nav-section { padding: 6px 16px 4px; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); margin-top: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; transition: background .15s; border-left: 2px solid transparent; font-size: 12.5px; color: var(--muted); }
+  .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-item.active { background: rgba(77,157,224,0.08); color: var(--blue); border-left-color: var(--blue); }
+  .nav-icon { width: 14px; text-align: center; font-size: 14px; }
+
+  /* ── Cards ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+  .card-header { padding: 14px 16px 0; display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 11px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; color: var(--muted); }
+  .card-body { padding: 14px 16px; }
+
+  /* ── Metric grid ── */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .metric { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .metric-label { font-size: 10px; color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 6px; }
+  .metric-value { font-family: var(--mono); font-size: 22px; font-weight: 500; line-height: 1; }
+  .metric-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .metric-sub.up { color: var(--green); }
+  .metric-sub.down { color: var(--red); }
+
+  /* ── Filter table ── */
+  .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .filter-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .filter-name { font-size: 11px; color: var(--muted); }
+  .filter-value { font-family: var(--mono); font-size: 11px; }
+  .filter-badge { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; }
+  .pass { background: rgba(0,214,143,0.12); color: var(--green); }
+  .fail { background: rgba(255,77,109,0.12); color: var(--red); }
+  .warn { background: rgba(245,166,35,0.12); color: var(--amber); }
+  .skip { background: rgba(107,114,128,0.15); color: var(--muted); }
+
+  /* ── Trade log ── */
+  .trade-row { display: grid; grid-template-columns: 80px 70px 90px 80px 80px 80px 1fr; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 12px; gap: 8px; }
+  .trade-row:last-child { border-bottom: none; }
+  .trade-row:hover { background: rgba(255,255,255,0.02); }
+  .trade-row.header { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; padding: 8px 16px; border-bottom: 1px solid var(--border2); }
+  .side-long { color: var(--green); font-weight: 500; }
+  .side-short { color: var(--red); font-weight: 500; }
+
+  /* ── Two-col layout ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── Signal panel ── */
+  .signal-panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .signal-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .signal-body { padding: 16px; }
+  .signal-stock { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+  .signal-type { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; }
+  .signal-long { background: rgba(0,214,143,0.15); color: var(--green); }
+  .signal-short { background: rgba(255,77,109,0.15); color: var(--red); }
+  .signal-none { background: rgba(107,114,128,0.15); color: var(--muted); }
+  .price-row { display: flex; gap: 20px; margin: 12px 0; }
+  .price-item label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px; }
+  .price-item span { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+  .entry-price { color: var(--text); }
+  .target-price { color: var(--green); }
+  .sl-price { color: var(--red); }
+
+  /* ── Risk bar ── */
+  .risk-bar { height: 6px; background: var(--bg3); border-radius: 3px; margin: 6px 0; overflow: hidden; }
+  .risk-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+  .risk-green { background: var(--green); }
+  .risk-amber { background: var(--amber); }
+  .risk-red { background: var(--red); }
+
+  /* ── VIX Gauge ── */
+  .gauge-wrap { display: flex; align-items: center; justify-content: center; padding: 8px 0; }
+
+  /* ── Buttons ── */
+  .btn { font-family: var(--font); font-size: 12px; font-weight: 500; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; transition: all .15s; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: var(--blue2); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: var(--red2); }
+  .btn-ghost { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .btn-green { background: var(--green2); color: #fff; }
+  .btn-green:hover { background: var(--green); color: #000; }
+  .kill-btn { background: rgba(255,77,109,0.15); color: var(--red); border: 1px solid rgba(255,77,109,0.3); font-size: 12px; padding: 10px 20px; border-radius: 7px; cursor: pointer; font-family: var(--font); font-weight: 500; width: 100%; margin-top: 8px; transition: all .15s; }
+  .kill-btn:hover { background: var(--red); color: #fff; }
+
+  /* ── Tag ── */
+  .tag { font-size: 9px; padding: 2px 7px; border-radius: 20px; border: 1px solid; display: inline-block; }
+  .tag-blue { border-color: rgba(77,157,224,0.4); color: var(--blue); }
+  .tag-purple { border-color: rgba(139,92,246,0.4); color: var(--purple); }
+  .tag-cyan { border-color: rgba(6,182,212,0.4); color: var(--cyan); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; }
+
+  /* ── Alert pill ── */
+  .alert-pill { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 7px; font-size: 11.5px; margin-bottom: 6px; }
+  .alert-pill.info { background: rgba(77,157,224,0.1); border: 1px solid rgba(77,157,224,0.2); color: var(--blue); }
+  .alert-pill.success { background: rgba(0,214,143,0.08); border: 1px solid rgba(0,214,143,0.2); color: var(--green); }
+  .alert-pill.warning { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.2); color: var(--amber); }
+  .alert-pill.danger { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.2); color: var(--red); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 2px; background: var(--bg3); border-radius: 8px; padding: 3px; margin-bottom: 16px; }
+  .tab { flex: 1; text-align: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11.5px; color: var(--muted); transition: all .15s; }
+  .tab.active { background: var(--card2); color: var(--text); }
+
+  /* ── Indicators ── */
+  .ind-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .ind-row:last-child { border-bottom: none; }
+  .ind-label { font-size: 11px; color: var(--muted); }
+  .ind-val { font-family: var(--mono); font-size: 12px; }
+
+  /* ── Timeline ── */
+  .timeline-row { display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .timeline-row:last-child { border-bottom: none; }
+  .tl-time { font-family: var(--mono); font-size: 10px; color: var(--muted); min-width: 50px; padding-top: 2px; }
+  .tl-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .tl-content { font-size: 11.5px; }
+  .tl-title { font-weight: 500; margin-bottom: 2px; }
+  .tl-sub { color: var(--muted); font-size: 10.5px; }
+
+  /* ── Input ── */
+  input[type=text], select { background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--font); font-size: 12px; padding: 7px 10px; outline: none; }
+  input[type=text]:focus, select:focus { border-color: var(--blue); }
+  input[type=range] { accent-color: var(--blue); }
+  select option { background: var(--bg3); }
+
+  /* ── Sector bars ── */
+  .sector-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .sector-name { font-size: 11px; color: var(--muted); min-width: 80px; }
+  .sector-bar-bg { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .sector-bar-fill { height: 100%; border-radius: 3px; }
+  .sector-pct { font-family: var(--mono); font-size: 10px; min-width: 36px; text-align: right; }
+
+  /* ── Backtest metrics ── */
+  .bt-stat { text-align: center; padding: 12px; background: var(--bg3); border-radius: 8px; }
+  .bt-val { font-family: var(--mono); font-size: 19px; font-weight: 500; }
+  .bt-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  .section-label { font-size: 10px; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  .chip { font-size: 9px; padding: 2px 7px; border-radius: 20px; background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border2); display: inline-block; }
+
+  /* ── Page sections ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Heartbeat ── */
+  .heartbeat { display: flex; align-items: center; gap: 6px; }
+  .hb-line { width: 60px; height: 20px; }
+
+  /* ── Blinking cursor ── */
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── Scrollable tables ── */
+  .table-wrap { overflow-x: auto; }
+
+  .signal-score { display: flex; gap: 4px; align-items: center; }
+  .score-dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-mark">P</div>
+      <div>
+        <div class="logo-text">Prism Trading Engine</div>
+        <div class="logo-sub">Angel One SmartAPI · NSE/BSE</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px">
+      <div class="heartbeat">
+        <svg class="hb-line" viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="0,10 12,10 16,3 20,17 24,5 28,15 32,10 60,10" stroke="var(--green)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--green)">LIVE</span>
+      </div>
+      <div class="market-time">IST <span id="clock">--:--:--</span></div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div class="status-dot"></div>API Connected</div>
+      <button class="btn btn-danger" onclick="killSwitch()" style="font-size:11px;padding:6px 14px">⚡ Kill Switch</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-section">Core</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">◈</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('signals',this)"><span class="nav-icon">⌖</span> Signal Engine</div>
+    <div class="nav-item" onclick="showPage('filters',this)"><span class="nav-icon">⊟</span> Trade Filters</div>
+    <div class="nav-item" onclick="showPage('orders',this)"><span class="nav-icon">▣</span> Order Book</div>
+    <div class="nav-section">Analysis</div>
+    <div class="nav-item" onclick="showPage('indicators',this)"><span class="nav-icon">∿</span> Indicators</div>
+    <div class="nav-item" onclick="showPage('backtest',this)"><span class="nav-icon">◎</span> Backtest</div>
+    <div class="nav-item" onclick="showPage('journal',this)"><span class="nav-icon">◧</span> Journal</div>
+    <div class="nav-section">Risk</div>
+    <div class="nav-item" onclick="showPage('risk',this)"><span class="nav-icon">⊕</span> Risk Monitor</div>
+    <div class="nav-item" onclick="showPage('sector',this)"><span class="nav-icon">⊞</span> Sector Watch</div>
+    <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⊙</span> Settings</div>
+    <div style="flex:1"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Capital Deployed</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--amber)">₹10,000 / ₹50,000</div>
+      <div class="risk-bar" style="margin-top:6px"><div class="risk-fill risk-amber" style="width:20%"></div></div>
+      <div style="font-size:10px;color:var(--muted)">20% utilised</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <!-- Metrics -->
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Today's P&L</div>
+          <div class="metric-value" style="color:var(--green)">+₹247</div>
+          <div class="metric-sub up">+2.47% · 1 trade</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Capital Available</div>
+          <div class="metric-value">₹40,000</div>
+          <div class="metric-sub">of ₹50,000 total</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Win Rate</div>
+          <div class="metric-value" style="color:var(--blue)">63%</div>
+          <div class="metric-sub">last 30 days · 19W/11L</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">India VIX</div>
+          <div class="metric-value" id="vix-val" style="color:var(--green)">13.4</div>
+          <div class="metric-sub up">Safe — below 20</div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div>
+        <div class="alert-pill success">✓ &nbsp;Market window active — 10:30 AM to 3:15 PM IST</div>
+        <div class="alert-pill info">⌖ &nbsp;HDFCBANK signal forming — 11 of 15 filters passing</div>
+        <div class="alert-pill warning">⚠ &nbsp;TATASTEEL excluded — ATR above 1.5% threshold</div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Equity Curve — 30 days</span><span class="chip">₹50K base</span></div>
+          <div class="card-body" style="padding-top:12px">
+            <div style="position:relative;height:160px"><canvas id="equityChart"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Daily P&L</span><span class="chip">last 15 sessions</span></div>
+          <div class="card-body" style="padding-top:12px">
+            <div style="position:relative;height:160px"><canvas id="pnlChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div class="grid-2">
+        <!-- Market flow -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Market Pulse</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">Nifty 50</span><span class="ind-val" style="color:var(--green)">24,210 <small style="font-size:10px">+0.42%</small></span></div>
+            <div class="ind-row"><span class="ind-label">Bank Nifty</span><span class="ind-val" style="color:var(--green)">51,880 <small style="font-size:10px">+0.18%</small></span></div>
+            <div class="ind-row"><span class="ind-label">SGX Nifty</span><span class="ind-val" style="color:var(--green)">24,250 <small style="font-size:10px">+0.6%</small></span></div>
+            <div class="ind-row"><span class="ind-label">India VIX</span><span class="ind-val" style="color:var(--green)">13.4 <small style="font-size:10px">stable</small></span></div>
+            <div class="ind-row"><span class="ind-label">FII Activity</span><span class="ind-val" style="color:var(--green)">+₹1,240Cr</span></div>
+            <div class="ind-row"><span class="ind-label">DII Activity</span><span class="ind-val" style="color:var(--muted)">-₹380Cr</span></div>
+          </div>
+        </div>
+        <!-- Heartbeat / system status -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">System Status</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">Angel One API</span><span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green)"><div class="status-dot" style="width:6px;height:6px"></div>Connected</span></div>
+            <div class="ind-row"><span class="ind-label">WebSocket Feed</span><span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green)"><div class="status-dot" style="width:6px;height:6px"></div>Streaming</span></div>
+            <div class="ind-row"><span class="ind-label">Heartbeat</span><span class="ind-val" style="color:var(--cyan)" id="hb-counter">60s ago</span></div>
+            <div class="ind-row"><span class="ind-label">Bracket Orders</span><span style="font-size:11px;color:var(--green)">Enabled</span></div>
+            <div class="ind-row"><span class="ind-label">Trade Lock</span><span id="trade-lock" style="font-size:11px;color:var(--muted)">Unlocked</span></div>
+            <div class="ind-row"><span class="ind-label">Auto-Exit 3:15 PM</span><span style="font-size:11px;color:var(--green)">Armed</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNAL ENGINE PAGE -->
+    <div class="page" id="page-signals">
+      <div class="grid-2">
+        <!-- Current Signal -->
+        <div class="signal-panel">
+          <div class="signal-header">
+            <div>
+              <div class="section-label" style="border:none;margin:0">Current Signal</div>
+              <div class="signal-stock">HDFCBANK</div>
+            </div>
+            <span class="signal-type signal-long">▲ LONG</span>
+          </div>
+          <div class="signal-body">
+            <div class="price-row">
+              <div class="price-item"><label>Entry</label><span class="entry-price">₹1,642.50</span></div>
+              <div class="price-item"><label>Target +1%</label><span class="target-price">₹1,659.00</span></div>
+              <div class="price-item"><label>Stop Loss</label><span class="sl-price">₹1,626.00</span></div>
+            </div>
+            <div style="margin:12px 0">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="ind-label">Signal Strength</span><span style="font-family:var(--mono);font-size:11px;color:var(--green)">87/100</span></div>
+              <div class="risk-bar"><div class="risk-fill risk-green" style="width:87%"></div></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              <span class="tag tag-blue">ADX 31.2</span>
+              <span class="tag tag-blue">RSI 52</span>
+              <span class="tag tag-cyan">VWAP ✓</span>
+              <span class="tag tag-purple">Vol 1.8×</span>
+              <span class="tag tag-cyan">Sentiment 0.34</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-green" style="flex:1" onclick="alert('Bracket order placed — HDFCBANK LONG ₹1,642.50')">Place Order</button>
+              <button class="btn btn-ghost" onclick="alert('Signal skipped and logged.')">Skip</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Position sizing calc -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Position Sizer</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:12px">
+              <div class="ind-label" style="margin-bottom:5px">ATR (14) value</div>
+              <input type="text" value="18.50" id="atr-input" oninput="calcPos()" style="width:100%">
+            </div>
+            <div style="margin-bottom:12px">
+              <div class="ind-label" style="margin-bottom:5px">Entry price</div>
+              <input type="text" value="1642.50" id="entry-input" oninput="calcPos()" style="width:100%">
+            </div>
+            <div style="margin-bottom:12px">
+              <div class="ind-label" style="margin-bottom:5px">Capital (₹)</div>
+              <input type="text" value="10000" id="cap-input" oninput="calcPos()" style="width:100%">
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:12px;border:1px solid var(--border)">
+              <div class="ind-row" style="padding:5px 0"><span class="ind-label">ATR-based qty</span><span class="ind-val" id="qty-atr">270 shares</span></div>
+              <div class="ind-row" style="padding:5px 0"><span class="ind-label">Risk-based qty</span><span class="ind-val" id="qty-risk">6 shares</span></div>
+              <div class="ind-row" style="padding:5px 0;border:none"><span class="ind-label">Final qty (min)</span><span class="ind-val" style="color:var(--amber)" id="qty-final">6 shares</span></div>
+              <div class="ind-row" style="padding:5px 0;border:none"><span class="ind-label">Exposure</span><span class="ind-val" style="color:var(--green)" id="exposure">₹9,855</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Watchlist signals -->
+      <div class="card">
+        <div class="card-header" style="padding-bottom:0"><span class="card-title">Watchlist Signal Scan</span></div>
+        <div>
+          <div class="trade-row header">
+            <span>Stock</span><span>Price</span><span>Signal</span><span>ADX</span><span>RSI</span><span>Vol</span><span>Filters</span>
+          </div>
+          <div class="trade-row"><span style="font-weight:500">HDFCBANK</span><span style="font-family:var(--mono)">₹1,642</span><span class="side-long">▲ LONG</span><span style="font-family:var(--mono);color:var(--green)">31.2</span><span style="font-family:var(--mono)">52</span><span style="color:var(--green)">1.8×</span><span><span class="pass filter-badge">11/15</span></span></div>
+          <div class="trade-row"><span style="font-weight:500">RELIANCE</span><span style="font-family:var(--mono)">₹2,890</span><span class="side-long">▲ LONG</span><span style="font-family:var(--mono);color:var(--green)">28.4</span><span style="font-family:var(--mono)">58</span><span style="color:var(--green)">2.1×</span><span><span class="pass filter-badge">10/15</span></span></div>
+          <div class="trade-row"><span style="font-weight:500">INFY</span><span style="font-family:var(--mono)">₹1,520</span><span class="side-short">▼ SHORT</span><span style="font-family:var(--mono)">22.1</span><span style="font-family:var(--mono)">38</span><span style="color:var(--muted)">0.9×</span><span><span class="fail filter-badge">7/15</span></span></div>
+          <div class="trade-row"><span style="font-weight:500">TATASTEEL</span><span style="font-family:var(--mono)">₹152</span><span style="color:var(--muted)">— NONE</span><span style="font-family:var(--mono)">18.2</span><span style="font-family:var(--mono)">61</span><span style="color:var(--muted)">1.1×</span><span><span class="fail filter-badge">6/15</span></span></div>
+          <div class="trade-row"><span style="font-weight:500">SBIN</span><span style="font-family:var(--mono)">₹810</span><span class="side-long">▲ LONG</span><span style="font-family:var(--mono);color:var(--amber)">26.0</span><span style="font-family:var(--mono)">55</span><span style="color:var(--green)">1.6×</span><span><span class="warn filter-badge">9/15</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTERS PAGE -->
+    <div class="page" id="page-filters">
+      <div style="margin-bottom:12px">
+        <div class="alert-pill info">Evaluating HDFCBANK — 11 of 15 filters passing</div>
+      </div>
+      <div class="filter-grid">
+        <div class="filter-item"><div><div class="filter-name">⏰ Time Window</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">10:30 AM – 3:15 PM</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">📈 Price vs 50MA</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">₹1,642 > ₹1,591</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">📈 50MA > 200MA</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">₹1,591 > ₹1,502</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">⚡ ADX (14)</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">31.2 > 25 required</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">〰 RSI (14)</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">52.4 ∈ [35, 65]</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">⊡ VWAP</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Price > VWAP</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">📊 ATR %</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">1.13% < 1.5% max</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">↕ Gap Check</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">0.3% < 0.8% max</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">🔊 Volume</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">1.8× 50-day avg</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">📰 News Sentiment</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">0.34 > 0.20 min</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">🏦 Sector RSI</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Banking RSI: 51</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">⊞ Sector VWAP</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Aligned ✓</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">🔗 Correlation</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">0.62 < 0.8 max</div></div><span class="filter-badge warn">WARN</span></div>
+        <div class="filter-item"><div><div class="filter-name">🏛 FII/DII</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">FII net buying</div></div><span class="filter-badge pass">PASS</span></div>
+        <div class="filter-item"><div><div class="filter-name">🌐 Global Markets</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">SGX +0.6% — OK</div></div><span class="filter-badge pass">PASS</span></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><span class="card-title">VIX Guard</span></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:16px">
+            <div>
+              <div style="font-family:var(--mono);font-size:32px;color:var(--green)">13.4</div>
+              <div style="font-size:11px;color:var(--muted)">India VIX — Safe (&lt;20)</div>
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px"><span>0</span><span style="color:var(--green)">Safe</span><span style="color:var(--amber)">Caution</span><span style="color:var(--red)">Halt</span></div>
+              <div style="height:10px;background:linear-gradient(90deg,var(--green),var(--amber) 60%,var(--red));border-radius:5px;position:relative">
+                <div style="position:absolute;top:-3px;left:calc(13.4/40*100%);width:2px;height:16px;background:white;border-radius:2px"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>0</span><span>20</span><span>30</span><span>40+</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS PAGE -->
+    <div class="page" id="page-orders">
+      <div class="card">
+        <div class="card-header" style="padding-bottom:0;padding-top:16px">
+          <span class="card-title">Today's Order Book</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" style="font-size:11px">Export CSV</button>
+            <button class="btn btn-primary" style="font-size:11px">+ Manual Order</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="trade-row header">
+            <span>Time</span><span>Stock</span><span>Side</span><span>Entry</span><span>Target</span><span>SL</span><span>Status</span>
+          </div>
+          <div class="trade-row"><span class="ind-label">10:42 AM</span><span style="font-weight:500">HDFCBANK</span><span class="side-long">▲ LONG</span><span style="font-family:var(--mono)">₹1,630</span><span style="font-family:var(--mono);color:var(--green)">₹1,646</span><span style="font-family:var(--mono);color:var(--red)">₹1,614</span><span style="color:var(--green);font-size:11px">● HIT TARGET</span></div>
+          <div class="trade-row" style="opacity:.5"><span class="ind-label">Yesterday</span><span style="font-weight:500">RELIANCE</span><span class="side-long">▲ LONG</span><span style="font-family:var(--mono)">₹2,855</span><span style="font-family:var(--mono);color:var(--green)">₹2,883</span><span style="font-family:var(--mono);color:var(--red)">₹2,827</span><span style="color:var(--green);font-size:11px">● HIT TARGET</span></div>
+          <div class="trade-row" style="opacity:.5"><span class="ind-label">2d ago</span><span style="font-weight:500">INFY</span><span class="side-short">▼ SHORT</span><span style="font-family:var(--mono)">₹1,510</span><span style="font-family:var(--mono);color:var(--green)">₹1,495</span><span style="font-family:var(--mono);color:var(--red)">₹1,525</span><span style="color:var(--red);font-size:11px">● HIT SL</span></div>
+          <div class="trade-row" style="opacity:.5"><span class="ind-label">3d ago</span><span style="font-weight:500">SBIN</span><span class="side-long">▲ LONG</span><span style="font-family:var(--mono)">₹800</span><span style="font-family:var(--mono);color:var(--green)">₹808</span><span style="font-family:var(--mono);color:var(--red)">₹792</span><span style="color:var(--green);font-size:11px">● HIT TARGET</span></div>
+        </div>
+      </div>
+      <!-- Active bracket -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Active Bracket Order</span><span style="font-size:10px;color:var(--green)">● LIVE</span></div>
+        <div class="card-body">
+          <div style="background:var(--bg3);border-radius:8px;padding:14px;border:1px solid rgba(0,214,143,0.15)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div><div style="font-size:18px;font-weight:600">HDFCBANK</div><div style="font-size:11px;color:var(--muted)">NSE · Bracket · 6 shares</div></div>
+              <span class="signal-type signal-long">▲ LONG</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <div style="text-align:center;padding:8px;background:var(--card);border-radius:6px"><div style="font-size:10px;color:var(--muted)">Avg Price</div><div style="font-family:var(--mono)">₹1,642.50</div></div>
+              <div style="text-align:center;padding:8px;background:rgba(0,214,143,0.08);border-radius:6px;border:1px solid rgba(0,214,143,0.15)"><div style="font-size:10px;color:var(--green)">Target</div><div style="font-family:var(--mono);color:var(--green)">₹1,659.00</div></div>
+              <div style="text-align:center;padding:8px;background:rgba(255,77,109,0.08);border-radius:6px;border:1px solid rgba(255,77,109,0.15)"><div style="font-size:10px;color:var(--red)">Stop Loss</div><div style="font-family:var(--mono);color:var(--red)">₹1,626.00</div></div>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <div><span style="font-size:11px;color:var(--muted)">Unrealised P&L: </span><span style="font-family:var(--mono);color:var(--green)">+₹28.50</span></div>
+              <button class="btn btn-danger" style="font-size:11px" onclick="alert('Emergency exit triggered — MARKET order placed.')">Emergency Exit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDICATORS PAGE -->
+    <div class="page" id="page-indicators">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Technical Indicators — HDFCBANK</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">50-day MA</span><span class="ind-val">₹1,591.20</span></div>
+            <div class="ind-row"><span class="ind-label">200-day MA</span><span class="ind-val">₹1,502.60</span></div>
+            <div class="ind-row"><span class="ind-label">ADX (14)</span><span class="ind-val" style="color:var(--green)">31.2 — Trending</span></div>
+            <div class="ind-row"><span class="ind-label">RSI (14)</span><span class="ind-val">52.4</span></div>
+            <div class="ind-row"><span class="ind-label">VWAP (intraday)</span><span class="ind-val">₹1,638.80</span></div>
+            <div class="ind-row"><span class="ind-label">ATR (14)</span><span class="ind-val">₹18.50 (1.13%)</span></div>
+            <div class="ind-row"><span class="ind-label">Pre-mkt Gap</span><span class="ind-val">+0.30%</span></div>
+            <div class="ind-row"><span class="ind-label">Volume vs Avg</span><span class="ind-val" style="color:var(--green)">1.8× surge</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Indicator Chart</span></div>
+          <div class="card-body" style="padding-top:12px">
+            <div style="position:relative;height:220px"><canvas id="indicatorChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header"><span class="card-title">News Sentiment</span></div>
+          <div class="card-body">
+            <div style="text-align:center;padding:8px 0">
+              <div style="font-family:var(--mono);font-size:36px;color:var(--green)">+0.34</div>
+              <div style="font-size:11px;color:var(--muted)">TextBlob/NewsAPI score</div>
+              <div style="margin-top:8px"><span class="filter-badge pass">Positive</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Sector RSI</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">Banking</span><span class="ind-val" style="color:var(--green)">51.2</span></div>
+            <div class="ind-row"><span class="ind-label">IT</span><span class="ind-val">44.0</span></div>
+            <div class="ind-row"><span class="ind-label">Auto</span><span class="ind-val">58.1</span></div>
+            <div class="ind-row" style="border:none"><span class="ind-label">Metals</span><span class="ind-val" style="color:var(--red)">68.4</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Blacklist</span></div>
+          <div class="card-body">
+            <div class="alert-pill danger" style="margin-bottom:4px">TATASTEEL — ATR &gt;1.5%</div>
+            <div class="alert-pill danger" style="margin-bottom:4px">VEDL — Pledging 62%</div>
+            <div class="alert-pill warning">ONGC — Vol &lt;500K avg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKTEST PAGE -->
+    <div class="page" id="page-backtest">
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="bt-stat"><div class="bt-val" style="color:var(--green)">63%</div><div class="bt-label">Win Rate</div></div>
+        <div class="bt-stat"><div class="bt-val" style="color:var(--blue)">1.82</div><div class="bt-label">Profit Factor</div></div>
+        <div class="bt-stat"><div class="bt-val" style="color:var(--purple)">1.45</div><div class="bt-label">Sharpe Ratio</div></div>
+        <div class="bt-stat"><div class="bt-val" style="color:var(--amber)">-6.2%</div><div class="bt-label">Max Drawdown</div></div>
+        <div class="bt-stat"><div class="bt-val">248</div><div class="bt-label">Total Trades</div></div>
+        <div class="bt-stat"><div class="bt-val" style="color:var(--green)">+₹8,420</div><div class="bt-label">Net P&L (1Y)</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Equity Curve — 1 Year Backtest</span><span class="chip">₹50K starting</span></div>
+        <div class="card-body" style="padding-top:12px">
+          <div style="position:relative;height:200px"><canvas id="btChart"></canvas></div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Optimization Parameters</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:12px">
+              <div class="ind-label" style="margin-bottom:4px">MA Length (50-day)</div>
+              <input type="range" min="20" max="100" value="50" style="width:100%">
+            </div>
+            <div style="margin-bottom:12px">
+              <div class="ind-label" style="margin-bottom:4px">RSI Range</div>
+              <input type="range" min="20" max="80" value="35" style="width:100%">
+            </div>
+            <div style="margin-bottom:12px">
+              <div class="ind-label" style="margin-bottom:4px">ADX Threshold</div>
+              <input type="range" min="15" max="40" value="25" style="width:100%">
+            </div>
+            <button class="btn btn-primary" style="width:100%">Re-run Backtest</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Cost Assumptions</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">Brokerage (Angel One)</span><span class="ind-val">₹20/trade</span></div>
+            <div class="ind-row"><span class="ind-label">STT (equity delivery)</span><span class="ind-val">0.1% buy side</span></div>
+            <div class="ind-row"><span class="ind-label">GST on brokerage</span><span class="ind-val">18%</span></div>
+            <div class="ind-row"><span class="ind-label">SEBI charges</span><span class="ind-val">₹10/crore</span></div>
+            <div class="ind-row" style="border:none"><span class="ind-label">Avg cost/trade</span><span class="ind-val" style="color:var(--amber)">~₹26.40</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOURNAL PAGE -->
+    <div class="page" id="page-journal">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Trade Journal — Auto Log</span><button class="btn btn-ghost" style="font-size:11px">Export CSV</button></div>
+        <div>
+          <div class="timeline-row">
+            <div class="tl-time">10:42</div>
+            <div class="tl-dot" style="background:var(--green)"></div>
+            <div class="tl-content"><div class="tl-title">HDFCBANK — LONG ▲ · +₹99</div><div class="tl-sub">Entry ₹1,630 → Exit ₹1,646 · 6 shares · RSI 52 · ADX 31 · VWAP ✓ · Vol 1.8× · Sentiment +0.34</div></div>
+          </div>
+          <div class="timeline-row">
+            <div class="tl-time">10:38</div>
+            <div class="tl-dot" style="background:var(--muted)"></div>
+            <div class="tl-content"><div class="tl-title">INFY — Skipped · RSI out of range</div><div class="tl-sub">RSI 28.4 below 35 minimum — signal rejected at filter stage</div></div>
+          </div>
+          <div class="timeline-row">
+            <div class="tl-time">10:30</div>
+            <div class="tl-dot" style="background:var(--blue)"></div>
+            <div class="tl-content"><div class="tl-title">Market Open · Pre-market checks complete</div><div class="tl-sub">VIX 13.4 ✓ · FII net +₹1,240Cr ✓ · SGX +0.6% ✓ · 3 stocks in scan queue</div></div>
+          </div>
+          <div class="timeline-row">
+            <div class="tl-time">10:15</div>
+            <div class="tl-dot" style="background:var(--purple)"></div>
+            <div class="tl-content"><div class="tl-title">Pre-market scan started</div><div class="tl-sub">NewsAPI fetched · NSE bulk deals pulled · Sector indices loaded</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Rejection Log</span></div>
+        <div>
+          <div class="trade-row header" style="grid-template-columns:80px 80px 1fr 100px">
+            <span>Time</span><span>Stock</span><span>Reason</span><span>Filters</span>
+          </div>
+          <div class="trade-row" style="grid-template-columns:80px 80px 1fr 100px"><span class="ind-label">10:38</span><span>INFY</span><span style="color:var(--muted)">RSI 28.4 below 35 minimum</span><span><span class="fail filter-badge">RSI</span></span></div>
+          <div class="trade-row" style="grid-template-columns:80px 80px 1fr 100px"><span class="ind-label">10:41</span><span>TATASTEEL</span><span style="color:var(--muted)">ATR 2.1% exceeds 1.5% limit</span><span><span class="fail filter-badge">ATR</span></span></div>
+          <div class="trade-row" style="grid-template-columns:80px 80px 1fr 100px"><span class="ind-label">11:05</span><span>NMDC</span><span style="color:var(--muted)">ADX 18.2 below 25 threshold</span><span><span class="fail filter-badge">ADX</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RISK PAGE -->
+    <div class="page" id="page-risk">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Risk Exposure</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="ind-label">Per-trade risk</span><span style="font-family:var(--mono);font-size:11px">₹100 (1%)</span></div>
+              <div class="risk-bar"><div class="risk-fill risk-green" style="width:20%"></div></div>
+            </div>
+            <div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="ind-label">Daily loss used</span><span style="font-family:var(--mono);font-size:11px;color:var(--green)">₹0 / ₹500</span></div>
+              <div class="risk-bar"><div class="risk-fill risk-green" style="width:0%"></div></div>
+            </div>
+            <div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="ind-label">Sector exposure (Banking)</span><span style="font-family:var(--mono);font-size:11px">12%</span></div>
+              <div class="risk-bar"><div class="risk-fill risk-green" style="width:12%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span class="ind-label">Correlation risk</span><span style="font-family:var(--mono);font-size:11px;color:var(--amber)">0.62 (warn &gt;0.8)</span></div>
+              <div class="risk-bar"><div class="risk-fill risk-amber" style="width:62%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Kill Switch & Protocols</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">Account drop trigger</span><span class="ind-val">-2% (₹-1,000)</span></div>
+            <div class="ind-row"><span class="ind-label">API fail trigger</span><span class="ind-val">3× consecutive</span></div>
+            <div class="ind-row"><span class="ind-label">Heartbeat timeout</span><span class="ind-val">3 missed (180s)</span></div>
+            <div class="ind-row"><span class="ind-label">Today's drop</span><span class="ind-val" style="color:var(--green)">+₹247 (safe)</span></div>
+            <div class="ind-row"><span class="ind-label">API failures today</span><span class="ind-val" style="color:var(--green)">0</span></div>
+            <button class="kill-btn" onclick="killSwitch()">⚡ EMERGENCY KILL SWITCH</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Blacklisted Stocks</span></div>
+        <div class="card-body">
+          <div class="filter-grid">
+            <div class="filter-item"><div><div class="filter-name">TATASTEEL</div><div style="font-size:10px;color:var(--muted)">ATR 2.1% — high volatility</div></div><span class="filter-badge fail">BLOCKED</span></div>
+            <div class="filter-item"><div><div class="filter-name">VEDL</div><div style="font-size:10px;color:var(--muted)">Pledging 62% (max 50%)</div></div><span class="filter-badge fail">BLOCKED</span></div>
+            <div class="filter-item"><div><div class="filter-name">ONGC</div><div style="font-size:10px;color:var(--muted)">Vol avg &lt;500K/day</div></div><span class="filter-badge fail">BLOCKED</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTOR PAGE -->
+    <div class="page" id="page-sector">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Sector RSI Heatmap</span></div>
+          <div class="card-body">
+            <div class="sector-row"><span class="sector-name">Banking</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:51%;background:var(--green)"></div></div><span class="sector-pct" style="color:var(--green)">51</span></div>
+            <div class="sector-row"><span class="sector-name">IT</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:44%;background:var(--blue)"></div></div><span class="sector-pct" style="color:var(--blue)">44</span></div>
+            <div class="sector-row"><span class="sector-name">Auto</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:58%;background:var(--green)"></div></div><span class="sector-pct" style="color:var(--green)">58</span></div>
+            <div class="sector-row"><span class="sector-name">Metals</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:68%;background:var(--amber)"></div></div><span class="sector-pct" style="color:var(--amber)">68</span></div>
+            <div class="sector-row"><span class="sector-name">Pharma</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:47%;background:var(--blue)"></div></div><span class="sector-pct" style="color:var(--blue)">47</span></div>
+            <div class="sector-row"><span class="sector-name">Energy</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:55%;background:var(--green)"></div></div><span class="sector-pct" style="color:var(--green)">55</span></div>
+            <div class="sector-row"><span class="sector-name">FMCG</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:42%;background:var(--muted)"></div></div><span class="sector-pct" style="color:var(--muted)">42</span></div>
+            <div class="sector-row"><span class="sector-name">Realty</span><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:72%;background:var(--red)"></div></div><span class="sector-pct" style="color:var(--red)">72</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">FII / DII Activity</span></div>
+          <div class="card-body" style="padding-top:12px">
+            <div style="position:relative;height:200px"><canvas id="fiiChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:4px">
+        <div class="card-header"><span class="card-title">Weekly Review — Sunday 6 PM</span><span class="chip">Next: Sunday</span></div>
+        <div class="card-body">
+          <div class="filter-grid">
+            <div class="filter-item"><div class="filter-name">FII/DII data update</div><span class="filter-badge pass">AUTO</span></div>
+            <div class="filter-item"><div class="filter-name">Sector trend analysis</div><span class="filter-badge pass">AUTO</span></div>
+            <div class="filter-item"><div class="filter-name">Blacklist refresh</div><span class="filter-badge pass">AUTO</span></div>
+            <div class="filter-item"><div class="filter-name">Nifty 50 benchmark compare</div><span class="filter-badge pass">AUTO</span></div>
+            <div class="filter-item"><div class="filter-name">Trade heatmap by sector</div><span class="filter-badge pass">AUTO</span></div>
+            <div class="filter-item"><div class="filter-name">Telegram weekly report</div><span class="filter-badge pass">AUTO</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Angel One SmartAPI</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">API Key</div><input type="text" value="●●●●●●●●●●●●" style="width:100%"></div>
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Client ID</div><input type="text" placeholder="AXXXXXXX" style="width:100%"></div>
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">TOTP Secret</div><input type="text" value="●●●●●●●●●●" style="width:100%"></div>
+            <button class="btn btn-primary" style="width:100%">Test Connection</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Trading Parameters</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Capital per trade (₹)</div><input type="text" value="10000" style="width:100%"></div>
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Profit target %</div><input type="text" value="1" style="width:100%"></div>
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Stop loss %</div><input type="text" value="1" style="width:100%"></div>
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Max daily loss %</div><input type="text" value="1" style="width:100%"></div>
+            <button class="btn btn-ghost" style="width:100%">Save Settings</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Notifications</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Telegram Bot Token</div><input type="text" placeholder="Enter bot token" style="width:100%"></div>
+            <div style="margin-bottom:10px"><div class="ind-label" style="margin-bottom:4px">Chat ID</div><input type="text" placeholder="-100XXXXXXXXX" style="width:100%"></div>
+            <button class="btn btn-ghost" style="width:100%">Test Alert</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Data Sources</span></div>
+          <div class="card-body">
+            <div class="ind-row"><span class="ind-label">Real-time</span><span style="font-size:11px;color:var(--green)">Angel One WS ✓</span></div>
+            <div class="ind-row"><span class="ind-label">Historical</span><span style="font-size:11px;color:var(--green)">Yahoo Finance ✓</span></div>
+            <div class="ind-row"><span class="ind-label">News</span><span style="font-size:11px;color:var(--green)">NewsAPI free tier ✓</span></div>
+            <div class="ind-row"><span class="ind-label">FII/DII</span><span style="font-size:11px;color:var(--green)">NSE Bulk Deals ✓</span></div>
+            <div class="ind-row"><span class="ind-label">VIX</span><span style="font-size:11px;color:var(--green)">NSE India VIX ✓</span></div>
+            <div class="ind-row" style="border:none"><span class="ind-label">Global cues</span><span style="font-size:11px;color:var(--green)">Investing.com ✓</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const h = String(ist.getHours()).padStart(2,'0');
+  const m = String(ist.getMinutes()).padStart(2,'0');
+  const s = String(ist.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Navigation ──
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ── Kill Switch ──
+function killSwitch() {
+  if (confirm('⚡ KILL SWITCH ACTIVATED\n\nThis will:\n• Exit all open positions at MARKET\n• Cancel all pending orders\n• Halt trading for the day\n\nConfirm?')) {
+    document.getElementById('trade-lock').textContent = '🔒 LOCKED';
+    document.getElementById('trade-lock').style.color = 'var(--red)';
+    alert('✓ Kill switch activated. All positions exited. Trading locked for today.\nTelegram alert sent.');
+  }
+}
+
+// ── Position Sizer ──
+function calcPos() {
+  const atr = parseFloat(document.getElementById('atr-input').value) || 18.5;
+  const entry = parseFloat(document.getElementById('entry-input').value) || 1642.5;
+  const cap = parseFloat(document.getElementById('cap-input').value) || 10000;
+  const risk = cap * 0.01;
+  const qtyATR = Math.floor(risk / (atr * 2));
+  const qtyRisk = Math.floor(risk / (entry * 0.01));
+  const qty = Math.max(Math.min(qtyATR, qtyRisk), 1);
+  const exposure = (qty * entry).toFixed(0);
+  document.getElementById('qty-atr').textContent = qtyATR + ' shares';
+  document.getElementById('qty-risk').textContent = qtyRisk + ' shares';
+  document.getElementById('qty-final').textContent = qty + ' shares';
+  document.getElementById('exposure').textContent = '₹' + Number(exposure).toLocaleString('en-IN');
+}
+calcPos();
+
+// ── Equity Curve Chart ──
+const eqDays = Array.from({length:30},(_,i)=>i+1);
+let eqVal = 50000;
+const eqData = eqDays.map(() => { eqVal += (Math.random()-0.38)*180; return Math.round(eqVal); });
+new Chart(document.getElementById('equityChart'), {
+  type: 'line',
+  data: {
+    labels: eqDays.map(d => 'D'+d),
+    datasets: [{ data: eqData, borderColor: '#00d68f', borderWidth: 1.5, fill: true, backgroundColor: 'rgba(0,214,143,0.07)', tension: 0.4, pointRadius: 0 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { size: 9 }, maxTicksLimit: 8 } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { size: 9 }, callback: v => '₹'+Math.round(v/1000)+'K' } }
+    }
+  }
+});
+
+// ── Daily P&L Chart ──
+const pnlDays = ['M','T','W','T','F','M','T','W','T','F','M','T','W','T','F'];
+const pnlVals = [120,-80,200,95,-50,180,75,230,-40,110,90,-30,150,80,247];
+new Chart(document.getElementById('pnlChart'), {
+  type: 'bar',
+  data: {
+    labels: pnlDays,
+    datasets: [{ data: pnlVals, backgroundColor: pnlVals.map(v => v>=0 ? 'rgba(0,214,143,0.6)' : 'rgba(255,77,109,0.6)'), borderRadius: 3 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { size: 9 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { size: 9 }, callback: v => '₹'+v } }
+    }
+  }
+});
+
+// ── Indicator Sparkline ──
+const iDays = Array.from({length:30},(_,i)=>i+1);
+let rsiV=50; const rsiData=iDays.map(()=>{rsiV+=(Math.random()-0.5)*4;rsiV=Math.max(30,Math.min(70,rsiV));return rsiV.toFixed(1);});
+let adxV=25; const adxData=iDays.map(()=>{adxV+=(Math.random()-0.45)*2;adxV=Math.max(15,Math.min(45,adxV));return adxV.toFixed(1);});
+new Chart(document.getElementById('indicatorChart'), {
+  type: 'line',
+  data: {
+    labels: iDays.map(d=>'D'+d),
+    datasets: [
+      { label:'RSI', data:rsiData, borderColor:'#4d9de0', borderWidth:1.5, fill:false, tension:0.4, pointRadius:0 },
+      { label:'ADX', data:adxData, borderColor:'#f5a623', borderWidth:1.5, fill:false, tension:0.4, pointRadius:0 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:true, labels:{ color:'#6b7280', font:{size:10}, boxWidth:10, boxHeight:2 } } },
+    scales: {
+      x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#6b7280',font:{size:9},maxTicksLimit:8} },
+      y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#6b7280',font:{size:9}}, min:10, max:80 }
+    }
+  }
+});
+
+// ── Backtest equity ──
+let btV=50000; const btData=Array.from({length:52},()=>{btV+=(Math.random()-0.38)*600;return Math.round(btV);});
+new Chart(document.getElementById('btChart'), {
+  type:'line',
+  data:{ labels:btData.map((_,i)=>`W${i+1}`), datasets:[{ data:btData, borderColor:'#8b5cf6', borderWidth:1.5, fill:true, backgroundColor:'rgba(139,92,246,0.07)', tension:0.4, pointRadius:0 }] },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:{size:9},maxTicksLimit:10}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:{size:9},callback:v=>'₹'+Math.round(v/1000)+'K'}}
+    }
+  }
+});
+
+// ── FII Chart ──
+const fiiW = ['W1','W2','W3','W4','W5','W6','W7','W8'];
+const fiiVals = [1240,-380,820,-120,560,940,-280,1240];
+const diiVals = [-380,420,-280,310,-180,120,450,-380];
+new Chart(document.getElementById('fiiChart'), {
+  type:'bar',
+  data:{
+    labels:fiiW,
+    datasets:[
+      { label:'FII', data:fiiVals, backgroundColor:'rgba(0,214,143,0.6)', borderRadius:3 },
+      { label:'DII', data:diiVals, backgroundColor:'rgba(77,157,224,0.6)', borderRadius:3 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true, labels:{color:'#6b7280',font:{size:10},boxWidth:10,boxHeight:2}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:{size:9}}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:{size:9},callback:v=>v+'Cr'}}
+    }
+  }
+});
+
+// ── Heartbeat counter ──
+let hbSecs = 60;
+setInterval(()=>{
+  hbSecs = Math.max(0, hbSecs-1);
+  if(hbSecs===0) hbSecs=60;
+  document.getElementById('hb-counter').textContent = hbSecs + 's ago';
+},1000);
+</script>
+</body>
+</html>
