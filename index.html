@@ -6,149 +6,119 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="themeColorMeta" content="#0a0e1a">
+<meta name="description" content="Prism Analytics - Live NSE BSE MCX market data">
 <title>Prism Analytics</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-[data-theme="dark"]{--bg:#0a0e1a;--bg2:#0f1422;--bg3:#161d2e;--card:#111827;--card2:#1a2338;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#e8edf5;--muted:#64748b;--dim:#2d3748;--green:#10b981;--red:#f43f5e;--amber:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;--shadow:0 1px 4px rgba(0,0,0,0.5);}
-[data-theme="light"]{--bg:#f1f5f9;--bg2:#ffffff;--bg3:#e8edf4;--card:#ffffff;--card2:#f8fafc;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--text:#0f172a;--muted:#64748b;--dim:#cbd5e1;--green:#059669;--red:#dc2626;--amber:#d97706;--blue:#2563eb;--purple:#7c3aed;--shadow:0 1px 4px rgba(0,0,0,0.08);}
+[data-theme="dark"]{--bg:#0a0e1a;--bg2:#0f1422;--bg3:#161d2e;--card:#111827;--card2:#1a2338;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#e8edf5;--muted:#64748b;--dim:#2d3748;--green:#10b981;--gbg:rgba(16,185,129,0.10);--red:#f43f5e;--rbg:rgba(244,63,94,0.10);--amber:#f59e0b;--abg:rgba(245,158,11,0.10);--blue:#3b82f6;--bbg:rgba(59,130,246,0.10);--shadow:0 1px 4px rgba(0,0,0,0.5);}
+[data-theme="light"]{--bg:#f1f5f9;--bg2:#fff;--bg3:#e8edf4;--card:#fff;--card2:#f8fafc;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--text:#0f172a;--muted:#64748b;--dim:#cbd5e1;--green:#059669;--gbg:rgba(5,150,105,0.08);--red:#dc2626;--rbg:rgba(220,38,38,0.08);--amber:#d97706;--abg:rgba(217,119,6,0.08);--blue:#2563eb;--bbg:rgba(37,99,235,0.08);--shadow:0 1px 4px rgba(0,0,0,0.08);}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{height:100%;overflow:hidden;}
 body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(--bg);color:var(--text);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
-.topbar{height:52px;flex-shrink:0;z-index:300;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;}
-.logo{display:flex;align-items:center;gap:10px;}
-.logo-mark{width:34px;height:34px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#6366f1,#3b82f6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;box-shadow:0 2px 10px rgba(99,102,241,0.45);}
+.topbar{height:52px;flex-shrink:0;z-index:300;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px;}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo-mark{width:34px;height:34px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#6366f1,#3b82f6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;box-shadow:0 2px 10px rgba(99,102,241,0.4);}
 .logo-name{font-weight:700;font-size:16px;letter-spacing:-.3px;}
 .logo-sub{font-size:9px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;}
-.topbar-right{display:flex;align-items:center;gap:8px;}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .ist-clock{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.4px;}
-.mkt-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;transition:all .4s;}
-.mkt-pill.open{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:var(--green);}
-.mkt-pill.closed{background:rgba(244,63,94,0.10);border:1px solid rgba(244,63,94,0.22);color:var(--red);}
-.mkt-pill.holiday{background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.22);color:var(--amber);}
+.mkt-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;border:1px solid transparent;transition:all .4s;}
+.mkt-pill.open{background:var(--gbg);border-color:rgba(16,185,129,0.25);color:var(--green);}
+.mkt-pill.closed{background:var(--rbg);border-color:rgba(244,63,94,0.22);color:var(--red);}
+.mkt-pill.holiday{background:var(--abg);border-color:rgba(245,158,11,0.22);color:var(--amber);}
 .pulse{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;animation:pulse 2s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
-.theme-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;font-size:16px;color:var(--text);display:flex;align-items:center;justify-content:center;}
+.theme-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;font-size:16px;color:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .theme-btn:active{transform:scale(.93);}
-
 /* MARKET BAR */
-.market-bar{height:38px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;}
+.market-bar{height:36px;flex-shrink:0;z-index:200;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .market-bar::-webkit-scrollbar{display:none;}
-.mb-item{display:flex;align-items:center;gap:6px;padding:0 12px;height:38px;flex-shrink:0;border-right:1px solid var(--border);white-space:nowrap;}
+.mb-item{display:flex;align-items:center;gap:5px;padding:0 12px;height:36px;flex-shrink:0;border-right:1px solid var(--border);white-space:nowrap;}
 .mb-name{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.3px;}
-.mb-price{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;}
+.mb-price{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;margin-left:2px;}
 .mb-chg{font-family:'DM Mono',monospace;font-size:10px;}
-.mb-up{color:var(--green)!important;}.mb-dn{color:var(--red)!important;}.mb-neu{color:var(--muted)!important;}
-.mb-skel{display:inline-block;width:48px;height:11px;border-radius:3px;background:var(--bg3);animation:skel 1.4s ease-in-out infinite;vertical-align:middle;}
+.mb-chg.up{color:var(--green);}.mb-chg.dn{color:var(--red);}.mb-chg.neu{color:var(--muted);}
+.mb-skel{width:50px;height:11px;border-radius:3px;background:var(--bg3);animation:skel 1.2s ease-in-out infinite;display:inline-block;}
 @keyframes skel{0%,100%{opacity:.4}50%{opacity:.9}}
-.mb-refresh{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:5px;padding:0 12px;height:38px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;border-left:1px solid var(--border);background:none;border-top:none;border-right:none;border-bottom:none;font-family:'Outfit',sans-serif;transition:color .15s;}
-.mb-refresh:hover{color:var(--text);}
-.spin{animation:spin .7s linear infinite;}
+.mb-controls{margin-left:auto;display:flex;align-items:center;flex-shrink:0;border-left:1px solid var(--border);}
+.mb-refresh-btn{height:36px;padding:0 12px;cursor:pointer;font-size:11px;color:var(--muted);background:none;border:none;display:flex;align-items:center;gap:4px;font-family:'Outfit',sans-serif;transition:color .2s;white-space:nowrap;}
+.mb-refresh-btn:hover{color:var(--blue);}
+.mb-time{height:36px;padding:0 10px;font-size:9px;color:var(--dim);display:flex;align-items:center;border-left:1px solid var(--border);white-space:nowrap;font-family:'DM Mono',monospace;}
+.spin{animation:spin .7s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.mb-stamp{flex-shrink:0;padding:0 10px;font-size:9px;color:var(--dim);white-space:nowrap;border-left:1px solid var(--border);height:38px;display:flex;align-items:center;}
-
-/* SHELL */
+/* APP SHELL */
 .app-shell{flex:1;display:flex;overflow:hidden;}
-
-/* SIDEBAR */
 .sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:none;flex-direction:column;overflow-y:auto;}
 @media(min-width:768px){.sidebar{display:flex;}}
 .nav-section{padding:12px 14px 3px;font-size:9px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);}
 .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:12.5px;color:var(--muted);border-left:3px solid transparent;transition:background .15s,color .15s;user-select:none;}
-.nav-item:hover{background:rgba(59,130,246,.06);color:var(--text);}
-.nav-item.active{background:rgba(59,130,246,.10);color:var(--blue);border-left-color:var(--blue);font-weight:600;}
+.nav-item:hover{background:var(--bbg);color:var(--text);}
+.nav-item.active{background:var(--bbg);color:var(--blue);border-left-color:var(--blue);font-weight:600;}
 .nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
 .nav-divider{height:1px;background:var(--border);margin:6px 10px;}
 .sidebar-footer{margin-top:auto;padding:14px;border-top:1px solid var(--border);}
 .sf-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-.sf-value{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);}
+.sf-value{font-family:'DM Mono',monospace;font-size:13px;color:var(--amber);}
 .sf-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin:7px 0 4px;}
-.sf-fill{height:100%;border-radius:3px;width:0%;transition:width .6s,background .3s;}
+.sf-fill{height:100%;border-radius:3px;background:var(--amber);width:0%;}
 .sf-sub{font-size:10px;color:var(--muted);}
-.ph-badge{display:inline-block;margin-top:10px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:rgba(59,130,246,.14);color:var(--blue);}
-
-/* SCROLL */
+.ph-badge{display:inline-block;margin-top:10px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:var(--bbg);color:var(--blue);}
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
 .scroll-area::-webkit-scrollbar{width:4px;}
 .scroll-area::-webkit-scrollbar-track{background:transparent;}
 .scroll-area::-webkit-scrollbar-thumb{background:var(--dim);border-radius:4px;}
-
-/* PAGES */
 .page{display:none;}.page.active{display:block;}
 .page-content{padding:14px;padding-bottom:80px;display:flex;flex-direction:column;gap:14px;}
 @media(min-width:768px){.page-content{padding:20px;padding-bottom:20px;}}
-
-/* BOTTOM NAV */
 .bottom-nav{height:60px;flex-shrink:0;z-index:300;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0px);}
 @media(min-width:768px){.bottom-nav{display:none;}}
 .bnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 4px;cursor:pointer;color:var(--muted);transition:color .15s;background:none;border:none;font-family:'Outfit',sans-serif;min-height:44px;}
 .bnav-btn.active{color:var(--blue);}
 .bnav-icon{font-size:20px;line-height:1;}.bnav-label{font-size:9px;font-weight:500;letter-spacing:.2px;}
-
-/* CARD */
+/* COMPONENTS */
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
 .card-header{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .card-title{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
 .card-body{padding:15px;}
-
-/* TILES */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(min-width:600px){.tiles{grid-template-columns:repeat(4,1fr);}}
 .tile{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:13px;transition:transform .15s;}
 .tile:active{transform:scale(.97);}
 .tile-label{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
 .tile-value{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;line-height:1;}
-.tile-chg{font-size:10px;font-weight:600;margin-top:5px;display:inline-block;padding:2px 6px;border-radius:6px;}
-.up{color:var(--green)!important;}.dn{color:var(--red)!important;}.warn{color:var(--amber)!important;}
-.badge-up{background:rgba(16,185,129,0.12);color:var(--green)!important;}
-.badge-dn{background:rgba(244,63,94,0.12);color:var(--red)!important;}
-.badge-neu{background:rgba(100,116,139,0.12);color:var(--muted)!important;}
-
-/* ALERTS */
+.tile-sub{font-size:10px;color:var(--muted);margin-top:5px;}
+.up{color:var(--green);}.dn{color:var(--red);}.warn{color:var(--amber);}
 .alert{display:flex;align-items:flex-start;gap:9px;padding:10px 13px;border-radius:10px;font-size:12px;line-height:1.5;margin-bottom:8px;}
 .alert:last-child{margin-bottom:0;}
 .alert-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
-.alert.success{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--green);}
-.alert.info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:var(--blue);}
-.alert.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--amber);}
-.alert.danger{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:var(--red);}
-
-/* MARKET ROWS */
-.mkt-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
-.mkt-row:last-child{border-bottom:none;}
-.mkt-row-name{font-size:12px;color:var(--muted);font-weight:500;}
-.mkt-row-right{text-align:right;}
-.mkt-row-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
-.mkt-row-chg{font-family:'DM Mono',monospace;font-size:10px;margin-top:2px;}
-
-/* STATUS */
-.status-row{display:flex;align-items:center;gap:6px;font-size:11px;}
-.s-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.s-on{background:var(--green);animation:pulse 2s infinite;}.s-off{background:var(--red);}.s-warn{background:var(--amber);animation:pulse 1.2s infinite;}
-
-/* BANNER */
-.src-banner{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;font-size:11px;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);color:var(--blue);}
-.src-banner.ok{background:rgba(16,185,129,0.07);border-color:rgba(16,185,129,0.15);color:var(--green);}
-.src-banner.warn{background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.15);color:var(--amber);}
-.src-banner.err{background:rgba(244,63,94,0.07);border-color:rgba(244,63,94,0.15);color:var(--red);}
-
-/* COMING SOON */
-.coming-soon{padding:52px 20px;text-align:center;color:var(--muted);}
-.cs-icon{font-size:44px;margin-bottom:14px;}.cs-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;}.cs-sub{font-size:12px;line-height:1.7;}
-.phase-lbl{display:inline-block;margin-top:14px;font-size:10px;font-weight:700;padding:4px 11px;border-radius:6px;}
-.ph1{background:rgba(16,185,129,.14);color:var(--green);}
-.ph2{background:rgba(59,130,246,.12);color:var(--blue);}
-.ph3{background:rgba(245,158,11,.12);color:var(--amber);}
-
-/* ROADMAP */
+.alert.success{background:var(--gbg);border:1px solid rgba(16,185,129,.2);color:var(--green);}
+.alert.info{background:var(--bbg);border:1px solid rgba(59,130,246,.2);color:var(--blue);}
+.alert.warn{background:var(--abg);border:1px solid rgba(245,158,11,.2);color:var(--amber);}
+.divider{height:1px;background:var(--border);}
+.ind-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.ind-row:last-child{border-bottom:none;}
+.ind-label{font-size:12px;color:var(--muted);}
+.ind-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;text-align:right;}
+.s-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.s-on{background:var(--green);animation:pulse 2s infinite;}.s-off{background:var(--red);}.s-warn{background:var(--amber);}
+.s-row{display:flex;align-items:center;gap:6px;font-size:11px;}
 .rmap-row{display:flex;align-items:center;gap:12px;padding:9px 0;}
 .rmap-ri{font-size:20px;flex-shrink:0;}
 .rmap-body{flex:1;}
 .rmap-title{font-size:12px;font-weight:600;margin-bottom:2px;}
 .rmap-sub{font-size:10px;color:var(--muted);}
-.divider{height:1px;background:var(--border);}
+.phase-lbl{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;flex-shrink:0;}
+.ph0{background:var(--gbg);color:var(--green);}
+.ph1{background:var(--bbg);color:var(--blue);}
+.ph2{background:var(--abg);color:var(--amber);}
 .chk-row{display:flex;gap:9px;font-size:12px;padding:5px 0;}
-.grid-2{display:grid;grid-template-columns:1fr;gap:14px;}
-@media(min-width:600px){.grid-2{grid-template-columns:1fr 1fr;}}
+.coming-soon{padding:52px 20px;text-align:center;color:var(--muted);}
+.cs-icon{font-size:44px;margin-bottom:14px;}
+.cs-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.cs-sub{font-size:12px;line-height:1.7;}
+.cs-badge{display:inline-block;margin-top:14px;font-size:10px;font-weight:700;padding:4px 11px;border-radius:6px;}
+.src-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--gbg);color:var(--green);letter-spacing:.3px;}
+.src-badge.warn{background:var(--abg);color:var(--amber);}
 </style>
 </head>
 <body>
@@ -156,59 +126,63 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 <header class="topbar">
   <div class="logo">
     <div class="logo-mark">PA</div>
-    <div><div class="logo-name">Prism Analytics</div><div class="logo-sub">NSE · BSE · MCX</div></div>
+    <div>
+      <div class="logo-name">Prism Analytics</div>
+      <div class="logo-sub">NSE · BSE · MCX</div>
+    </div>
   </div>
   <div class="topbar-right">
     <span class="ist-clock" id="ist-clock">--:--:--</span>
     <div class="mkt-pill closed" id="mkt-pill"><div class="pulse"></div><span id="mkt-text">CLOSED</span></div>
-    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">&#x1F319;</button>
   </div>
 </header>
 
-<!-- MARKET BAR — Phase 1B Live -->
-<div class="market-bar">
-  <div class="mb-item"><span class="mb-name">NIFTY 50</span><span class="mb-price" id="mb-nifty-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-nifty-c"></span></div>
-  <div class="mb-item"><span class="mb-name">BANKNIFTY</span><span class="mb-price" id="mb-bnifty-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-bnifty-c"></span></div>
-  <div class="mb-item"><span class="mb-name">SENSEX</span><span class="mb-price" id="mb-sensex-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-sensex-c"></span></div>
-  <div class="mb-item"><span class="mb-name">INDIA VIX</span><span class="mb-price" id="mb-vix-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-vix-c"></span></div>
-  <div class="mb-item"><span class="mb-name">GOLD</span><span class="mb-price" id="mb-gold-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-gold-c"></span></div>
-  <div class="mb-item"><span class="mb-name">SILVER</span><span class="mb-price" id="mb-silver-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-silver-c"></span></div>
-  <div class="mb-item"><span class="mb-name">USD/INR</span><span class="mb-price" id="mb-usdinr-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-usdinr-c"></span></div>
-  <div class="mb-item"><span class="mb-name">CRUDE</span><span class="mb-price" id="mb-crude-p"><span class="mb-skel"></span></span><span class="mb-chg mb-neu" id="mb-crude-c"></span></div>
-  <button class="mb-refresh" onclick="fetchAll(true)"><span id="mb-spin">↻</span> Refresh</button>
-  <div class="mb-stamp" id="mb-stamp">—</div>
+<div class="market-bar" id="market-bar">
+  <div class="mb-item"><span class="mb-name">NIFTY</span><span class="mb-price" id="mb-nifty-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-nifty-c"></span></div>
+  <div class="mb-item"><span class="mb-name">BNIFTY</span><span class="mb-price" id="mb-bnifty-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-bnifty-c"></span></div>
+  <div class="mb-item"><span class="mb-name">SENSEX</span><span class="mb-price" id="mb-sensex-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-sensex-c"></span></div>
+  <div class="mb-item"><span class="mb-name">VIX</span><span class="mb-price" id="mb-vix-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-vix-c"></span></div>
+  <div class="mb-item"><span class="mb-name">GOLD</span><span class="mb-price" id="mb-gold-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-gold-c"></span></div>
+  <div class="mb-item"><span class="mb-name">USD/INR</span><span class="mb-price" id="mb-usdinr-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-usdinr-c"></span></div>
+  <div class="mb-item"><span class="mb-name">CRUDE</span><span class="mb-price" id="mb-crude-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-crude-c"></span></div>
+  <div class="mb-item"><span class="mb-name">BTC</span><span class="mb-price" id="mb-btc-p"><span class="mb-skel"></span></span><span class="mb-chg neu" id="mb-btc-c"></span></div>
+  <div class="mb-controls">
+    <button class="mb-refresh-btn" id="mb-refresh-btn" onclick="fetchMarketBar()" aria-label="Refresh"><span id="mb-spin">&#x21BB;</span> Refresh</button>
+    <div class="mb-time" id="mb-time">--:--:--</div>
+  </div>
 </div>
 
 <div class="app-shell">
   <nav class="sidebar">
     <div class="nav-section">Markets</div>
-    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">◈</span> Dashboard</div>
-    <div class="nav-item" onclick="showPage('prices',this)"><span class="nav-icon">📈</span> Live Prices</div>
-    <div class="nav-item" onclick="showPage('mcx',this)"><span class="nav-icon">🥇</span> MCX Metals</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">&#x25C8;</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('prices',this)"><span class="nav-icon">&#x1F4C8;</span> Live Prices</div>
+    <div class="nav-item" onclick="showPage('mcx',this)"><span class="nav-icon">&#x1F947;</span> MCX Metals</div>
     <div class="nav-divider"></div>
     <div class="nav-section">Trading</div>
-    <div class="nav-item" onclick="showPage('signals',this)"><span class="nav-icon">⌖</span> Signal Engine</div>
-    <div class="nav-item" onclick="showPage('filters',this)"><span class="nav-icon">⊟</span> Trade Filters</div>
-    <div class="nav-item" onclick="showPage('orders',this)"><span class="nav-icon">▣</span> Orders</div>
-    <div class="nav-item" onclick="showPage('portfolio',this)"><span class="nav-icon">💼</span> Portfolio</div>
+    <div class="nav-item" onclick="showPage('signals',this)"><span class="nav-icon">&#x2316;</span> Signal Engine</div>
+    <div class="nav-item" onclick="showPage('filters',this)"><span class="nav-icon">&#x229F;</span> Trade Filters</div>
+    <div class="nav-item" onclick="showPage('orders',this)"><span class="nav-icon">&#x25A3;</span> Orders</div>
+    <div class="nav-item" onclick="showPage('portfolio',this)"><span class="nav-icon">&#x1F4BC;</span> Portfolio</div>
     <div class="nav-divider"></div>
     <div class="nav-section">Tools</div>
-    <div class="nav-item" onclick="showPage('screener',this)"><span class="nav-icon">🔍</span> Screener</div>
-    <div class="nav-item" onclick="showPage('ai',this)"><span class="nav-icon">🤖</span> AI Analysis</div>
-    <div class="nav-item" onclick="showPage('backtest',this)"><span class="nav-icon">◎</span> Backtest</div>
-    <div class="nav-item" onclick="showPage('journal',this)"><span class="nav-icon">📓</span> Journal</div>
+    <div class="nav-item" onclick="showPage('screener',this)"><span class="nav-icon">&#x1F50D;</span> Screener</div>
+    <div class="nav-item" onclick="showPage('ai',this)"><span class="nav-icon">&#x1F916;</span> AI Analysis</div>
+    <div class="nav-item" onclick="showPage('backtest',this)"><span class="nav-icon">&#x25CE;</span> Backtest</div>
+    <div class="nav-item" onclick="showPage('journal',this)"><span class="nav-icon">&#x1F4D3;</span> Journal</div>
     <div class="nav-divider"></div>
     <div class="nav-section">System</div>
-    <div class="nav-item" onclick="showPage('risk',this)"><span class="nav-icon">🛡</span> Risk Monitor</div>
-    <div class="nav-item" onclick="showPage('telegram',this)"><span class="nav-icon">📨</span> Telegram</div>
-    <div class="nav-item" onclick="showPage('vault',this)"><span class="nav-icon">🔐</span> Vault</div>
-    <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙</span> Settings</div>
+    <div class="nav-item" onclick="showPage('risk',this)"><span class="nav-icon">&#x1F6E1;</span> Risk Monitor</div>
+    <div class="nav-item" onclick="showPage('telegram',this)"><span class="nav-icon">&#x1F4E8;</span> Telegram</div>
+    <div class="nav-item" onclick="showPage('vault',this)"><span class="nav-icon">&#x1F510;</span> Vault</div>
+    <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">&#x2699;</span> Settings</div>
     <div class="sidebar-footer">
-      <div class="sf-label">Data Source</div>
-      <div class="sf-value">Yahoo Finance — Free</div>
-      <div class="sf-bar"><div class="sf-fill" id="sf-fill"></div></div>
-      <div class="sf-sub" id="sf-sub">Fetching live data…</div>
-      <div class="ph-badge">Phase 1B — Market Bar</div>
+      <div class="sf-label">Capital Deployed</div>
+      <div class="sf-value">&#x20B9;0 / &#x20B9;50,000</div>
+      <div class="sf-bar"><div class="sf-fill"></div></div>
+      <div class="sf-sub">0% &middot; 0 trades today</div>
+      <div class="ph-badge">Phase 1B &mdash; Market Bar Live</div>
     </div>
   </nav>
 
@@ -216,169 +190,154 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard"><div class="page-content">
-      <div class="src-banner" id="dash-banner"><span>⟳</span><span id="dash-banner-txt">Connecting to Yahoo Finance — fetching NSE live prices…</span></div>
+      <div class="alert info" id="fetch-status-bar">
+        <span class="alert-icon">&#x1F4E1;</span>
+        <span id="fetch-status-msg">Connecting to Yahoo Finance &mdash; fetching live market data&hellip;</span>
+      </div>
       <div class="tiles">
-        <div class="tile"><div class="tile-label">Nifty 50</div><div class="tile-value" id="t-nifty">—</div><div class="tile-chg badge-neu" id="t-nifty-c">—</div></div>
-        <div class="tile"><div class="tile-label">Bank Nifty</div><div class="tile-value" id="t-bnifty">—</div><div class="tile-chg badge-neu" id="t-bnifty-c">—</div></div>
-        <div class="tile"><div class="tile-label">India VIX</div><div class="tile-value warn" id="t-vix">—</div><div class="tile-chg badge-neu" id="t-vix-c">—</div></div>
-        <div class="tile"><div class="tile-label">Gold MCX</div><div class="tile-value" id="t-gold">—</div><div class="tile-chg badge-neu" id="t-gold-c">—</div></div>
+        <div class="tile"><div class="tile-label">Nifty 50</div><div class="tile-value" id="dash-nifty-p">&mdash;</div><div class="tile-sub" id="dash-nifty-c">Loading&hellip;</div></div>
+        <div class="tile"><div class="tile-label">Bank Nifty</div><div class="tile-value" id="dash-bnifty-p">&mdash;</div><div class="tile-sub" id="dash-bnifty-c">Loading&hellip;</div></div>
+        <div class="tile"><div class="tile-label">India VIX</div><div class="tile-value" id="dash-vix-p">&mdash;</div><div class="tile-sub" id="dash-vix-c">Loading&hellip;</div></div>
+        <div class="tile"><div class="tile-label">Gold MCX</div><div class="tile-value warn" id="dash-gold-p">&mdash;</div><div class="tile-sub" id="dash-gold-c">per 10g</div></div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Market Pulse — Live</span><div class="status-row"><div class="s-dot s-warn" id="api-dot"></div><span id="api-txt" style="font-size:10px;color:var(--muted)">Fetching…</span></div></div>
-        <div class="card-body" style="padding:0 15px;">
-          <div class="mkt-row"><span class="mkt-row-name">Nifty 50</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-nifty">—</div><div class="mkt-row-chg mb-neu" id="mp-nifty-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Bank Nifty</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-bnifty">—</div><div class="mkt-row-chg mb-neu" id="mp-bnifty-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Sensex</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-sensex">—</div><div class="mkt-row-chg mb-neu" id="mp-sensex-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">India VIX</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-vix">—</div><div class="mkt-row-chg mb-neu" id="mp-vix-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Gold MCX (per 10g)</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-gold">—</div><div class="mkt-row-chg mb-neu" id="mp-gold-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Silver MCX (per kg)</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-silver">—</div><div class="mkt-row-chg mb-neu" id="mp-silver-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">USD / INR</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-usdinr">—</div><div class="mkt-row-chg mb-neu" id="mp-usdinr-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Crude Oil WTI</span><div class="mkt-row-right"><div class="mkt-row-price" id="mp-crude">—</div><div class="mkt-row-chg mb-neu" id="mp-crude-c">—</div></div></div>
+        <div class="card-header"><span class="card-title">Market Pulse</span><span class="src-badge" id="pulse-badge">Yahoo Finance</span></div>
+        <div style="padding:0 15px">
+          <div class="ind-row"><span class="ind-label">Nifty 50</span><span class="ind-val" id="pulse-nifty">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">Bank Nifty</span><span class="ind-val" id="pulse-bnifty">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">Sensex</span><span class="ind-val" id="pulse-sensex">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">India VIX</span><span class="ind-val" id="pulse-vix">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">Gold MCX (est.)</span><span class="ind-val" id="pulse-gold">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">USD / INR</span><span class="ind-val" id="pulse-usdinr">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">Crude Oil WTI</span><span class="ind-val" id="pulse-crude">Loading&hellip;</span></div>
+          <div class="ind-row"><span class="ind-label">Bitcoin USD</span><span class="ind-val" id="pulse-btc">Loading&hellip;</span></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">System Status</span></div>
-        <div class="card-body" style="padding:0 15px;">
-          <div class="mkt-row"><span class="mkt-row-name">Yahoo Finance API</span><div class="status-row"><div class="s-dot s-warn" id="st-api"></div><span id="st-api-t" style="font-size:11px;color:var(--muted)">Connecting…</span></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Last Refresh</span><div class="status-row"><div class="s-dot s-on"></div><span id="st-ref" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">—</span></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Auto Refresh</span><div class="status-row"><div class="s-dot s-on"></div><span style="font-size:11px;color:var(--green)">Every 60s ✓</span></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">IST Clock</span><div class="status-row"><div class="s-dot s-on"></div><span style="font-size:11px;color:var(--green)">Live ✓</span></div></div>
-          <div class="mkt-row" style="border:none"><span class="mkt-row-name">Next Phase</span><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(245,158,11,0.12);color:var(--amber)">1C — Watchlist Stock Prices</span></div>
+        <div class="card-header"><span class="card-title">Data Source Status</span></div>
+        <div style="padding:0 15px">
+          <div class="ind-row"><span class="ind-label">Yahoo Finance API</span><div class="s-row"><div class="s-dot" id="st-dot"></div><span id="st-txt" style="font-size:11px">Connecting&hellip;</span></div></div>
+          <div class="ind-row"><span class="ind-label">Last Refresh</span><span class="ind-val" id="st-last">&mdash;</span></div>
+          <div class="ind-row"><span class="ind-label">Auto-refresh</span><span class="ind-val" style="color:var(--green)">Every 60s &#x2713;</span></div>
+          <div class="ind-row"><span class="ind-label">Next refresh in</span><span class="ind-val" id="st-next">60s</span></div>
+          <div class="ind-row"><span class="ind-label">Watchlist Prices</span><div class="s-row"><div class="s-dot s-off"></div><span style="font-size:11px;color:var(--muted)">Phase 1C &mdash; Next</span></div></div>
+          <div class="ind-row"><span class="ind-label">Angel One API</span><div class="s-row"><div class="s-dot s-off"></div><span style="font-size:11px;color:var(--muted)">Phase 4 &mdash; Last</span></div></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Build Roadmap</span></div>
-        <div class="card-body" style="padding:0 15px;">
-          <div class="rmap-row"><span class="rmap-ri">✅</span><div class="rmap-body"><div class="rmap-title">1A — Foundation &amp; Mobile Layout</div><div class="rmap-sub">Bottom nav, sidebar, theme, IST clock — done</div></div><span class="phase-lbl ph1">Done</span></div>
+        <div class="card-header"><span class="card-title">Phase 1 &mdash; Build Roadmap</span></div>
+        <div class="card-body" style="padding:0 15px">
+          <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1A &mdash; Foundation &amp; Mobile Layout</div><div class="rmap-sub">Bottom nav, sidebar, theme, IST clock</div></div><span class="phase-lbl ph0">Done</span></div>
           <div class="divider"></div>
-          <div class="rmap-row"><span class="rmap-ri">✅</span><div class="rmap-body"><div class="rmap-title">1B — Live Market Bar</div><div class="rmap-sub">Nifty, Bank Nifty, VIX, Gold, USD/INR, Crude — Yahoo Finance</div></div><span class="phase-lbl ph1">Done</span></div>
+          <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1B &mdash; Live Market Bar</div><div class="rmap-sub">Nifty, VIX, Gold, USD/INR via Yahoo Finance</div></div><span class="phase-lbl ph0">Done</span></div>
           <div class="divider"></div>
-          <div class="rmap-row"><span class="rmap-ri">🔵</span><div class="rmap-body"><div class="rmap-title">1C — Watchlist Live Prices</div><div class="rmap-sub">HDFCBANK, RELIANCE, INFY, TCS, SBIN + more with LTP</div></div><span class="phase-lbl ph2">Next</span></div>
+          <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">1C &mdash; Watchlist Live Prices</div><div class="rmap-sub">HDFCBANK, RELIANCE, INFY, TCS, SBIN + more</div></div><span class="phase-lbl ph1">Next</span></div>
           <div class="divider"></div>
-          <div class="rmap-row"><span class="rmap-ri">⬜</span><div class="rmap-body"><div class="rmap-title">1D — Dashboard Metrics</div><div class="rmap-sub">P&amp;L cards, VIX guard, system health</div></div><span class="phase-lbl ph3">Queued</span></div>
+          <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1D &mdash; Dashboard Metrics</div><div class="rmap-sub">Live VIX card, P&amp;L, system status</div></div><span class="phase-lbl ph2">Queued</span></div>
           <div class="divider"></div>
-          <div class="rmap-row"><span class="rmap-ri">⬜</span><div class="rmap-body"><div class="rmap-title">1E — Charts</div><div class="rmap-sub">Equity curve, P&amp;L bars, Gold 30-day trend</div></div><span class="phase-lbl ph3">Queued</span></div>
+          <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1E &mdash; Charts</div><div class="rmap-sub">Equity curve, P&amp;L bars, Gold 30-day trend</div></div><span class="phase-lbl ph2">Queued</span></div>
           <div class="divider"></div>
-          <div class="rmap-row"><span class="rmap-ri">⬜</span><div class="rmap-body"><div class="rmap-title">1F — Signal Engine</div><div class="rmap-sub">15 filters, position sizer, live LTP</div></div><span class="phase-lbl ph3">Queued</span></div>
+          <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1F &mdash; Signal Engine</div><div class="rmap-sub">15 filters, position sizer, live LTP</div></div><span class="phase-lbl ph2">Queued</span></div>
           <div class="divider"></div>
-          <div class="rmap-row"><span class="rmap-ri">⬜</span><div class="rmap-body"><div class="rmap-title">1G — Supporting Pages</div><div class="rmap-sub">Orders, Portfolio, Screener, Journal, AI, Risk</div></div><span class="phase-lbl ph3">Queued</span></div>
+          <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1G &mdash; All Supporting Pages</div><div class="rmap-sub">Orders, Portfolio, Screener, Journal, AI, Risk</div></div><span class="phase-lbl ph2">Queued</span></div>
           <div class="divider"></div>
-          <div class="rmap-row" style="padding-bottom:6px"><span class="rmap-ri">⬜</span><div class="rmap-body"><div class="rmap-title">1H — Vault, Telegram, Settings</div><div class="rmap-sub">PIN vault, live Telegram bot, PWA</div></div><span class="phase-lbl ph3">Queued</span></div>
+          <div class="rmap-row" style="margin-bottom:0"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1H &mdash; Vault, Telegram, Settings</div><div class="rmap-sub">PIN vault, live Telegram bot, PWA install</div></div><span class="phase-lbl ph2">Queued</span></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">1B Test Checklist</span></div>
+        <div class="card-header"><span class="card-title">1B &mdash; Test Checklist</span></div>
         <div class="card-body">
-          <div class="chk-row"><span>☐</span><span>Market bar at top shows 8 live tickers scrolling horizontally</span></div>
-          <div class="chk-row"><span>☐</span><span>Each price shows green (+) or red (–) change percentage</span></div>
-          <div class="chk-row"><span>☐</span><span>Market Pulse card below shows all 8 rows with change</span></div>
-          <div class="chk-row"><span>☐</span><span>4 tiles show Nifty, Bank Nifty, VIX, Gold with live values</span></div>
-          <div class="chk-row"><span>☐</span><span>↻ Refresh button triggers a new fetch and spins while loading</span></div>
-          <div class="chk-row"><span>☐</span><span>Last updated timestamp shows after fetch completes</span></div>
-          <div class="chk-row"><span>☐</span><span>Status banner turns green when data loads successfully</span></div>
-          <div class="chk-row"><span>☐</span><span>Market bar scrolls horizontally on small phone screens</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Market bar at top shows Nifty, Bank Nifty, Sensex, VIX, Gold, USD/INR, Crude, BTC</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Prices load automatically within a few seconds of opening the page</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Green = up, Red = down &mdash; colours correct on each ticker</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>&#x21BB; Refresh button works &mdash; icon spins while fetching then stops</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Market Pulse card on dashboard shows all 8 live values</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>4 dashboard tiles (Nifty, BankNifty, VIX, Gold) update with real numbers</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Auto-refreshes every 60s without any action &mdash; countdown visible in Status card</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Market bar scrolls horizontally on phone without breaking layout</span></div>
+          <div class="chk-row"><span>&#x2610;</span><span>Data Source Status card shows Yahoo Finance Connected &#x2713;</span></div>
         </div>
       </div>
     </div></div>
 
     <!-- LIVE PRICES -->
     <div class="page" id="page-prices"><div class="page-content">
-      <div class="src-banner ok"><span>📡</span><span>Live via Yahoo Finance · Auto-refresh 60s · Updated: <span id="px-stamp">—</span></span></div>
-      <div class="tiles">
-        <div class="tile"><div class="tile-label">Nifty 50</div><div class="tile-value" id="px-nifty">—</div><div class="tile-chg badge-neu" id="px-nifty-c">—</div></div>
-        <div class="tile"><div class="tile-label">Bank Nifty</div><div class="tile-value" id="px-bnifty">—</div><div class="tile-chg badge-neu" id="px-bnifty-c">—</div></div>
-        <div class="tile"><div class="tile-label">Sensex</div><div class="tile-value" id="px-sensex">—</div><div class="tile-chg badge-neu" id="px-sensex-c">—</div></div>
-        <div class="tile"><div class="tile-label">India VIX</div><div class="tile-value warn" id="px-vix">—</div><div class="tile-chg badge-neu" id="px-vix-c">—</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">FX &amp; Commodities</span><button style="font-size:11px;padding:5px 11px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;" onclick="fetchAll(true)">↻ Refresh</button></div>
-        <div class="card-body" style="padding:0 15px;">
-          <div class="mkt-row"><span class="mkt-row-name">USD / INR</span><div class="mkt-row-right"><div class="mkt-row-price" id="px-usdinr">—</div><div class="mkt-row-chg mb-neu" id="px-usdinr-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Gold Spot (USD/oz)</span><div class="mkt-row-right"><div class="mkt-row-price" id="px-gold">—</div><div class="mkt-row-chg mb-neu" id="px-gold-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Silver Spot (USD/oz)</span><div class="mkt-row-right"><div class="mkt-row-price" id="px-silver">—</div><div class="mkt-row-chg mb-neu" id="px-silver-c">—</div></div></div>
-          <div class="mkt-row"><span class="mkt-row-name">Crude Oil WTI ($/bbl)</span><div class="mkt-row-right"><div class="mkt-row-price" id="px-crude">—</div><div class="mkt-row-chg mb-neu" id="px-crude-c">—</div></div></div>
-          <div class="mkt-row" style="border:none"><span class="mkt-row-name">Bitcoin USD</span><div class="mkt-row-right"><div class="mkt-row-price" id="px-btc">—</div><div class="mkt-row-chg mb-neu" id="px-btc-c">—</div></div></div>
-        </div>
-      </div>
-      <div class="coming-soon" style="padding:28px 20px">
-        <div class="cs-icon" style="font-size:30px">📋</div>
-        <div class="cs-title" style="font-size:13px">Watchlist Stock Prices</div>
-        <div class="cs-sub" style="font-size:11px">HDFCBANK, RELIANCE, INFY, TCS, SBIN + more<br>with LTP, change %, sector — coming in Phase 1C.</div>
-        <div class="phase-lbl ph2">Phase 1C — Next</div>
-      </div>
+      <div class="alert info"><span class="alert-icon">&#x1F4E1;</span><span>Market bar above is live (Phase 1B). Full watchlist with individual stock prices coming in Phase 1C.</span></div>
+      <div class="coming-soon"><div class="cs-icon">&#x1F4C8;</div><div class="cs-title">Watchlist Live Prices</div><div class="cs-sub">Individual LTP, change %, OHLC for<br>HDFCBANK &middot; RELIANCE &middot; INFY &middot; TCS<br>SBIN &middot; ICICIBANK &middot; KOTAKBANK &middot; L&amp;T<br><br>Coming in Phase 1C.</div><div class="cs-badge ph1" style="background:var(--bbg);color:var(--blue)">Phase 1C &mdash; Coming Soon</div></div>
     </div></div>
 
     <!-- MCX -->
     <div class="page" id="page-mcx"><div class="page-content">
-      <div class="src-banner ok"><span>🥇</span><span>MCX approximated from international spot × USD/INR · Updated: <span id="mcx-stamp">—</span></span></div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Precious Metals</span><span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(16,185,129,.14);color:var(--green)">Live</span></div>
-        <div class="card-body" style="padding:0 15px;">
-          <div class="mkt-row"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px">🥇</span><div><div style="font-weight:600;font-size:13px">Gold</div><div style="font-size:10px;color:var(--muted)">per 10g · MCX approx</div></div></div><div class="mkt-row-right"><div class="mkt-row-price" id="mcx-gold">—</div><div class="mkt-row-chg mb-neu" id="mcx-gold-c">—</div></div></div>
-          <div class="mkt-row"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px">🥈</span><div><div style="font-weight:600;font-size:13px">Silver</div><div style="font-size:10px;color:var(--muted)">per kg · MCX approx</div></div></div><div class="mkt-row-right"><div class="mkt-row-price" id="mcx-silver">—</div><div class="mkt-row-chg mb-neu" id="mcx-silver-c">—</div></div></div>
-          <div class="mkt-row" style="border:none"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px">⬜</span><div><div style="font-weight:600;font-size:13px">Platinum</div><div style="font-size:10px;color:var(--muted)">per 10g · MCX approx</div></div></div><div class="mkt-row-right"><div class="mkt-row-price" id="mcx-plat">—</div><div class="mkt-row-chg mb-neu" id="mcx-plat-c">—</div></div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Energy &amp; Base</span></div>
-        <div class="card-body" style="padding:0 15px;">
-          <div class="mkt-row"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px">🛢</span><div><div style="font-weight:600;font-size:13px">Crude Oil</div><div style="font-size:10px;color:var(--muted)">per barrel · WTI</div></div></div><div class="mkt-row-right"><div class="mkt-row-price" id="mcx-crude">—</div><div class="mkt-row-chg mb-neu" id="mcx-crude-c">—</div></div></div>
-          <div class="mkt-row" style="border:none"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px">🔶</span><div><div style="font-weight:600;font-size:13px">Copper</div><div style="font-size:10px;color:var(--muted)">per kg · MCX approx</div></div></div><div class="mkt-row-right"><div class="mkt-row-price" id="mcx-copper">—</div><div class="mkt-row-chg mb-neu" id="mcx-copper-c">—</div></div></div>
-        </div>
-      </div>
-      <div class="alert info"><span class="alert-icon">ℹ</span><span>MCX prices are approximate — international spot × USD/INR. Actual MCX rates may vary slightly. Direct MCX API coming in Phase 2.</span></div>
+      <div class="alert info"><span class="alert-icon">&#x1F947;</span><span>Gold price in market bar is live now. Full MCX metals detail page with chart coming in Phase 1C.</span></div>
+      <div class="coming-soon"><div class="cs-icon">&#x1F947;</div><div class="cs-title">MCX Metals Detail</div><div class="cs-sub">Gold &middot; Silver &middot; Platinum<br>Copper &middot; Zinc &middot; Aluminium &middot; Lead<br>with live MCX rates and 30-day trend chart.<br><br>Coming in Phase 1C.</div><div class="cs-badge ph1" style="background:var(--bbg);color:var(--blue)">Phase 1C &mdash; Coming Soon</div></div>
     </div></div>
 
-    <!-- ALL OTHER PAGES — COMING SOON -->
-    <div class="page" id="page-signals"><div class="page-content"><div class="coming-soon"><div class="cs-icon">⌖</div><div class="cs-title">Signal Engine</div><div class="cs-sub">15-filter scanner with live LTP,<br>position sizer, bracket order button.<br><br>Coming in <strong>Phase 1F</strong>.</div><div class="phase-lbl ph3">Phase 1F</div></div></div></div>
-    <div class="page" id="page-filters"><div class="page-content"><div class="coming-soon"><div class="cs-icon">⊟</div><div class="cs-title">Trade Filters</div><div class="cs-sub">All 15 filters: Time, MA, ADX, RSI, VWAP,<br>ATR, Gap, Volume, Sentiment, Sector, VIX, FII/DII, SGX.<br><br>Coming in <strong>Phase 1F</strong>.</div><div class="phase-lbl ph3">Phase 1F</div></div></div></div>
-    <div class="page" id="page-orders"><div class="page-content"><div class="coming-soon"><div class="cs-icon">▣</div><div class="cs-title">Order Book</div><div class="cs-sub">Active bracket orders, history,<br>emergency exit button.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-portfolio"><div class="page-content"><div class="coming-soon"><div class="cs-icon">💼</div><div class="cs-title">Portfolio</div><div class="cs-sub">Holdings with live LTP and P&amp;L,<br>allocation donut chart, XIRR.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-screener"><div class="page-content"><div class="coming-soon"><div class="cs-icon">🔍</div><div class="cs-title">Stock Screener</div><div class="cs-sub">Custom filters: ADX, RSI, Volume,<br>ATR %, sector.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-ai"><div class="page-content"><div class="coming-soon"><div class="cs-icon">🤖</div><div class="cs-title">AI Analysis</div><div class="cs-sub">Claude API stock reports — quick, full,<br>bull/bear case, entry/exit strategy.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-backtest"><div class="page-content"><div class="coming-soon"><div class="cs-icon">◎</div><div class="cs-title">Backtest Engine</div><div class="cs-sub">1-year backtest: Sharpe, drawdown,<br>win rate, profit factor.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-journal"><div class="page-content"><div class="coming-soon"><div class="cs-icon">📓</div><div class="cs-title">Trade Journal</div><div class="cs-sub">Auto-log every trade and rejection<br>with indicator snapshot, CSV export.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-risk"><div class="page-content"><div class="coming-soon"><div class="cs-icon">🛡</div><div class="cs-title">Risk Monitor</div><div class="cs-sub">Kill switch, daily loss limit,<br>sector exposure, correlation check.<br><br>Coming in <strong>Phase 1G</strong>.</div><div class="phase-lbl ph3">Phase 1G</div></div></div></div>
-    <div class="page" id="page-telegram"><div class="page-content"><div class="coming-soon"><div class="cs-icon">📨</div><div class="cs-title">Telegram Alerts</div><div class="cs-sub">Live bot: trade signals, order alerts,<br>daily 3:30 PM summary, kill switch.<br><br>Coming in <strong>Phase 1H</strong>.</div><div class="phase-lbl ph3">Phase 1H</div></div></div></div>
-    <div class="page" id="page-vault"><div class="page-content"><div class="coming-soon"><div class="cs-icon">🔐</div><div class="cs-title">Secure Vault</div><div class="cs-sub">PIN-locked credential storage for API keys.<br>Browser only — never sent to any server.<br><br>Coming in <strong>Phase 1H</strong>.</div><div class="phase-lbl ph3">Phase 1H</div></div></div></div>
-    <div class="page" id="page-settings"><div class="page-content"><div class="coming-soon"><div class="cs-icon">⚙</div><div class="cs-title">Settings</div><div class="cs-sub">Trading params, capital, profit target,<br>stop loss, auto-exit, PWA install.<br><br>Coming in <strong>Phase 1H</strong>.</div><div class="phase-lbl ph3">Phase 1H</div></div></div></div>
+    <!-- ALL REMAINING PAGES - COMING SOON -->
+    <div class="page" id="page-signals"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x2316;</div><div class="cs-title">Signal Engine</div><div class="cs-sub">15-filter scanner &middot; Live LTP &middot; Position sizer &middot; Bracket order button<br><br>Coming in Phase 1F.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1F &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-filters"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x229F;</div><div class="cs-title">Trade Filters</div><div class="cs-sub">All 15 filters: Time &middot; MA &middot; ADX &middot; RSI &middot; VWAP &middot; ATR &middot; Gap &middot; Volume &middot; Sentiment &middot; Sector &middot; VIX &middot; FII/DII &middot; SGX<br><br>Coming in Phase 1F.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1F &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-orders"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x25A3;</div><div class="cs-title">Order Book</div><div class="cs-sub">Active bracket orders &middot; Order history &middot; Emergency exit button<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-portfolio"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F4BC;</div><div class="cs-title">Portfolio</div><div class="cs-sub">Holdings with live P&amp;L &middot; Allocation donut chart &middot; XIRR<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-screener"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F50D;</div><div class="cs-title">Stock Screener</div><div class="cs-sub">Custom filters: ADX &middot; RSI range &middot; Volume multiplier &middot; ATR % &middot; Sector<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-ai"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F916;</div><div class="cs-title">AI Analysis</div><div class="cs-sub">Claude API stock reports with live price context &middot; Quick, Full, Bull, Bear, Entry/Exit<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-backtest"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x25CE;</div><div class="cs-title">Backtest Engine</div><div class="cs-sub">1-year backtest &middot; Sharpe ratio &middot; Max drawdown &middot; Win rate &middot; Equity curve<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-journal"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F4D3;</div><div class="cs-title">Trade Journal</div><div class="cs-sub">Auto-log every trade and rejection with full indicator snapshot &middot; Export CSV<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-risk"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F6E1;</div><div class="cs-title">Risk Monitor</div><div class="cs-sub">Kill switch &middot; Daily loss limit &middot; Sector exposure &middot; Correlation check &middot; Blacklist<br><br>Coming in Phase 1G.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1G &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-telegram"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F4E8;</div><div class="cs-title">Telegram Alerts</div><div class="cs-sub">Live bot integration &middot; Trade signals &middot; Daily 3:30 PM summary &middot; Kill switch alerts<br><br>Coming in Phase 1H.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1H &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-vault"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F510;</div><div class="cs-title">Secure Vault</div><div class="cs-sub">PIN-locked credential storage for API keys &middot; Browser-only &middot; Never sent to any server<br><br>Coming in Phase 1H.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1H &mdash; Coming Soon</div></div></div></div>
+
+    <div class="page" id="page-settings"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x2699;</div><div class="cs-title">Settings</div><div class="cs-sub">Trading parameters &middot; Capital &middot; Target % &middot; Stop loss % &middot; Auto-exit time &middot; PWA install<br><br>Coming in Phase 1H.</div><div class="cs-badge ph2" style="background:var(--abg);color:var(--amber)">Phase 1H &mdash; Coming Soon</div></div></div></div>
 
   </div>
 </div>
 
 <nav class="bottom-nav">
-  <button class="bnav-btn active" id="bn-dashboard" onclick="showPage('dashboard',this,'bnav')"><span class="bnav-icon">◈</span><span class="bnav-label">Home</span></button>
-  <button class="bnav-btn" id="bn-prices" onclick="showPage('prices',this,'bnav')"><span class="bnav-icon">📈</span><span class="bnav-label">Prices</span></button>
-  <button class="bnav-btn" id="bn-mcx" onclick="showPage('mcx',this,'bnav')"><span class="bnav-icon">🥇</span><span class="bnav-label">MCX</span></button>
-  <button class="bnav-btn" id="bn-signals" onclick="showPage('signals',this,'bnav')"><span class="bnav-icon">⌖</span><span class="bnav-label">Signals</span></button>
-  <button class="bnav-btn" id="bn-settings" onclick="showPage('settings',this,'bnav')"><span class="bnav-icon">⚙</span><span class="bnav-label">More</span></button>
+  <button class="bnav-btn active" id="bn-dashboard" onclick="showPage('dashboard',this,'bnav')"><span class="bnav-icon">&#x25C8;</span><span class="bnav-label">Home</span></button>
+  <button class="bnav-btn" id="bn-prices" onclick="showPage('prices',this,'bnav')"><span class="bnav-icon">&#x1F4C8;</span><span class="bnav-label">Prices</span></button>
+  <button class="bnav-btn" id="bn-signals" onclick="showPage('signals',this,'bnav')"><span class="bnav-icon">&#x2316;</span><span class="bnav-label">Signals</span></button>
+  <button class="bnav-btn" id="bn-ai" onclick="showPage('ai',this,'bnav')"><span class="bnav-icon">&#x1F916;</span><span class="bnav-label">AI</span></button>
+  <button class="bnav-btn" id="bn-settings" onclick="showPage('settings',this,'bnav')"><span class="bnav-icon">&#x2699;</span><span class="bnav-label">More</span></button>
 </nav>
 
 <script>
 'use strict';
 const ALL_PAGES=['dashboard','prices','mcx','signals','filters','orders','portfolio','screener','ai','backtest','journal','risk','telegram','vault','settings'];
-const SWIPE_PAGES=['dashboard','prices','mcx','signals','settings'];
-let liveInr=83.5;
+const SWIPE_PAGES=['dashboard','prices','signals','ai','settings'];
 
-/* THEME */
-function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('theme-btn').textContent=t==='dark'?'🌙':'☀';document.getElementById('themeColorMeta').setAttribute('content',t==='dark'?'#0a0e1a':'#f1f5f9');}
-function toggleTheme(){const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';applyTheme(n);localStorage.setItem('prism-theme',n);}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('theme-btn').textContent=t==='dark'?'\u{1F319}':'\u{2600}';
+  document.getElementById('themeColorMeta').setAttribute('content',t==='dark'?'#0a0e1a':'#f1f5f9');
+}
+function toggleTheme(){
+  const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  applyTheme(n);localStorage.setItem('prism-theme',n);
+}
 applyTheme(localStorage.getItem('prism-theme')||'dark');
 
-/* CLOCK */
-function tick(){
+function updateClock(){
   const ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=String(ist.getHours()).padStart(2,'0'),m=String(ist.getMinutes()).padStart(2,'0'),s=String(ist.getSeconds()).padStart(2,'0');
-  document.getElementById('ist-clock').textContent=h+':'+m+':'+s;
+  const hh=String(ist.getHours()).padStart(2,'0');
+  const mm=String(ist.getMinutes()).padStart(2,'0');
+  const ss=String(ist.getSeconds()).padStart(2,'0');
+  document.getElementById('ist-clock').textContent=hh+':'+mm+':'+ss;
   const day=ist.getDay(),mins=ist.getHours()*60+ist.getMinutes();
   const pill=document.getElementById('mkt-pill'),txt=document.getElementById('mkt-text');
   if(day===0||day===6){pill.className='mkt-pill holiday';txt.textContent='WEEKEND';}
   else if(mins>=630&&mins<915){pill.className='mkt-pill open';txt.textContent='OPEN';}
   else{pill.className='mkt-pill closed';txt.textContent='CLOSED';}
 }
-setInterval(tick,1000);tick();
+setInterval(updateClock,1000);updateClock();
 
-/* NAV */
 function showPage(id,el,src){
   ALL_PAGES.forEach(p=>{const pg=document.getElementById('page-'+p);if(pg)pg.classList.remove('active');});
   const t=document.getElementById('page-'+id);if(t)t.classList.add('active');
@@ -390,170 +349,146 @@ function showPage(id,el,src){
   else{const b=document.getElementById('bn-'+id);if(b)b.classList.add('active');}
 }
 
-/* SWIPE */
-let tx=0,ty=0;
+let touchX=0,touchY=0;
 const sa=document.getElementById('scroll-area');
-sa.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+sa.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;},{passive:true});
 sa.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  const dx=e.changedTouches[0].clientX-touchX,dy=e.changedTouches[0].clientY-touchY;
   if(Math.abs(dy)>80||Math.abs(dx)<60)return;
   const cur=ALL_PAGES.find(id=>document.getElementById('page-'+id)?.classList.contains('active'));
   const idx=SWIPE_PAGES.indexOf(cur);if(idx===-1)return;
   const ni=dx<0?Math.min(idx+1,SWIPE_PAGES.length-1):Math.max(idx-1,0);
-  if(ni!==idx){const nb=document.getElementById('bn-'+SWIPE_PAGES[ni]);showPage(SWIPE_PAGES[ni],nb,'bnav');}
+  if(ni!==idx){const b=document.getElementById('bn-'+SWIPE_PAGES[ni]);showPage(SWIPE_PAGES[ni],b,'bnav');}
 },{passive:true});
 
-/* HELPERS */
-function fmtN(n,d=2){if(n==null||isNaN(n))return'—';return n.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});}
-function fmtC(chg,pct){if(chg==null||isNaN(chg))return'—';const s=chg>=0?'+':'';return s+fmtN(chg)+' ('+s+pct.toFixed(2)+'%)';}
-function s(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
-
-/* Write to all DOM targets for one ticker id */
-function paint(id,priceStr,chgStr,isUp){
-  const uc=isUp?'mb-up':'mb-dn';
-  const bc=isUp?'badge-up':'badge-dn';
-  /* market bar */
-  s('mb-'+id+'-p',priceStr);
-  const mbc=document.getElementById('mb-'+id+'-c');
-  if(mbc){mbc.textContent=chgStr;mbc.className='mb-chg '+uc;}
-  /* dashboard tiles */
-  s('t-'+id,priceStr);
-  const tc=document.getElementById('t-'+id+'-c');
-  if(tc){tc.textContent=chgStr;tc.className='tile-chg '+bc;}
-  /* market pulse rows */
-  s('mp-'+id,priceStr);
-  const mc=document.getElementById('mp-'+id+'-c');
-  if(mc){mc.textContent=chgStr;mc.className='mkt-row-chg '+uc;}
-  /* prices page tiles */
-  s('px-'+id,priceStr);
-  const pc=document.getElementById('px-'+id+'-c');
-  if(pc){pc.textContent=chgStr;pc.className='tile-chg '+bc;}
-  /* prices page rows (FX section) */
-  const prc=document.getElementById('px-'+id+'-c');
-  if(prc){prc.textContent=chgStr;prc.className='mkt-row-chg '+uc;}
-  /* MCX page */
-  s('mcx-'+id,priceStr);
-  const mcc=document.getElementById('mcx-'+id+'-c');
-  if(mcc){mcc.textContent=chgStr;mcc.className='mkt-row-chg '+uc;}
-}
-
 /* YAHOO FINANCE FETCH */
-async function yf(sym){
-  const bases=['https://query1.finance.yahoo.com','https://query2.finance.yahoo.com'];
-  for(const base of bases){
+async function yFetch(sym){
+  const urls=[
+    'https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d',
+    'https://query2.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d'
+  ];
+  for(const url of urls){
     try{
-      const r=await fetch(base+'/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=1d',{mode:'cors',cache:'no-cache'});
-      if(!r.ok)continue;
-      const j=await r.json();
-      const meta=j?.chart?.result?.[0]?.meta;
-      if(!meta)continue;
-      const price=meta.regularMarketPrice??meta.previousClose;
-      const prev=meta.chartPreviousClose??meta.previousClose;
+      const res=await fetch(url,{mode:'cors',cache:'no-store'});
+      if(!res.ok)continue;
+      const j=await res.json();
+      const r=j?.chart?.result?.[0];if(!r)continue;
+      const m=r.meta;
+      const price=m.regularMarketPrice??m.previousClose;
+      const prev=m.chartPreviousClose??m.previousClose;
       const chg=price-prev;
-      const pct=prev!==0?(chg/prev)*100:0;
-      return{price,prev,chg,pct};
+      const chgPct=prev?(chg/prev)*100:0;
+      return{price,prev,chg,chgPct};
     }catch(_){}
   }
   return null;
 }
 
-async function fetchAll(manual=false){
-  const spin=document.getElementById('mb-spin');
-  if(spin)spin.classList.add('spin');
+/* FORMAT HELPERS */
+const fmtN=(n,d=2)=>n==null?'--':n.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtC=(chg,pct)=>{if(chg==null)return'--';const s=chg>=0?'+':'';return s+chg.toFixed(2)+' ('+s+pct.toFixed(2)+'%)';};
+const cc=(v)=>v>0?'up':v<0?'dn':'neu';
 
-  let ok=0;
-
-  /* 1. USD/INR — fetch first so we have the rate */
-  const inrD=await yf('INR=X');
-  if(inrD){
-    /* Yahoo INR=X = USD per 1 INR, so invert */
-    const inrPrice=1/inrD.price;
-    liveInr=inrPrice;
-    const inrChg=-(inrD.chg/(inrD.price*inrD.price));
-    const inrPct=-inrD.pct;
-    paint('usdinr','₹'+fmtN(inrPrice,2),fmtC(inrChg,inrPct),inrPct>=0);
-    ok++;
-  }
-
-  /* 2. Fetch all others in parallel */
-  const SYMS=[
-    {sym:'^NSEI',   id:'nifty',  fmt:p=>fmtN(p,0),          chgFmt:(c,pct)=>fmtC(c,pct)},
-    {sym:'^NSEBANK',id:'bnifty', fmt:p=>fmtN(p,0),          chgFmt:(c,pct)=>fmtC(c,pct)},
-    {sym:'^BSESN',  id:'sensex', fmt:p=>fmtN(p,0),          chgFmt:(c,pct)=>fmtC(c,pct)},
-    {sym:'^INDIAVIX',id:'vix',   fmt:p=>fmtN(p,2),          chgFmt:(c,pct)=>fmtC(c,pct)},
-    /* Gold: troy oz → per 10g in INR. 1 troy oz = 31.1035g, so per 10g = price*liveInr/3.11035 */
-    {sym:'GC=F',    id:'gold',   fmt:p=>'₹'+fmtN(p*liveInr/3.11035,0), chgFmt:(c,pct)=>fmtC(c*liveInr/3.11035,pct)},
-    /* Silver: troy oz → per kg in INR. 1 troy oz=31.1035g, per kg=price*liveInr/0.0311035 */
-    {sym:'SI=F',    id:'silver', fmt:p=>'₹'+fmtN(p*liveInr/0.0311035,0), chgFmt:(c,pct)=>fmtC(c*liveInr/0.0311035,pct)},
-    /* Platinum: same as gold formula */
-    {sym:'PL=F',    id:'plat',   fmt:p=>'₹'+fmtN(p*liveInr/3.11035,0), chgFmt:(c,pct)=>fmtC(c*liveInr/3.11035,pct)},
-    /* Crude: USD/barrel */
-    {sym:'CL=F',    id:'crude',  fmt:p=>'$'+fmtN(p,2),      chgFmt:(c,pct)=>fmtC(c,pct)},
-    /* Copper: USD/lb → INR/kg: *2.2046*liveInr */
-    {sym:'HG=F',    id:'copper', fmt:p=>'₹'+fmtN(p*2.2046*liveInr,0), chgFmt:(c,pct)=>fmtC(c*2.2046*liveInr,pct)},
-    /* BTC */
-    {sym:'BTC-USD', id:'btc',    fmt:p=>'$'+fmtN(p,0),      chgFmt:(c,pct)=>fmtC(c,pct)},
-  ];
-
-  const results=await Promise.allSettled(SYMS.map(s=>yf(s.sym)));
-  results.forEach((res,i)=>{
-    if(res.status!=='fulfilled'||!res.value)return;
-    const d=res.value;
-    const sym=SYMS[i];
-    ok++;
-    const priceStr=sym.fmt(d.price);
-    const chgStr=sym.chgFmt(d.chg,d.pct);
-    paint(sym.id,priceStr,chgStr,d.chg>=0);
-  });
-
-  /* Timestamps */
-  const now=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  s('mb-stamp','Updated '+now);
-  s('st-ref',now);
-  s('px-stamp',now);
-  s('mcx-stamp',now);
-
-  /* Status banners & indicators */
-  const dot=document.getElementById('api-dot'),atxt=document.getElementById('api-txt');
-  const stApi=document.getElementById('st-api'),stApiT=document.getElementById('st-api-t');
-  const banner=document.getElementById('dash-banner'),bannerTxt=document.getElementById('dash-banner-txt');
-  const sfFill=document.getElementById('sf-fill'),sfSub=document.getElementById('sf-sub');
-
-  if(ok>=6){
-    if(dot){dot.className='s-dot s-on';}
-    if(atxt){atxt.textContent=ok+' prices live ✓';atxt.style.color='var(--green)';}
-    if(stApi){stApi.className='s-dot s-on';}
-    if(stApiT){stApiT.textContent='Connected · '+ok+' prices';stApiT.style.color='var(--green)';}
-    if(banner){banner.className='src-banner ok';}
-    if(bannerTxt){bannerTxt.textContent='✓ Live data — '+ok+' prices from Yahoo Finance · Updated '+now;}
-    if(sfFill){sfFill.style.width='100%';sfFill.style.background='var(--green)';}
-    if(sfSub){sfSub.textContent=ok+' prices live · '+now;}
-  } else if(ok>=3){
-    if(dot){dot.className='s-dot s-warn';}
-    if(atxt){atxt.textContent='Partial — '+ok+' prices';atxt.style.color='var(--amber)';}
-    if(stApi){stApi.className='s-dot s-warn';}
-    if(stApiT){stApiT.textContent='Partial — '+ok+' of 11';stApiT.style.color='var(--amber)';}
-    if(banner){banner.className='src-banner warn';}
-    if(bannerTxt){bannerTxt.textContent='⚠ Partial — '+ok+' prices loaded. CORS may limit some. Auto-retry in 60s.';}
-    if(sfFill){sfFill.style.width=Math.round(ok/11*100)+'%';sfFill.style.background='var(--amber)';}
-    if(sfSub){sfSub.textContent=ok+' partial · '+now;}
-  } else {
-    if(dot){dot.className='s-dot s-off';}
-    if(atxt){atxt.textContent='Feed error — retrying';atxt.style.color='var(--red)';}
-    if(stApi){stApi.className='s-dot s-off';}
-    if(stApiT){stApiT.textContent='Error — check network';stApiT.style.color='var(--red)';}
-    if(banner){banner.className='src-banner err';}
-    if(bannerTxt){bannerTxt.textContent='⚠ Feed error — Yahoo Finance blocked or no internet. Retrying in 60s.';}
-    if(sfFill){sfFill.style.width='8%';sfFill.style.background='var(--red)';}
-    if(sfSub){sfSub.textContent='Error · '+now;}
-  }
-
-  if(spin)spin.classList.remove('spin');
+function setMB(id,price,chg,pct,prefix,dec){
+  const pe=document.getElementById('mb-'+id+'-p'),ce=document.getElementById('mb-'+id+'-c');
+  if(!pe||!ce)return;
+  if(price==null){pe.textContent='--';ce.textContent='';return;}
+  pe.textContent=prefix+fmtN(price,dec);
+  const s=chg>=0?'+':'';
+  ce.textContent=s+pct.toFixed(2)+'%';
+  ce.className='mb-chg '+cc(chg);
+}
+function setTile(pid,sid,ptext,ctext,cv){
+  const pe=document.getElementById(pid),se=document.getElementById(sid);
+  if(pe){pe.textContent=ptext;pe.className='tile-value '+(cv>0?'up':cv<0?'dn':'');}
+  if(se){se.textContent=ctext;se.style.color=cv>0?'var(--green)':cv<0?'var(--red)':'var(--muted)';}
+}
+function setPulse(id,text,cv){
+  const el=document.getElementById(id);if(!el)return;
+  el.textContent=text;
+  el.className='ind-val '+(cv>0?'up':cv<0?'dn':'');
+}
+function setBanner(type,msg){
+  const b=document.getElementById('fetch-status-bar'),t=document.getElementById('fetch-status-msg');
+  if(b)b.className='alert '+type;if(t)t.textContent=msg;
 }
 
-/* AUTO REFRESH */
-fetchAll();
-setInterval(()=>fetchAll(),60000);
+const SYMS=[
+  {sym:'^NSEI',id:'nifty',dec:2,prefix:''},
+  {sym:'^NSEBANK',id:'bnifty',dec:2,prefix:''},
+  {sym:'^BSESN',id:'sensex',dec:2,prefix:''},
+  {sym:'^INDIAVIX',id:'vix',dec:2,prefix:''},
+  {sym:'GC=F',id:'gold',dec:2,prefix:'$'},
+  {sym:'INR=X',id:'usdinr',dec:2,prefix:''},
+  {sym:'CL=F',id:'crude',dec:2,prefix:'$'},
+  {sym:'BTC-USD',id:'btc',dec:0,prefix:'$'},
+];
+
+let usdInr=84.0,countdown=60;
+
+async function fetchMarketBar(){
+  const sp=document.getElementById('mb-spin'),btn=document.getElementById('mb-refresh-btn');
+  if(sp)sp.classList.add('spin');if(btn)btn.disabled=true;
+  setBanner('info','Fetching live prices from Yahoo Finance...');
+  let ok=0;
+
+  for(const s of SYMS){
+    const d=await yFetch(s.sym);
+    if(!d)continue;
+    ok++;
+    let{price,chg,chgPct}=d;
+    let dp=price,dc=chg,dpct=chgPct,pfx=s.prefix,dec=s.dec;
+
+    if(s.id==='usdinr'){
+      usdInr=price<2?(1/price):price;
+      dp=usdInr;dc=d.chg*(price<2?-1/price/price:1);dpct=d.chgPct*-1;pfx='Rs.';
+    }
+    if(s.id==='gold'){
+      const ig=(price/31.1035)*10*usdInr;
+      const ig0=((price-chg)/31.1035)*10*usdInr;
+      dp=ig;dc=ig-ig0;dpct=ig0?(dc/ig0)*100:0;pfx='Rs.';
+    }
+
+    setMB(s.id,dp,dc,dpct,pfx,dec);
+
+    if(s.id==='nifty'){setTile('dash-nifty-p','dash-nifty-c',fmtN(dp,2),fmtC(dc,dpct),dc);setPulse('pulse-nifty','Rs.'+fmtN(dp,2)+'  '+fmtC(dc,dpct),dc);}
+    if(s.id==='bnifty'){setTile('dash-bnifty-p','dash-bnifty-c',fmtN(dp,2),fmtC(dc,dpct),dc);setPulse('pulse-bnifty','Rs.'+fmtN(dp,2)+'  '+fmtC(dc,dpct),dc);}
+    if(s.id==='sensex'){setPulse('pulse-sensex','Rs.'+fmtN(dp,2)+'  '+fmtC(dc,dpct),dc);}
+    if(s.id==='vix'){
+      const safe=dp<20;
+      setTile('dash-vix-p','dash-vix-c',dp.toFixed(2),safe?'Safe <20':'Elevated >20',safe?1:-1);
+      setPulse('pulse-vix',dp.toFixed(2)+'  '+fmtC(dc,dpct),dc);
+    }
+    if(s.id==='gold'){setTile('dash-gold-p','dash-gold-c','Rs.'+fmtN(dp,0),fmtC(dc,dpct)+' /10g',dc);setPulse('pulse-gold','Rs.'+fmtN(dp,0)+'/10g  '+fmtC(dc,dpct),dc);}
+    if(s.id==='usdinr'){setPulse('pulse-usdinr','Rs.'+fmtN(dp,2)+' per USD  '+fmtC(dc,dpct),dc);}
+    if(s.id==='crude'){setPulse('pulse-crude','$'+fmtN(dp,2)+'  '+fmtC(dc,dpct),dc);}
+    if(s.id==='btc'){setPulse('pulse-btc','$'+fmtN(dp,0)+'  '+fmtC(dc,dpct),dc);}
+  }
+
+  const now=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const mbt=document.getElementById('mb-time');if(mbt)mbt.textContent=now;
+  const stl=document.getElementById('st-last');if(stl)stl.textContent=now+' IST';
+  const dot=document.getElementById('st-dot'),txt=document.getElementById('st-txt');
+  if(ok>0){
+    if(dot)dot.className='s-dot s-on';
+    if(txt){txt.textContent='Active ('+ok+'/'+SYMS.length+' symbols)';txt.style.color='var(--green)';}
+    setBanner('success','Live prices loaded — '+ok+' of '+SYMS.length+' symbols at '+now+' IST. Auto-refresh every 60s.');
+  }else{
+    if(dot)dot.className='s-dot s-warn';
+    if(txt){txt.textContent='CORS blocked — try different network';txt.style.color='var(--amber)';}
+    setBanner('warn','Could not reach Yahoo Finance. Browser CORS policy may be blocking. Try refreshing or open in a different browser/network.');
+  }
+  if(sp)sp.classList.remove('spin');if(btn)btn.disabled=false;
+  countdown=60;
+}
+
+setInterval(()=>{
+  countdown--;
+  const el=document.getElementById('st-next');if(el)el.textContent=countdown+'s';
+  if(countdown<=0)fetchMarketBar();
+},1000);
+
+fetchMarketBar();
 </script>
 </body>
 </html>
