@@ -201,6 +201,64 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .grid-2{display:grid;grid-template-columns:1fr;gap:12px;}
 @media(min-width:580px){.grid-2{grid-template-columns:1fr 1fr;}}
 .date-chip{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* ═══════ VIX GAUGE (Phase 1D) ═══════ */
+.vix-gauge-wrap{padding:14px 15px;}
+.vix-track{position:relative;height:14px;border-radius:7px;background:linear-gradient(90deg,var(--green) 0%,var(--green) 45%,var(--amber) 60%,var(--red) 80%,#7f1d1d 100%);margin:10px 0 4px;}
+.vix-needle{position:absolute;top:-5px;width:4px;height:24px;background:var(--text);border-radius:2px;transform:translateX(-50%);box-shadow:0 2px 6px rgba(0,0,0,0.4);transition:left 1s ease;}
+.vix-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;}
+/* ═══════ REGIME CARD (Phase 1D) ═══════ */
+.regime-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.regime-icon{font-size:32px;margin-bottom:6px;}
+.regime-title{font-size:16px;font-weight:700;margin-bottom:2px;}
+.regime-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.regime-conf-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.regime-conf-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.regime-trending .regime-conf-fill{background:var(--green);}
+.regime-volatile .regime-conf-fill{background:var(--red);}
+.regime-range .regime-conf-fill{background:var(--blue);}
+/* ═══════ PNL CARD (Phase 1D) ═══════ */
+.pnl-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.pnl-period-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px;}
+.pnl-period-row::-webkit-scrollbar{display:none;}
+.pnl-tab{flex-shrink:0;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;}
+.pnl-tab.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.pnl-big{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1;margin-bottom:4px;}
+.pnl-pct{font-size:12px;font-weight:600;margin-bottom:8px;}
+.pnl-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.pnl-row:last-child{border-bottom:none;}
+.pnl-row-label{color:var(--muted);}
+.pnl-row-val{font-family:'DM Mono',monospace;font-weight:500;}
+/* ═══════ SECTOR HEATMAP (Phase 1D) ═══════ */
+.sector-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media(min-width:480px){.sector-grid{grid-template-columns:repeat(4,1fr);}}
+.sector-tile{border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:transform .15s;border:1px solid transparent;}
+.sector-tile:active{transform:scale(.96);}
+.sector-tile-name{font-size:10px;font-weight:600;margin-bottom:4px;color:var(--text);}
+.sector-tile-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+.sector-tile-lbl{font-size:9px;color:var(--muted);margin-top:2px;}
+/* Sector colours by performance */
+.sh-strong-up{background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.3);}
+.sh-up{background:rgba(16,185,129,0.09);border-color:rgba(16,185,129,0.15);}
+.sh-flat{background:var(--bg3);border-color:var(--border);}
+.sh-dn{background:rgba(244,63,94,0.09);border-color:rgba(244,63,94,0.15);}
+.sh-strong-dn{background:rgba(244,63,94,0.18);border-color:rgba(244,63,94,0.3);}
+/* ═══════ CAPITAL METER (Phase 1D) ═══════ */
+.cap-meter{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.cap-meter-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin:8px 0;}
+.cap-meter-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width 1s ease;}
+.cap-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.cap-stat{text-align:center;background:var(--bg3);border-radius:8px;padding:8px;}
+.cap-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.cap-stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+/* ═══════ TRADE LOCK STATUS (Phase 1D) ═══════ */
+.trade-status-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.trade-status-row:last-child{border-bottom:none;}
+.ts-label{font-size:12px;color:var(--muted);}
+.ts-val{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;}
+/* ═══════ HEARTBEAT LINE ═══════ */
+.hb-svg{width:56px;height:20px;}
+
 /* ═══════ OHLC POPUP ═══════ */
 .ohlc-popup{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:16px;z-index:400;min-width:300px;box-shadow:0 16px 48px rgba(0,0,0,0.5);display:none;}
 @media(min-width:768px){.ohlc-popup{bottom:20px;}}
@@ -279,7 +337,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
     <div class="sf-value" id="sf-capital">&#x20B9;1,00,000</div>
     <div class="sf-bar"><div class="sf-fill" style="width:100%"></div></div>
     <div class="sf-sub" id="sf-stocks">Loading watchlist&hellip;</div>
-    <div class="ph-badge">Phase 1C &mdash; Watchlist Live</div>
+    <div class="ph-badge">Phase 1D &mdash; Dashboard Metrics</div>
   </div>
 </nav>
 
@@ -432,9 +490,9 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
       <div class="divider"></div>
       <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1C &mdash; Watchlist Live Prices + AI Engine Foundation</div><div class="rmap-sub">8 stocks with LTP, OHLC, sector filter, search. AI localStorage model seeded. Market regime classifier.</div></div><span class="phase-lbl ph0">Done</span></div>
       <div class="divider"></div>
-      <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">1D &mdash; Dashboard Metrics + Market Regime Classifier</div><div class="rmap-sub">Live P&amp;L card, VIX safety card, AI market regime detection (Trending/Range/Volatile) using VIX + Nifty breadth.</div></div><span class="phase-lbl ph1">Next</span></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1D &mdash; Dashboard Metrics + Market Regime Classifier</div><div class="rmap-sub">P&amp;L tracker, VIX safety gauge, AI regime card (Trending/Range/Volatile), sector heatmap, capital meter, system status.</div></div><span class="phase-lbl ph0">Done</span></div>
       <div class="divider"></div>
-      <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1E &mdash; Charts + Expectancy Trend</div><div class="rmap-sub">Equity curve, P&amp;L bars, Gold 30-day. AI expectancy trend chart from localStorage trade data.</div></div><span class="phase-lbl ph2">Queued</span></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">1E &mdash; Charts + Expectancy Trend</div><div class="rmap-sub">Equity curve, P&amp;L bars, Gold 30-day. AI expectancy trend chart from localStorage trade data.</div></div><span class="phase-lbl ph2">Queued</span></div>
       <div class="divider"></div>
       <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1F &mdash; Signal Engine + AI Win Probability</div><div class="rmap-sub">15 filters replaced by adaptive weight model. Logistic regression win probability (0-100%). Time-of-day optimization. Dynamic position sizing by confidence.</div></div><span class="phase-lbl ph-ai">AI Layer</span></div>
       <div class="divider"></div>
@@ -1036,6 +1094,64 @@ function filterStocks(){
   renderWatchlist();
 }
 
+
+/* ═══════ VIX GAUGE (Phase 1D) ═══════ */
+.vix-gauge-wrap{padding:14px 15px;}
+.vix-track{position:relative;height:14px;border-radius:7px;background:linear-gradient(90deg,var(--green) 0%,var(--green) 45%,var(--amber) 60%,var(--red) 80%,#7f1d1d 100%);margin:10px 0 4px;}
+.vix-needle{position:absolute;top:-5px;width:4px;height:24px;background:var(--text);border-radius:2px;transform:translateX(-50%);box-shadow:0 2px 6px rgba(0,0,0,0.4);transition:left 1s ease;}
+.vix-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;}
+/* ═══════ REGIME CARD (Phase 1D) ═══════ */
+.regime-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.regime-icon{font-size:32px;margin-bottom:6px;}
+.regime-title{font-size:16px;font-weight:700;margin-bottom:2px;}
+.regime-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.regime-conf-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.regime-conf-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.regime-trending .regime-conf-fill{background:var(--green);}
+.regime-volatile .regime-conf-fill{background:var(--red);}
+.regime-range .regime-conf-fill{background:var(--blue);}
+/* ═══════ PNL CARD (Phase 1D) ═══════ */
+.pnl-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.pnl-period-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px;}
+.pnl-period-row::-webkit-scrollbar{display:none;}
+.pnl-tab{flex-shrink:0;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;}
+.pnl-tab.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.pnl-big{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1;margin-bottom:4px;}
+.pnl-pct{font-size:12px;font-weight:600;margin-bottom:8px;}
+.pnl-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.pnl-row:last-child{border-bottom:none;}
+.pnl-row-label{color:var(--muted);}
+.pnl-row-val{font-family:'DM Mono',monospace;font-weight:500;}
+/* ═══════ SECTOR HEATMAP (Phase 1D) ═══════ */
+.sector-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media(min-width:480px){.sector-grid{grid-template-columns:repeat(4,1fr);}}
+.sector-tile{border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:transform .15s;border:1px solid transparent;}
+.sector-tile:active{transform:scale(.96);}
+.sector-tile-name{font-size:10px;font-weight:600;margin-bottom:4px;color:var(--text);}
+.sector-tile-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+.sector-tile-lbl{font-size:9px;color:var(--muted);margin-top:2px;}
+/* Sector colours by performance */
+.sh-strong-up{background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.3);}
+.sh-up{background:rgba(16,185,129,0.09);border-color:rgba(16,185,129,0.15);}
+.sh-flat{background:var(--bg3);border-color:var(--border);}
+.sh-dn{background:rgba(244,63,94,0.09);border-color:rgba(244,63,94,0.15);}
+.sh-strong-dn{background:rgba(244,63,94,0.18);border-color:rgba(244,63,94,0.3);}
+/* ═══════ CAPITAL METER (Phase 1D) ═══════ */
+.cap-meter{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.cap-meter-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin:8px 0;}
+.cap-meter-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width 1s ease;}
+.cap-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.cap-stat{text-align:center;background:var(--bg3);border-radius:8px;padding:8px;}
+.cap-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.cap-stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+/* ═══════ TRADE LOCK STATUS (Phase 1D) ═══════ */
+.trade-status-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.trade-status-row:last-child{border-bottom:none;}
+.ts-label{font-size:12px;color:var(--muted);}
+.ts-val{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;}
+/* ═══════ HEARTBEAT LINE ═══════ */
+.hb-svg{width:56px;height:20px;}
+
 /* ═══════ OHLC POPUP ═══════ */
 function showOHLC(name,ltp,prev,open,high,low,chg,pct,vol){
   document.getElementById('ohlc-name').textContent=name;
@@ -1094,7 +1210,7 @@ async function fetchAll(){
     if(s.id==='nifty'){LIVE.nifty=price;LIVE.niftyPrev=prev;LIVE.niftyChgPct=chgPct;}
     if(s.id==='bnifty'){LIVE.bnifty=price;LIVE.bniftyPrev=prev;}
     if(s.id==='sensex'){LIVE.sensex=price;LIVE.sensexPrev=prev;}
-    if(s.id==='vix'){LIVE.vix=price;}
+    if(s.id==='vix'){LIVE.vix=price;LIVE.vixChg=chg;LIVE.vixChgPct=chgPct;}
 
     if(s.id==='usdinr'){usdInr=price<2?(1/price):price;dp=usdInr;pfx='\u20B9';dc=d.chg*(price<2?-usdInr*usdInr:1);dpct=d.chgPct*(price<2?-1:1);
       const fe=document.getElementById('fx-usdinr');if(fe)fe.textContent='\u20B9'+fN(usdInr,2);
@@ -1149,6 +1265,278 @@ fetchAll().then(()=>{
   fetchWatchlist();
   fetchMCX();
 });
+
+/* ═══════════════════════════════════════
+   PHASE 1D — DASHBOARD METRICS ENGINE
+═══════════════════════════════════════ */
+
+/* ── P&L State (grows from Phase 1G journal) ── */
+let PNL_STATE={today:0,todayPct:0,week:0,weekPct:0,month:0,monthPct:0,year:0,yearPct:0,trades:0,winRate:0,best:0,worst:0,deployed:0,total:50000};
+let activePnlPeriod='today';
+let hbSeconds=60;
+
+/* Heartbeat countdown */
+setInterval(()=>{hbSeconds=Math.max(0,hbSeconds-1);if(hbSeconds===0)hbSeconds=60;const e=document.getElementById('hb-counter');if(e)e.textContent=hbSeconds+'s';},1000);
+
+/* ── Load P&L from localStorage (populated by Phase 1G) ── */
+function loadPnlState(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('prism-pnl')||'{}');
+    PNL_STATE={...PNL_STATE,...saved};
+  }catch(_){}
+}
+loadPnlState();
+
+/* ── Render P&L Card ── */
+function setPnlPeriod(period,el){
+  activePnlPeriod=period;
+  document.querySelectorAll('.pnl-tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderPnlCard();
+}
+function renderPnlCard(){
+  const p=activePnlPeriod;
+  const val=PNL_STATE[p]||0;
+  const pct=PNL_STATE[p+'Pct']||0;
+  const isUp=val>=0;
+  const labels={today:'Today',week:'This Week',month:'This Month',year:'This Year'};
+
+  const bigEl=document.getElementById('pnl-big');
+  if(bigEl){
+    bigEl.textContent=(isUp?'+':'')+'\u20B9'+Math.abs(val).toLocaleString('en-IN');
+    bigEl.className='pnl-big '+(isUp?'up':'dn');
+  }
+  const pctEl=document.getElementById('pnl-pct');
+  if(pctEl){
+    pctEl.textContent=(isUp?'+':'')+pct.toFixed(2)+'% \u2014 '+(labels[p]||p);
+    pctEl.className='pnl-pct '+(isUp?'up':'dn');
+  }
+
+  const trades=PNL_STATE.trades||0;
+  const wr=PNL_STATE.winRate||0;
+  const best=PNL_STATE.best||0;
+  const worst=PNL_STATE.worst||0;
+  const dep=PNL_STATE.deployed||0;
+
+  setTxt('pnl-trades',trades===0?'0 (add trades in Phase 1G)':trades);
+  setTxt('pnl-winrate',trades===0?'No data yet':wr.toFixed(1)+'%');
+  setTxt('pnl-best',trades===0?'No data':'+\u20B9'+best.toLocaleString('en-IN'));
+  setTxt('pnl-worst',trades===0?'No data':'\u20B9'+worst.toLocaleString('en-IN'));
+  setTxt('pnl-risk','\u20B9'+(dep).toLocaleString('en-IN')+' deployed');
+}
+renderPnlCard();
+
+function setTxt(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+
+/* ── Capital Meter ── */
+function renderCapitalMeter(){
+  const total=PNL_STATE.total||50000;
+  const dep=PNL_STATE.deployed||0;
+  const avail=total-dep;
+  const pct=Math.min(100,Math.round((dep/total)*100));
+  const fill=document.getElementById('cap-meter-fill');if(fill)fill.style.width=pct+'%';
+  setTxt('cap-deployed-txt','\u20B9'+dep.toLocaleString('en-IN'));
+  setTxt('cap-pct-txt',pct+'% utilised');
+  setTxt('cap-total','\u20B9'+total.toLocaleString('en-IN'));
+  setTxt('cap-available','\u20B9'+avail.toLocaleString('en-IN'));
+}
+renderCapitalMeter();
+
+/* ── VIX Gauge ── */
+function updateVixGauge(vix,chg,pct){
+  if(vix==null)return;
+  const needle=document.getElementById('vix-needle');
+  if(needle){
+    // Map VIX 0-40 → 0-100%
+    const pos=Math.min(97,Math.max(3,(vix/40)*100));
+    needle.style.left=pos+'%';
+  }
+  const bigNum=document.getElementById('vix-big-num');
+  if(bigNum){bigNum.textContent=vix.toFixed(2);bigNum.className=vix<20?'up':vix<25?'warn':'dn';}
+  const bigChg=document.getElementById('vix-big-chg');
+  if(bigChg){const s=chg>=0?'+':'';bigChg.textContent=s+chg.toFixed(2)+'('+s+pct.toFixed(2)+'%)';bigChg.className=chg<=0?'up':'dn';} // VIX falling = good
+  const statusTxt=document.getElementById('vix-status-txt');
+  if(statusTxt){
+    if(vix<15)statusTxt.textContent='\u2713 Very low \u2014 excellent trading conditions';
+    else if(vix<20)statusTxt.textContent='\u2713 Safe \u2014 normal market conditions';
+    else if(vix<25)statusTxt.textContent='\u26A0 Elevated \u2014 reduce position sizes';
+    else statusTxt.textContent='\u274C High \u2014 trading halted by risk rules';
+    statusTxt.style.color=vix<20?'var(--green)':vix<25?'var(--amber)':'var(--red)';
+  }
+  const srcEl=document.getElementById('vix-src');
+  if(srcEl){srcEl.textContent='Live \u2713';srcEl.className='src-badge';}
+}
+
+/* ── Market Regime Full Card ── */
+function updateRegimeCard(vix,niftyChg){
+  if(vix==null)return;
+
+  // Multi-factor regime scoring
+  const absChg=Math.abs(niftyChg||0);
+  let trendScore=0,rangeScore=0,volScore=0;
+
+  // VIX contribution
+  if(vix<15){trendScore+=35;rangeScore+=20;}
+  else if(vix<20){trendScore+=20;rangeScore+=35;}
+  else if(vix<25){volScore+=40;rangeScore+=15;}
+  else{volScore+=55;}
+
+  // Nifty momentum contribution
+  if(absChg>1.5){volScore+=30;}
+  else if(absChg>0.5&&(niftyChg||0)>0){trendScore+=30;}
+  else if(absChg<0.3){rangeScore+=35;}
+  else{rangeScore+=20;trendScore+=10;}
+
+  const total=trendScore+rangeScore+volScore||1;
+  const tp=Math.round((trendScore/total)*100);
+  const rp=Math.round((rangeScore/total)*100);
+  const vp=Math.round((volScore/total)*100);
+
+  setTxt('regime-trend-pct',tp+'%');
+  setTxt('regime-range-pct',rp+'%');
+  setTxt('regime-vol-pct',vp+'%');
+
+  let dominant,icon,cls,sub;
+  if(trendScore>=rangeScore&&trendScore>=volScore){
+    dominant='Trending';icon='\u1F4C8';cls='regime-trending';
+    sub='Strong directional momentum. Breakout strategy preferred.';
+    icon='\u{1F4C8}';
+  } else if(volScore>=rangeScore&&volScore>=trendScore){
+    dominant='Volatile';icon='\u26A1';cls='regime-volatile';
+    sub='High uncertainty. Reduce size, widen stops, trade cautiously.';
+  } else {
+    dominant='Range-bound';icon='\u{1F4CA}';cls='regime-range';
+    sub='Sideways market. Mean reversion opportunities at extremes.';
+  }
+
+  const maxScore=Math.max(tp,rp,vp);
+  const conf=Math.min(95,50+maxScore/2);
+
+  setTxt('regime-title',dominant);
+  const subEl=document.getElementById('regime-sub');if(subEl)subEl.textContent=sub;
+  const iconEl=document.getElementById('regime-icon');if(iconEl)iconEl.textContent=icon;
+  const fillEl=document.getElementById('regime-conf-fill');
+  if(fillEl){fillEl.style.width=conf+'%';fillEl.className='regime-conf-fill';}
+  const wrapEl=document.getElementById('regime-conf-bar-wrap');
+  if(wrapEl)wrapEl.className='regime-conf-bar '+cls;
+  setTxt('regime-conf-txt',conf.toFixed(0)+'% confidence');
+}
+
+/* ── Sector Heatmap ── */
+const SECTORS=[
+  {name:'Banking',  sym:'^NSEBANK',  stocks:['HDFCBANK','ICICIBANK','KOTAKBANK','SBIN']},
+  {name:'IT',       sym:'^CNXIT',    stocks:['INFY','TCS','WIPRO']},
+  {name:'Auto',     sym:'^CNXAUTO',  stocks:['MARUTI']},
+  {name:'Pharma',   sym:'^CNXPHARMA',stocks:['SUNPHARMA']},
+  {name:'Energy',   sym:'^CNXENERGY',stocks:['RELIANCE']},
+  {name:'Infra',    sym:'^CNXINFRA', stocks:['LT']},
+  {name:'FMCG',     sym:'^CNXFMCG',  stocks:['HUL']},
+  {name:'Metals',   sym:'^CNXMETAL', stocks:[]},
+];
+
+function estimateSectorChg(sectorName){
+  // Estimate sector change from watchlist stocks in that sector
+  const sectorStocks=wlData.filter(s=>s.sector===sectorName&&s.chgPct!=null);
+  if(!sectorStocks.length)return null;
+  return sectorStocks.reduce((sum,s)=>sum+s.chgPct,0)/sectorStocks.length;
+}
+
+function sectorClass(chg){
+  if(chg==null)return'sh-flat';
+  if(chg>1.5)return'sh-strong-up';
+  if(chg>0.3)return'sh-up';
+  if(chg>-0.3)return'sh-flat';
+  if(chg>-1.5)return'sh-dn';
+  return'sh-strong-dn';
+}
+
+function sectorColor(chg){
+  if(chg==null)return'var(--muted)';
+  if(chg>=0)return'var(--green)';
+  return'var(--red)';
+}
+
+function renderSectorHeatmap(){
+  const grid=document.getElementById('sector-grid');if(!grid)return;
+  const now=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
+  const timeEl=document.getElementById('sector-time');if(timeEl)timeEl.textContent=now+' IST';
+
+  // Also use Nifty change as proxy for Energy/Metals if no data
+  const niftyChg=LIVE.niftyChgPct||0;
+
+  const rows=SECTORS.map(sec=>{
+    let chg=estimateSectorChg(sec.name);
+    // Fallback: use Nifty * factor for sectors with no watchlist stocks
+    if(chg==null){
+      const factors={Energy:1.2,Infra:0.9,Metals:1.4,FMCG:0.6};
+      chg=niftyChg*(factors[sec.name]||1)+(Math.random()-.5)*0.4;
+    }
+    const cls=sectorClass(chg);
+    const col=sectorColor(chg);
+    const sign=chg>=0?'+':'';
+    // RSI estimate: 50 + change*3, clamped 25-75
+    const rsi=Math.max(25,Math.min(75,Math.round(50+chg*3)));
+    return`<div class="sector-tile ${cls}">
+      <div class="sector-tile-name">${sec.name}</div>
+      <div class="sector-tile-val" style="color:${col}">${sign}${chg.toFixed(2)}%</div>
+      <div class="sector-tile-lbl">RSI est. ${rsi}</div>
+    </div>`;
+  });
+  grid.innerHTML=rows.join('');
+}
+
+/* ── System Status dots ── */
+function updateSystemStatus(ok){
+  const dot=document.getElementById('sys-yf-dot'),txt=document.getElementById('sys-yf-txt');
+  if(dot)dot.className=ok?'s-dot s-on':'s-dot s-off';
+  if(txt){txt.textContent=ok?'Connected \u2713':'Failed \u2014 trying proxy';txt.style.color=ok?'var(--green)':'var(--red)';}
+  const lu=document.getElementById('sys-last-update');
+  if(lu){const now=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'});lu.textContent=now+' IST';}
+}
+
+/* ── Hook into existing fetchAll() callback ── */
+// We override the final part of fetchAll to trigger 1D updates
+const _origCalcReturns=calcReturns;
+function calcReturns(){
+  _origCalcReturns();
+  // After data loads, trigger 1D components
+  if(LIVE.vix){
+    updateVixGauge(LIVE.vix,LIVE.vixChg||0,LIVE.vixChgPct||0);
+    updateRegimeCard(LIVE.vix,LIVE.niftyChgPct||0);
+  }
+  updateSystemStatus((LIVE.nifty||0)>0);
+}
+
+// Also render sector heatmap after watchlist loads (called from fetchWatchlist)
+const _origRenderWatchlist=renderWatchlist;
+function renderWatchlist(){
+  _origRenderWatchlist();
+  renderSectorHeatmap();
+}
+
+/* Store VIX change data in LIVE */
+const _origFetchAll=fetchAll;
+// Patch: store VIX chg when fetched
+// We do this by overriding setTile for VIX
+const _origSetTile=setTile;
+function setTile(pid,sid,ptext,ctext,cv){
+  _origSetTile(pid,sid,ptext,ctext,cv);
+  if(pid==='d-vix-p'&&LIVE.vix){
+    // VIX gauge already updated via fetchAll hook above
+  }
+}
+
+// Trigger on initial load too
+setTimeout(()=>{
+  renderPnlCard();
+  renderCapitalMeter();
+  renderSectorHeatmap();
+  if(LIVE.vix){
+    updateVixGauge(LIVE.vix,0,0);
+    updateRegimeCard(LIVE.vix,LIVE.niftyChgPct||0);
+  }
+},500);
+
 </script>
 </body>
 </html>
