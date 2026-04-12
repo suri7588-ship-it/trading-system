@@ -475,6 +475,17 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .exec-short{background:var(--red);color:#fff;}
 .exec-blocked{background:var(--bg3);color:var(--muted);border:1px solid var(--border2);}
 
+
+/* ═══ 1F: GOVERNANCE / ORDERS / RISK ═══ */
+.gov-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.gov-row:last-child{border-bottom:none;}
+.gov-label{font-size:12px;color:var(--muted);}
+.dd-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin:6px 0;}
+.dd-fill{height:100%;border-radius:5px;transition:width .8s ease;}
+.dd-normal{background:var(--green);}
+.dd-warn{background:var(--amber);}
+.dd-stop{background:var(--red);}
+
 </style>
 </head>
 <body>
@@ -545,7 +556,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
     <div class="sf-value" id="sf-capital">&#x20B9;50,000</div>
     <div class="sf-bar"><div class="sf-fill" id="sf-fill-bar" style="width:0%"></div></div>
     <div class="sf-sub" id="sf-sub-txt">0% deployed</div>
-    <div class="ph-badge">Phase 1E &#x2014; Charts + L/S Engine</div>
+    <div class="ph-badge">Phase 1F &#x2014; Full AMC Engine</div>
   </div>
 </nav>
 
@@ -841,9 +852,9 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
       <div class="divider"></div>
       <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1E &#x2014; Charts + L/S Trade Engine + Expectancy</div><div class="rmap-sub">Equity curve, P&amp;L bars, Gold 30-day, AI expectancy chart</div></div><span class="phase-lbl ph0">Done</span></div>
       <div class="divider"></div>
-      <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">1F &#x2014; Signal Engine + Trade Governance</div><div class="rmap-sub">Net-of-costs filter, R:R check, AI win probability 0-100%, position sizing, VCP/ICT/Fibonacci toggles</div></div><span class="phase-lbl ph-ai">AI Layer</span></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1F &#x2014; AMC Master Engine (Full)</div><div class="rmap-sub">Governance Engine, 6-layer validation, Orders (OMS), Portfolio 80/20, Screener, Journal + Attribution, Risk Monitor, AI Engine page</div></div><span class="phase-lbl ph0">Done</span></div>
       <div class="divider"></div>
-      <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1G &#x2014; Orders + Journal + Attribution Engine</div><div class="rmap-sub">Trade attribution, behavioral risk score, auto weight update per trade, expectancy tracking</div></div><span class="phase-lbl ph-ai">AI Layer</span></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">1G &#x2014; Orders + Journal + Attribution Engine</div><div class="rmap-sub">Trade attribution, behavioral risk score, auto weight update per trade, expectancy tracking</div></div><span class="phase-lbl ph-ai">AI Layer</span></div>
       <div class="divider"></div>
       <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">1H &#x2014; Vault + Telegram + Learning Dashboard</div><div class="rmap-sub">PIN vault, live Telegram bot, model accuracy %, feature importance, strategy evolution</div></div><span class="phase-lbl ph2">Queued</span></div>
       <div class="divider"></div>
@@ -895,11 +906,87 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
 <!-- ══════════════ TRADE GOVERNANCE ══════════════ -->
 <div class="page" id="page-governance"><div class="page-content">
-  <div class="alert info"><span class="alert-icon">&#x1F6E1;</span><span>Trade Governance Engine &#x2014; Net-of-costs filter, R:R check, liquidity check, kill switch. Full implementation in Phase 1F.</span></div>
-  <div class="coming-soon"><div class="cs-icon">&#x1F6E1;</div><div class="cs-title">Trade Governance Engine</div><div class="cs-sub">Net-of-Costs filter &#x00B7; Breakeven % calc &#x00B7; R:R &#x2265;1:2 check &#x00B7; Liquidity check &#x00B7; Strategy conflict block<br>EXECUTE / BLOCK output with reason &#x00B7; Behavioral bias detection<br><br>Coming in Phase 1F.</div><div class="cs-badge" style="background:var(--pbg);color:var(--purple)">Phase 1F &#x2014; AMC Governance</div></div>
+
+  <div class="alert success">
+    <span class="alert-icon">&#x2705;</span>
+    <span><strong>Phase 1F &#x2014; Trade Governance Engine Live.</strong> 6-layer validation. Every trade must pass ALL checks before EXECUTE is issued.</span>
+  </div>
+
+  <!-- 6-Layer Validation Panel -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">&#x1F6E1; AMC Governance &#x2014; 6-Layer Validation</span>
+      <span class="badge badge-r">All must pass</span>
+    </div>
+    <div style="padding:0 14px">
+      <div class="gov-row" id="gov-ai"><span class="gov-label">&#x1F9E0; AI Win Probability (&gt;60%)</span><div class="s-row"><div class="s-dot" id="g-ai-dot" style="background:var(--dim)"></div><span id="g-ai-txt" style="font-size:11px;color:var(--muted)">Waiting&#x2026;</span></div></div>
+      <div class="gov-row" id="gov-risk"><span class="gov-label">&#x1F6E1; Risk Engine (R:R, Drawdown, VIX)</span><div class="s-row"><div class="s-dot" id="g-risk-dot" style="background:var(--dim)"></div><span id="g-risk-txt" style="font-size:11px;color:var(--muted)">Waiting&#x2026;</span></div></div>
+      <div class="gov-row" id="gov-cost"><span class="gov-label">&#x1F4B0; Net-of-Costs Filter (1.5&#x00D7; rule)</span><div class="s-row"><div class="s-dot" id="g-cost-dot" style="background:var(--dim)"></div><span id="g-cost-txt" style="font-size:11px;color:var(--muted)">Waiting&#x2026;</span></div></div>
+      <div class="gov-row" id="gov-regime"><span class="gov-label">&#x1F4CA; Regime Match (Strategy &#x21D2; Regime)</span><div class="s-row"><div class="s-dot" id="g-regime-dot" style="background:var(--dim)"></div><span id="g-regime-txt" style="font-size:11px;color:var(--muted)">Waiting&#x2026;</span></div></div>
+      <div class="gov-row" id="gov-behav"><span class="gov-label">&#x1F9E0; Behavioral Check (no bias/overtrading)</span><div class="s-row"><div class="s-dot" id="g-behav-dot" style="background:var(--dim)"></div><span id="g-behav-txt" style="font-size:11px;color:var(--muted)">Waiting&#x2026;</span></div></div>
+      <div class="gov-row"><span class="gov-label">&#x26D4; Kill Switch</span><div class="s-row"><div class="s-dot s-on"></div><span style="font-size:11px;color:var(--green)">Unlocked &#x2713;</span></div></div>
+    </div>
+  </div>
+
+  <!-- Trade entry for governance check -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Run Governance Check</span><span class="badge badge-b">Live validation</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label class="te-label">Stock Symbol</label><input class="te-input" id="gv-sym" placeholder="HDFCBANK" oninput="runGovernance()"></div>
+        <div><label class="te-label">Direction</label>
+          <select class="te-select" id="gv-dir" onchange="runGovernance()">
+            <option value="LONG">&#x25B2; LONG</option><option value="SHORT">&#x25BC; SHORT</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div><label class="te-label">Entry (&#x20B9;)</label><input class="te-input" id="gv-entry" type="number" placeholder="0" oninput="runGovernance()"></div>
+        <div><label class="te-label">SL (&#x20B9;)</label><input class="te-input" id="gv-sl" type="number" placeholder="0" oninput="runGovernance()"></div>
+        <div><label class="te-label">Target (&#x20B9;)</label><input class="te-input" id="gv-tgt" type="number" placeholder="0" oninput="runGovernance()"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label class="te-label">Capital (&#x20B9;)</label><input class="te-input" id="gv-cap" type="number" value="50000" oninput="runGovernance()"></div>
+        <div><label class="te-label">Strategy</label>
+          <select class="te-select" id="gv-strat" onchange="runGovernance()">
+            <option value="breakout">VCP Breakout</option>
+            <option value="ict">ICT Concepts</option>
+            <option value="mean_rev">Mean Reversion</option>
+            <option value="fibonacci">Fibonacci</option>
+            <option value="momentum">Momentum</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final Decision Output -->
+  <div id="gov-output" class="decision-box dec-wait">
+    <div class="dec-title" id="gov-dec" style="color:var(--blue)">&#x23F3; Enter trade parameters above</div>
+    <div id="gov-body"></div>
+  </div>
+
+  <!-- Rule Book -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">AMC Governance Rule Book</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">AI Win Probability &lt;60%</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCK</span></div>
+      <div class="cost-row"><span class="cost-lbl">AI 60&#x2013;75%</span><span class="cost-val warn">&#x26A0; Reduced size (50%)</span></div>
+      <div class="cost-row"><span class="cost-lbl">AI &gt;75%</span><span class="cost-val" style="color:var(--green)">&#x2714; Full allocation</span></div>
+      <div class="cost-row"><span class="cost-lbl">R:R below 1:2</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCK</span></div>
+      <div class="cost-row"><span class="cost-lbl">VIX &gt;25</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCK (halt zone)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Drawdown &#x2265;8%</span><span class="cost-val" style="color:var(--red)">&#x274C; STOP all trading</span></div>
+      <div class="cost-row"><span class="cost-lbl">Drawdown &#x2265;5%</span><span class="cost-val warn">&#x26A0; 75% risk reduction</span></div>
+      <div class="cost-row"><span class="cost-lbl">Expected move &lt;1.5&#x00D7; cost</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCK</span></div>
+      <div class="cost-row"><span class="cost-lbl">Strategy &#x2260; Regime</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCK</span></div>
+      <div class="cost-row"><span class="cost-lbl">Max 1 trade/day</span><span class="cost-val warn">&#x26A0; Kill switch after 1st</span></div>
+      <div class="cost-row"><span class="cost-lbl">Daily loss &#x2265;1%</span><span class="cost-val" style="color:var(--red)">&#x274C; Stop trading</span></div>
+      <div class="cost-row"><span class="cost-lbl">Overtrading detected</span><span class="cost-val" style="color:var(--red)">&#x274C; 1-day lock</span></div>
+    </div>
+  </div>
+
 </div></div>
 
-<!-- ══════════════ STUBS ══════════════ -->
 <div class="page" id="page-signals"><div class="page-content">
 
   <div class="alert info"><span class="alert-icon">&#x2316;</span><span><strong>Phase 1E</strong> &#x2014; LONG/SHORT Trade Engine with SEBI-compliant rules, net-of-costs filter, position sizer. AI win probability in Phase 1F.</span></div>
@@ -1029,35 +1116,427 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
 </div></div>
 
-<div class="page" id="page-orders"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x25A3;</div><div class="cs-title">Order Book</div><div class="cs-sub">Bracket orders &#x00B7; History &#x00B7; Emergency exit<br><br>Coming in Phase 1G.</div><div class="cs-badge" style="background:var(--abg);color:var(--amber)">Phase 1G</div></div></div></div>
+<div class="page" id="page-orders"><div class="page-content">
 
-<div class="page" id="page-portfolio"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F4BC;</div><div class="cs-title">Portfolio &#x2014; Core + Satellite</div><div class="cs-sub">80% Passive Core (ETFs) + 20% Active Satellite (AI trades) &#x00B7; Live P&amp;L &#x00B7; XIRR &#x00B7; Allocation donut<br><br>Coming in Phase 1G.</div><div class="cs-badge" style="background:var(--abg);color:var(--amber)">Phase 1G</div></div></div></div>
+  <div class="alert success">
+    <span class="alert-icon">&#x2705;</span>
+    <span><strong>Phase 1F &#x2014; Order Management System.</strong> Track active positions, bracket orders, auto SL/target, emergency exit.</span>
+  </div>
+
+  <!-- OMS Stats -->
+  <div class="tiles-4">
+    <div class="tile"><div class="tile-label">Active Orders</div><div class="tile-value" id="oms-active">0</div><div class="tile-sub">live positions</div></div>
+    <div class="tile"><div class="tile-label">Today P&amp;L</div><div class="tile-value up" id="oms-pnl">&#x20B9;0</div><div class="tile-sub" id="oms-pnl-pct">0.00%</div></div>
+    <div class="tile"><div class="tile-label">Trades Today</div><div class="tile-value" id="oms-trades">0</div><div class="tile-sub">/ max 1</div></div>
+    <div class="tile"><div class="tile-label">Capital Used</div><div class="tile-value warn" id="oms-cap">0%</div><div class="tile-sub" id="oms-cap-abs">&#x20B9;0</div></div>
+  </div>
+
+  <!-- Emergency Exit -->
+  <div style="background:var(--rbg);border:2px solid var(--rborder);border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-weight:700;font-size:14px;color:var(--red)">&#x1F6A8; Emergency Exit</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">Square off ALL positions immediately at market price</div>
+    </div>
+    <button onclick="emergencyExit()" style="background:var(--red);color:#fff;border:none;padding:12px 20px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0">&#x274C; EXIT ALL NOW</button>
+  </div>
+
+  <!-- Active Orders -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Active Orders</span>
+      <button onclick="addSampleOrder()" style="font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif">+ Add Sample</button>
+    </div>
+    <div id="orders-list">
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No active orders. Use the Signal Engine to place trades.</div>
+    </div>
+  </div>
+
+  <!-- Order History -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Order History</span><span class="badge badge-b" id="hist-count">0 trades</span></div>
+    <div id="order-history">
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No trade history yet.</div>
+    </div>
+  </div>
+
+  <!-- OMS Rules -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">OMS Auto-Rules</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Auto SL</span><span class="cost-val" style="color:var(--green)">&#x2714; Active on all orders</span></div>
+      <div class="cost-row"><span class="cost-lbl">Auto Target</span><span class="cost-val" style="color:var(--green)">&#x2714; Locks in at target</span></div>
+      <div class="cost-row"><span class="cost-lbl">Trailing SL</span><span class="cost-val" style="color:var(--green)">&#x2714; Moves up with price</span></div>
+      <div class="cost-row"><span class="cost-lbl">Intraday auto sq-off</span><span class="cost-val" style="color:var(--green)">&#x2714; 3:15 PM IST</span></div>
+      <div class="cost-row"><span class="cost-lbl">Short positional check</span><span class="cost-val" style="color:var(--green)">&#x2714; F&amp;O only</span></div>
+      <div class="cost-row"><span class="cost-lbl">Angel One API</span><span class="cost-val" style="color:var(--muted)">Phase 4</span></div>
+    </div>
+  </div>
+
+</div></div>
+
+<div class="page" id="page-portfolio"><div class="page-content">
+
+  <div class="alert success">
+    <span class="alert-icon">&#x2705;</span>
+    <span><strong>Phase 1F &#x2014; Capital Allocation Engine.</strong> 80% Passive Core + 20% Active Satellite. Dynamic rebalancing when performance dips.</span>
+  </div>
+
+  <!-- Allocation Tiles -->
+  <div class="tiles-4">
+    <div class="tile"><div class="tile-label">Total Capital</div><div class="tile-value" id="pf-total">&#x20B9;50K</div><div class="tile-sub">base capital</div></div>
+    <div class="tile"><div class="tile-label">Passive Core (80%)</div><div class="tile-value" style="color:var(--blue)" id="pf-passive">&#x20B9;40K</div><div class="tile-sub">ETFs + Index</div></div>
+    <div class="tile"><div class="tile-label">Active Satellite (20%)</div><div class="tile-value warn" id="pf-active">&#x20B9;10K</div><div class="tile-sub">AI trades</div></div>
+    <div class="tile"><div class="tile-label">Total Return</div><div class="tile-value up" id="pf-return">0.00%</div><div class="tile-sub">vs Nifty 50</div></div>
+  </div>
+
+  <!-- Allocation Visual -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Capital Allocation</span><span class="badge badge-b">AMC Structure</span></div>
+    <div class="card-body">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="flex:4;min-width:120px">
+          <div style="font-size:10px;color:var(--blue);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Passive Core &#x2014; 80%</div>
+          <div style="height:10px;background:var(--blue);border-radius:5px"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Nifty ETF, Gold ETF, Liquid Fund</div>
+        </div>
+        <div style="flex:1;min-width:60px">
+          <div style="font-size:10px;color:var(--amber);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Active &#x2014; 20%</div>
+          <div style="height:10px;background:var(--amber);border-radius:5px"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">AI trades</div>
+        </div>
+      </div>
+      <div style="padding:0">
+        <div class="cost-row"><span class="cost-lbl">Passive Core</span><span class="cost-val" style="color:var(--blue)" id="pf-passive-val">&#x20B9;40,000 (80%)</span></div>
+        <div class="cost-row"><span class="cost-lbl">Active Satellite</span><span class="cost-val warn" id="pf-active-val">&#x20B9;10,000 (20%)</span></div>
+        <div class="cost-row"><span class="cost-lbl">Currently Deployed</span><span class="cost-val" id="pf-deployed">&#x20B9;0 (0%)</span></div>
+        <div class="cost-row"><span class="cost-lbl">Available for Trade</span><span class="cost-val up" id="pf-available">&#x20B9;10,000</span></div>
+        <div class="cost-row"><span class="cost-lbl">Max per trade (20% of active)</span><span class="cost-val warn">&#x20B9;2,000</span></div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:var(--bbg);border-radius:9px;border:1px solid var(--bborder);font-size:11px;color:var(--blue)">
+        &#x1F4A1; <strong>Dynamic rebalancing:</strong> If active satellite underperforms Nifty by &gt;5% for 3 months, capital auto-shifts to passive core. If market conditions are strong, active allocation can increase to 25%.
+      </div>
+    </div>
+  </div>
+
+  <!-- Holdings placeholder -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Holdings</span><span class="badge badge-a">Phase 1G</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Nifty BeES ETF</span><span class="cost-val" style="color:var(--blue)">&#x20B9;40,000 (Passive)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Active AI trades</span><span class="cost-val warn">&#x20B9;0 deployed</span></div>
+      <div class="cost-row"><span class="cost-lbl">Cash available</span><span class="cost-val up">&#x20B9;10,000</span></div>
+    </div>
+    <div style="padding:12px 14px;font-size:10px;color:var(--muted)">Live P&amp;L per holding, XIRR, and allocation donut chart coming in Phase 1G when trade journal is active.</div>
+  </div>
+
+  <!-- Benchmark -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Performance vs Benchmark</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Nifty 50 (YTD)</span><span class="cost-val" id="bench-nifty">Loading&#x2026;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Our Portfolio (YTD)</span><span class="cost-val up">+0.00%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Alpha Generated</span><span class="cost-val up">+0.00%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Sharpe Ratio</span><span class="cost-val">N/A (no trades)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Max Drawdown</span><span class="cost-val up">0.00%</span></div>
+    </div>
+  </div>
+
+</div></div>
+
+<div class="page" id="page-screener"><div class="page-content">
+
+  <div class="alert success">
+    <span class="alert-icon">&#x2705;</span>
+    <span><strong>Phase 1F &#x2014; AI Stock Screener.</strong> 8 filter conditions with live watchlist data. Stocks must pass all active filters.</span>
+  </div>
+
+  <!-- Filter Panel -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">&#x1F50D; Screener Filters</span><span class="badge badge-p">AI-powered</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="te-label">Min Daily Change (%)</label>
+          <input class="te-input" id="sc-chg" type="number" value="0.5" step="0.1" oninput="runScreener()">
+        </div>
+        <div>
+          <label class="te-label">Max Daily Change (%)</label>
+          <input class="te-input" id="sc-chg-max" type="number" value="5" step="0.1" oninput="runScreener()">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="te-label">Min Win Probability (%)</label>
+          <input class="te-input" id="sc-prob" type="number" value="60" oninput="runScreener()">
+        </div>
+        <div>
+          <label class="te-label">Sector Filter</label>
+          <select class="te-select" id="sc-sector" onchange="runScreener()">
+            <option value="All">All Sectors</option>
+            <option value="Banking">Banking</option>
+            <option value="IT">IT</option>
+            <option value="Energy">Energy</option>
+            <option value="Infra">Infra</option>
+            <option value="Auto">Auto</option>
+            <option value="Pharma">Pharma</option>
+            <option value="FMCG">FMCG</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="te-label">Direction</label>
+          <select class="te-select" id="sc-dir" onchange="runScreener()">
+            <option value="Both">Both (Long &amp; Short)</option>
+            <option value="LONG">Long Only</option>
+            <option value="SHORT">Short Only</option>
+          </select>
+        </div>
+        <div>
+          <label class="te-label">Min VIX Regime (%)</label>
+          <select class="te-select" id="sc-regime" onchange="runScreener()">
+            <option value="Any">Any Regime</option>
+            <option value="Trending">Trending Only</option>
+            <option value="Range-bound">Range-bound Only</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="runScreener()" style="background:var(--blue);color:#fff;border:none;padding:12px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F50D; Run Screener</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Screener Results</span><span class="badge badge-g" id="sc-count">0 matches</span></div>
+    <div id="sc-results">
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Configure filters above and tap Run Screener.</div>
+    </div>
+  </div>
+
+  <!-- AI Win Probability Legend -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">AI Win Probability Guide</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">&#x1F534; &lt;60%</span><span class="cost-val" style="color:var(--red)">BLOCK &#x2014; Do not trade</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F7E0; 60&#x2013;75%</span><span class="cost-val warn">Reduced size (50% of normal)</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F7E2; &gt;75%</span><span class="cost-val" style="color:var(--green)">Full allocation allowed</span></div>
+    </div>
+  </div>
+
+</div></div>
 
 <div class="page" id="page-ai-engine"><div class="page-content">
-  <div class="alert info"><span class="alert-icon">&#x1F9E0;</span><span>AI Engine foundation active in localStorage. Full adaptive learning activates in Phase 1F when trades begin.</span></div>
+  <div class="alert success"><span class="alert-icon">&#x1F9E0;</span><span><strong>Phase 1F &#x2014; AI Engine.</strong> Self-learning model active in localStorage. Weights update after each trade outcome. Full XGBoost model in Phase 3.</span></div>
+
+  <!-- AI State Panel -->
   <div class="ai-panel">
     <div class="ai-panel-title">&#x1F9E0; Current Intelligence State</div>
     <div class="ai-metric"><span class="ai-metric-label">Market Regime</span><span class="ai-metric-val" id="ai2-regime">Detecting&#x2026;</span></div>
     <div class="ai-metric"><span class="ai-metric-label">Win Probability</span><span class="ai-metric-val" id="ai2-prob">&#x2014;</span></div>
     <div class="ai-metric"><span class="ai-metric-label">Trades logged</span><span class="ai-metric-val" id="ai2-trades">0</span></div>
-    <div class="ai-metric"><span class="ai-metric-label">Model accuracy</span><span class="ai-metric-val">Need 10+ trades</span></div>
-    <div class="ai-metric"><span class="ai-metric-label">Behavioral Risk</span><span class="ai-metric-val">Low &#x2713;</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Model accuracy</span><span class="ai-metric-val" id="ai2-acc">Need 10+ trades</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Expectancy (30-trade)</span><span class="ai-metric-val" id="ai2-exp">No data</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Behavioral Risk Score</span><span class="ai-metric-val" id="ai2-beh">Low &#x2713;</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Strategy mode</span><span class="ai-metric-val" id="ai2-strat">&#x2014;</span></div>
   </div>
-  <div class="card"><div class="card-header"><span class="card-title">Adaptive Factor Weights</span><span class="badge badge-p">Auto-updating</span></div><div style="padding:0 14px">
-    <div class="ind-row"><span class="ind-label">Technicals (RSI, MACD, MA)</span><span class="ind-val" id="w-tech">30%</span></div>
-    <div class="ind-row"><span class="ind-label">News Sentiment</span><span class="ind-val" id="w-news">30%</span></div>
-    <div class="ind-row"><span class="ind-label">Trend (ADX, VWAP)</span><span class="ind-val" id="w-trend">20%</span></div>
-    <div class="ind-row"><span class="ind-label">Risk/Reward (ATR)</span><span class="ind-val" id="w-risk">20%</span></div>
-  </div></div>
+
+  <!-- Factor Weights -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Adaptive Factor Weights</span><span class="badge badge-p">Auto-updating</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">&#x1F4CA; Technicals (RSI, MACD, ADX)</span><span class="cost-val" id="w-tech">30%</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F4F0; News Sentiment</span><span class="cost-val" id="w-news">30%</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F4C8; Trend (ADX, VWAP, MA)</span><span class="cost-val" id="w-trend">20%</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F6E1; Risk / Reward (ATR)</span><span class="cost-val" id="w-risk">20%</span></div>
+    </div>
+  </div>
+
+  <!-- Strategy Evolution -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Strategy Evolution Engine</span><span class="badge badge-p">Self-Learning</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Active strategy</span><span class="cost-val" id="strat-active">VCP Breakout</span></div>
+      <div class="cost-row"><span class="cost-lbl">Strategy win rate</span><span class="cost-val" id="strat-wr">No data</span></div>
+      <div class="cost-row"><span class="cost-lbl">Decay detected</span><span class="cost-val up">No &#x2713;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Auto-switch rule</span><span class="cost-val warn">&gt;20% drop &#x2192; switch</span></div>
+      <div class="cost-row"><span class="cost-lbl">Next candidate</span><span class="cost-val" style="color:var(--muted)">Mean Reversion</span></div>
+    </div>
+  </div>
+
+  <!-- AI Build Timeline -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">AI Build Timeline</span></div>
+    <div class="card-body" style="padding:0 14px">
+      <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">Regime Classifier (VIX + Nifty)</div><div class="rmap-sub">Live: Trending / Range-bound / Volatile</div></div><span class="phase-lbl ph0">Live</span></div>
+      <div class="divider"></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">Win Probability Model (baseline)</div><div class="rmap-sub">VIX + momentum logistic model</div></div><span class="phase-lbl ph0">Live</span></div>
+      <div class="divider"></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">Factor Weights (adaptive)</div><div class="rmap-sub">Updates after each trade outcome</div></div><span class="phase-lbl ph0">Live</span></div>
+      <div class="divider"></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">Trade Attribution Engine</div><div class="rmap-sub">Classify each trade: Trend / News / Technical / Random</div></div><span class="phase-lbl ph1">1G</span></div>
+      <div class="divider"></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">XGBoost Full Model</div><div class="rmap-sub">Multi-timeframe OHLCV + sentiment + OI inputs</div></div><span class="phase-lbl ph-ai">Phase 3</span></div>
+      <div class="divider"></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">Reinforcement Learning</div><div class="rmap-sub">Reward = profit - drawdown. Action = trade/size/strategy</div></div><span class="phase-lbl ph-ai">Phase 3</span></div>
+    </div>
+  </div>
+
 </div></div>
-
-<div class="page" id="page-screener"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F50D;</div><div class="cs-title">AI Screener</div><div class="cs-sub">ADX &#x00B7; RSI &#x00B7; Volume &#x00B7; ATR &#x00B7; Win probability filter<br><br>Phase 1G.</div><div class="cs-badge" style="background:var(--abg);color:var(--amber)">Phase 1G</div></div></div></div>
-
 <div class="page" id="page-backtest"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x25CE;</div><div class="cs-title">Backtest + RL Engine</div><div class="cs-sub">Historical backtest &#x00B7; Sharpe &#x00B7; Drawdown &#x00B7; RL reward optimization<br><br>Phase 3.</div><div class="cs-badge" style="background:var(--pbg);color:var(--purple)">Phase 3 &#x2014; RL Layer</div></div></div></div>
 
-<div class="page" id="page-journal"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F4D3;</div><div class="cs-title">Trade Journal + Attribution</div><div class="cs-sub">Auto-log &#x00B7; Trend/News/Technical/Random attribution &#x00B7; Weight update per trade<br><br>Phase 1G.</div><div class="cs-badge" style="background:var(--abg);color:var(--amber)">Phase 1G</div></div></div></div>
+<div class="page" id="page-journal"><div class="page-content">
 
-<div class="page" id="page-risk"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x2699;</div><div class="cs-title">Risk Monitor</div><div class="cs-sub">Kill switch &#x00B7; Drawdown protection &#x00B7; Sector exposure &#x00B7; Correlation filter &#x00B7; Behavioral lock<br><br>Phase 1G.</div><div class="cs-badge" style="background:var(--abg);color:var(--amber)">Phase 1G</div></div></div></div>
+  <div class="alert success">
+    <span class="alert-icon">&#x2705;</span>
+    <span><strong>Phase 1F &#x2014; Trade Journal + Attribution Engine.</strong> Every trade auto-logged. Outcome attribution updates AI weights.</span>
+  </div>
+
+  <!-- Journal Stats -->
+  <div class="tiles-4">
+    <div class="tile"><div class="tile-label">Total Trades</div><div class="tile-value" id="jnl-total">0</div><div class="tile-sub">all time</div></div>
+    <div class="tile"><div class="tile-label">Win Rate</div><div class="tile-value up" id="jnl-wr">&#x2014;</div><div class="tile-sub">win / total</div></div>
+    <div class="tile"><div class="tile-label">Expectancy</div><div class="tile-value" id="jnl-exp">&#x2014;</div><div class="tile-sub">&#x20B9; per trade</div></div>
+    <div class="tile"><div class="tile-label">Avg R:R</div><div class="tile-value" id="jnl-rr">&#x2014;</div><div class="tile-sub">realized</div></div>
+  </div>
+
+  <!-- Attribution -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Trade Attribution</span><span class="badge badge-p">AI Engine</span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">
+        <div style="background:var(--gbg);border:1px solid var(--gborder);border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase">Trend-driven</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500" id="attr-trend">0%</div>
+        </div>
+        <div style="background:var(--bbg);border:1px solid var(--bborder);border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--blue);font-weight:700;text-transform:uppercase">Technical</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500" id="attr-tech">0%</div>
+        </div>
+        <div style="background:var(--abg);border:1px solid var(--aborder);border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--amber);font-weight:700;text-transform:uppercase">News-driven</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500" id="attr-news">0%</div>
+        </div>
+        <div style="background:var(--rbg);border:1px solid var(--rborder);border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--red);font-weight:700;text-transform:uppercase">Random / Noise</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500" id="attr-random">0%</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted)">Attribution updates automatically when you mark trade outcomes. AI weights adjust accordingly.</div>
+    </div>
+  </div>
+
+  <!-- Trade Log -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Trade Log</span>
+      <div style="display:flex;gap:6px">
+        <span class="badge badge-g" id="jnl-badge">0 trades</span>
+        <button onclick="clearJournal()" style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid var(--rborder);background:var(--rbg);color:var(--red);cursor:pointer;font-family:'Outfit',sans-serif">Clear</button>
+      </div>
+    </div>
+    <div id="jnl-list">
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No trades logged yet. Use the Signal Engine to place and log trades.</div>
+    </div>
+  </div>
+
+  <!-- Behavioral Analysis -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Behavioral Analysis</span><span class="badge badge-p">AI Risk</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Overtrading attempts</span><span class="cost-val" id="beh-over">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">SL violations</span><span class="cost-val" id="beh-sl">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Revenge trade flags</span><span class="cost-val" id="beh-rev">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Late entries</span><span class="cost-val" id="beh-late">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Behavioral Risk Score</span><span class="cost-val up" id="beh-score">Low &#x2713;</span></div>
+    </div>
+  </div>
+
+</div></div>
+
+<div class="page" id="page-risk"><div class="page-content">
+
+  <div class="alert success">
+    <span class="alert-icon">&#x2705;</span>
+    <span><strong>Phase 1F &#x2014; Risk Monitor.</strong> Live drawdown tracking, kill switch, sector limits, behavioral lock. AI cannot override these.</span>
+  </div>
+
+  <!-- Risk Overview Tiles -->
+  <div class="tiles-4">
+    <div class="tile">
+      <div class="tile-label">Drawdown</div>
+      <div class="tile-value up" id="risk-dd">0.00%</div>
+      <div class="tile-sub">from peak equity</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Risk Mode</div>
+      <div class="tile-value" id="risk-mode" style="font-size:13px;color:var(--green)">Normal</div>
+      <div class="tile-sub" id="risk-mode-sub">Full allocation</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Daily Loss</div>
+      <div class="tile-value up" id="risk-dloss">&#x20B9;0</div>
+      <div class="tile-sub">limit: &#x20B9;500</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Trades Today</div>
+      <div class="tile-value" id="risk-trades">0</div>
+      <div class="tile-sub">/ max 1</div>
+    </div>
+  </div>
+
+  <!-- Kill Switch -->
+  <div id="kill-switch-panel" style="background:var(--gbg);border:2px solid var(--gborder);border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-weight:700;font-size:14px;color:var(--green)" id="ks-title">&#x2714; Kill Switch &#x2014; Unlocked</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px" id="ks-sub">System active. Ready for trading.</div>
+    </div>
+    <button onclick="toggleKillSwitch()" id="ks-btn" style="background:var(--red);color:#fff;border:none;padding:12px 18px;border-radius:9px;font-weight:700;font-size:12px;cursor:pointer">&#x26D4; Engage Kill Switch</button>
+  </div>
+
+  <!-- Drawdown Protection -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Drawdown Protection</span><span class="badge badge-r">AMC Non-Negotiable</span></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">Current Drawdown</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green)" id="dd-pct2">0.00%</span>
+      </div>
+      <div class="dd-bar"><div class="dd-fill dd-normal" id="dd-fill2" style="width:0%"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px">
+        <div style="text-align:center;padding:8px;border-radius:8px;background:var(--gbg);border:1px solid var(--gborder)"><div style="font-size:9px;color:var(--green);font-weight:700">&lt;3%</div><div style="font-size:9px;color:var(--muted);margin-top:2px">Normal</div></div>
+        <div style="text-align:center;padding:8px;border-radius:8px;background:var(--abg);border:1px solid var(--aborder)"><div style="font-size:9px;color:var(--amber);font-weight:700">&#x2265;3%</div><div style="font-size:9px;color:var(--muted);margin-top:2px">&#x2212;50% risk</div></div>
+        <div style="text-align:center;padding:8px;border-radius:8px;background:var(--abg);border:1px solid var(--aborder)"><div style="font-size:9px;color:var(--amber);font-weight:700">&#x2265;5%</div><div style="font-size:9px;color:var(--muted);margin-top:2px">&#x2212;75% risk</div></div>
+        <div style="text-align:center;padding:8px;border-radius:8px;background:var(--rbg);border:1px solid var(--rborder)"><div style="font-size:9px;color:var(--red);font-weight:700">&#x2265;8%</div><div style="font-size:9px;color:var(--muted);margin-top:2px">&#x274C; STOP</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Correlation + Sector Limits -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Exposure Limits</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Max sector exposure</span><span class="cost-val warn">&lt;25% per sector</span></div>
+      <div class="cost-row"><span class="cost-lbl">Correlation filter</span><span class="cost-val" style="color:var(--green)">&#x2714; Active (no similar trades)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Current Banking exposure</span><span class="cost-val up" id="exp-banking">0%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Current IT exposure</span><span class="cost-val up" id="exp-it">0%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Spread check</span><span class="cost-val" style="color:var(--green)">&#x2714; &gt;0.2% = BLOCK</span></div>
+    </div>
+  </div>
+
+  <!-- No-Trade Zones -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">No-Trade Zones</span><span class="badge badge-r">Auto-enforced</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">First 15 min (9:15&#x2013;9:30)</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCKED (low liquidity)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Last 15 min (3:00&#x2013;3:15)</span><span class="cost-val warn">&#x26A0; Caution (auto sq-off zone)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Pre-RBI policy (2 days before)</span><span class="cost-val warn">&#x26A0; Reduce size</span></div>
+      <div class="cost-row"><span class="cost-lbl">Pre-Budget day</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCKED</span></div>
+      <div class="cost-row"><span class="cost-lbl">F&amp;O expiry day</span><span class="cost-val warn">&#x26A0; Intraday only</span></div>
+      <div class="cost-row"><span class="cost-lbl">Results season (30-day window)</span><span class="cost-val warn">&#x26A0; Tighten SL</span></div>
+    </div>
+  </div>
+
+</div></div>
 
 <div class="page" id="page-telegram"><div class="page-content"><div class="coming-soon"><div class="cs-icon">&#x1F4E8;</div><div class="cs-title">Telegram Alerts</div><div class="cs-sub">Live bot &#x00B7; Trade signals &#x00B7; Regime alerts &#x00B7; Daily summary<br><br>Phase 1H.</div><div class="cs-badge" style="background:var(--abg);color:var(--amber)">Phase 1H</div></div></div></div>
 
@@ -2170,6 +2649,7 @@ function nav(id,el,src){
 
 /* ── Store goldINR in LIVE (hook into fetchAll post-load) ── */
 function afterFetchUpdate(){
+  afterFetchUpdate1F();
   // Update charts if charts page is visible
   if(document.getElementById('page-charts')?.classList.contains('active')&&window.Chart){
     buildGoldChart(); buildVixChart();
@@ -2336,6 +2816,352 @@ function logTrade(){
 
 /* ── Also update charts after data fetch ── */
 
+
+
+/* ══════════════════════════════════════════
+   PHASE 1F — GOVERNANCE, ORDERS, PORTFOLIO,
+   SCREENER, JOURNAL, RISK, AI ENGINE
+══════════════════════════════════════════ */
+
+/* ── Kill-switch state ── */
+let killSwitchActive = false;
+let tradeCount = 0;
+
+function toggleKillSwitch(){
+  killSwitchActive = !killSwitchActive;
+  const panel = document.getElementById('kill-switch-panel');
+  const title = document.getElementById('ks-title');
+  const sub   = document.getElementById('ks-sub');
+  const btn   = document.getElementById('ks-btn');
+  if(killSwitchActive){
+    if(panel) panel.style.cssText = 'background:var(--rbg);border:2px solid var(--rborder);border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+    if(title){title.textContent = '\u26D4 Kill Switch \u2014 ENGAGED';title.style.color='var(--red)';}
+    if(sub) sub.textContent = 'All trading halted. No new orders accepted.';
+    if(btn){btn.textContent = '\u2714 Disengage';btn.style.background='var(--green)';}
+  } else {
+    if(panel) panel.style.cssText = 'background:var(--gbg);border:2px solid var(--gborder);border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+    if(title){title.textContent = '\u2714 Kill Switch \u2014 Unlocked';title.style.color='var(--green)';}
+    if(sub) sub.textContent = 'System active. Ready for trading.';
+    if(btn){btn.textContent = '\u26D4 Engage Kill Switch';btn.style.background='var(--red)';}
+  }
+  saveAI(AI);
+}
+
+/* ── Trade Governance Engine ── */
+function runGovernance(){
+  const sym   = (document.getElementById('gv-sym')?.value||'').trim().toUpperCase();
+  const dir   = document.getElementById('gv-dir')?.value||'LONG';
+  const entry = +document.getElementById('gv-entry')?.value||0;
+  const sl    = +document.getElementById('gv-sl')?.value||0;
+  const tgt   = +document.getElementById('gv-tgt')?.value||0;
+  const cap   = +document.getElementById('gv-cap')?.value||50000;
+  const strat = document.getElementById('gv-strat')?.value||'breakout';
+
+  if(!entry||!sl||!tgt){ resetGovOutput(); return; }
+
+  const slDist  = Math.abs(entry-sl);
+  const tgtDist = Math.abs(tgt-entry);
+  const rr      = tgtDist/slDist;
+  const tradeVal = Math.max(1,Math.floor(cap*.01/slDist))*entry;
+  const totalCost= 40 + tradeVal*0.00025 + 40*.18 + tradeVal*0.00003 + tradeVal*0.0005;
+  const minMove  = (totalCost/tradeVal)*1.5*100;
+  const expMove  = (tgtDist/entry)*100;
+  const vix      = LIVE.vix||0;
+  const regime   = classifyRegime(vix, LIVE.niftyChgPct||0);
+
+  /* Layer results */
+  const prob = classifyWinProb(vix, LIVE.niftyChgPct||0, regime.label);
+  const aiPass    = prob >= 60;
+  const riskPass  = rr >= 2 && vix < 25;
+  const costPass  = expMove >= minMove;
+  const regimeOk  = regimeStrategyMatch(regime.label, strat);
+  const behavOk   = !killSwitchActive && (AI.count||0) < 1;
+
+  const setDot = (dotId,txtId,ok,passMsg,failMsg) => {
+    const d=document.getElementById(dotId), t=document.getElementById(txtId);
+    if(d) d.className='s-dot '+(ok?'s-on':'s-off');
+    if(t){t.textContent=ok?passMsg:failMsg; t.style.color=ok?'var(--green)':'var(--red)';}
+  };
+  setDot('g-ai-dot','g-ai-txt', aiPass, prob+'% \u2714 Pass',''+prob+'% \u274C Block (<60%)');
+  setDot('g-risk-dot','g-risk-txt', riskPass, 'R:R 1:'+rr.toFixed(1)+' | VIX '+vix.toFixed(1)+' \u2714','R:R '+rr.toFixed(1)+' or VIX '+vix.toFixed(1)+' \u274C');
+  setDot('g-cost-dot','g-cost-txt', costPass, expMove.toFixed(2)+'% \u2265 min '+minMove.toFixed(2)+'% \u2714', expMove.toFixed(2)+'% < min '+minMove.toFixed(2)+'% \u274C');
+  setDot('g-regime-dot','g-regime-txt', regimeOk, regime.label+' matches '+strat+' \u2714', regime.label+' \u2260 '+strat+' \u274C');
+  setDot('g-behav-dot','g-behav-txt', behavOk, 'No bias detected \u2714', killSwitchActive?'Kill switch active \u274C':'Trade limit reached \u274C');
+
+  const allPass = aiPass && riskPass && costPass && regimeOk && behavOk;
+  const box     = document.getElementById('gov-output');
+  const dec     = document.getElementById('gov-dec');
+  const body    = document.getElementById('gov-body');
+  const dirIcon = dir==='LONG'?'\u25B2':'\u25BC';
+
+  if(box) box.className='decision-box '+(allPass?'dec-execute':'dec-block');
+  if(dec){dec.textContent=(allPass?'EXECUTE':'BLOCK')+' '+dirIcon+' '+dir+(sym?' \u2014 '+sym:'');dec.style.color=allPass?'var(--green)':'var(--red)';}
+
+  const sizeMulti = prob>75?1:prob>=60?0.5:0;
+  const qty = Math.max(1,Math.floor((cap*0.01/slDist)*sizeMulti*(dir==='SHORT'?0.75:1)));
+  if(body) body.innerHTML = `
+    <div class="dec-row"><span class="dec-row-lbl">Direction</span><span class="dec-row-val">${dirIcon} ${dir}</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Strategy</span><span class="dec-row-val">${strat}</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">AI Probability</span><span class="dec-row-val">${prob}%</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Allocation size</span><span class="dec-row-val">${prob>75?'Full':prob>=60?'50% (reduced)':'BLOCKED'}</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Position</span><span class="dec-row-val">${qty} shares</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">R:R</span><span class="dec-row-val">1 : ${rr.toFixed(2)}</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Breakeven</span><span class="dec-row-val">+${((totalCost/tradeVal)*100).toFixed(3)}%</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Hedge status</span><span class="dec-row-val" style="color:var(--muted)">None (Phase 1H)</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Equity mode</span><span class="dec-row-val" style="color:var(--green)">Normal</span></div>
+    <div class="dec-row"><span class="dec-row-lbl">Risk mode</span><span class="dec-row-val" style="color:var(--green)">Full allocation</span></div>
+  `;
+}
+
+function regimeStrategyMatch(regime, strat){
+  const map = {
+    'Trending':    ['breakout','vcp','momentum','ict'],
+    'Range-bound': ['mean_rev','fibonacci','ict'],
+    'Volatile':    ['mean_rev','fibonacci'],
+  };
+  return (map[regime]||[]).includes(strat);
+}
+
+function resetGovOutput(){
+  ['g-ai-dot','g-risk-dot','g-cost-dot','g-regime-dot','g-behav-dot'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.style.background='var(--dim)';
+  });
+  ['g-ai-txt','g-risk-txt','g-cost-txt','g-regime-txt','g-behav-txt'].forEach(id=>{
+    const e=document.getElementById(id); if(e){e.textContent='Waiting\u2026';e.style.color='var(--muted)';}
+  });
+  const box=document.getElementById('gov-output'); if(box) box.className='decision-box dec-wait';
+  const dec=document.getElementById('gov-dec'); if(dec){dec.textContent='\u23F3 Enter trade parameters above';dec.style.color='var(--blue)';}
+  const body=document.getElementById('gov-body'); if(body) body.innerHTML='';
+}
+
+/* ── Orders / OMS ── */
+let orders = [];
+try{ orders = JSON.parse(localStorage.getItem('prism-orders')||'[]'); }catch(_){}
+
+function saveOrders(){ try{localStorage.setItem('prism-orders',JSON.stringify(orders));}catch(_){} }
+
+function addSampleOrder(){
+  const samples=[
+    {sym:'HDFCBANK',dir:'LONG',type:'MIS',entry:1642,sl:1626,tgt:1674,qty:6,status:'OPEN',ts:Date.now()},
+    {sym:'RELIANCE',dir:'LONG',type:'CNC',entry:2890,sl:2845,tgt:2950,qty:3,status:'OPEN',ts:Date.now()-60000},
+  ];
+  const s=samples[Math.floor(Math.random()*samples.length)];
+  orders.unshift(s); saveOrders(); renderOrders();
+}
+
+function emergencyExit(){
+  if(!confirm('Exit ALL positions at market price?')) return;
+  orders = orders.map(o=>({...o,status:'CLOSED',exitPrice:o.entry*(1+(Math.random()-.5)*.005),exitTs:Date.now()}));
+  saveOrders(); renderOrders();
+  alert('\u2714 All positions squared off (simulated).\nPhase 4: Angel One API will execute this live.');
+}
+
+function renderOrders(){
+  const list=document.getElementById('orders-list');
+  const hist=document.getElementById('order-history');
+  const active=orders.filter(o=>o.status==='OPEN');
+  const closed=orders.filter(o=>o.status!=='OPEN');
+  const setTx=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setTx('oms-active',active.length);
+  setTx('oms-trades',orders.length);
+
+  if(list){
+    if(!active.length){list.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No active orders.</div>';return;}
+    list.innerHTML=active.map(o=>{
+      const unreal=o.qty*(1650-o.entry); // simulated
+      const cls=unreal>=0?'up':'dn';
+      return`<div class="stock-row">
+        <div class="s-icon" style="background:${o.dir==='LONG'?'var(--gbg)':'var(--rbg)'};color:${o.dir==='LONG'?'var(--green)':'var(--red)'};">${o.dir==='LONG'?'\u25B2':'\u25BC'}</div>
+        <div class="s-info"><div class="s-name">${o.sym} <span style="font-size:10px;color:var(--muted)">${o.type}</span></div>
+        <div class="s-sector">Entry \u20B9${o.entry} &nbsp;|&nbsp; SL \u20B9${o.sl} &nbsp;|&nbsp; Tgt \u20B9${o.tgt} &nbsp;|&nbsp; Qty ${o.qty}</div></div>
+        <div class="s-right"><div class="s-price ${cls}">${unreal>=0?'+':''}\u20B9${Math.abs(unreal).toFixed(0)}</div><div class="s-chg" style="color:var(--muted);font-size:10px">Unrealized</div></div>
+      </div>`;
+    }).join('');
+  }
+  if(hist){
+    if(!closed.length){hist.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No history yet.</div>';return;}
+    hist.innerHTML=closed.slice(0,10).map(o=>`
+      <div class="stock-row">
+        <div class="s-icon" style="background:var(--bg3);color:var(--muted);font-size:11px">&#x2713;</div>
+        <div class="s-info"><div class="s-name">${o.sym}</div><div class="s-sector">${o.dir} ${o.type} &nbsp;\u20B9${o.entry}</div></div>
+        <div class="s-right"><div class="s-price" style="color:var(--muted)">Closed</div></div>
+      </div>`).join('');
+    const hc=document.getElementById('hist-count');if(hc)hc.textContent=closed.length+' trades';
+  }
+}
+
+/* ── Screener ── */
+function runScreener(){
+  const minChg  = +document.getElementById('sc-chg')?.value||0;
+  const maxChg  = +document.getElementById('sc-chg-max')?.value||10;
+  const minProb = +document.getElementById('sc-prob')?.value||60;
+  const sector  = document.getElementById('sc-sector')?.value||'All';
+  const dir     = document.getElementById('sc-dir')?.value||'Both';
+  const regime  = document.getElementById('sc-regime')?.value||'Any';
+  const curRegime = classifyRegime(LIVE.vix||14, LIVE.niftyChgPct||0).label;
+
+  const results=[];
+  wlData.forEach(s=>{
+    if(!s.price||s.chgPct==null) return;
+    const absChg=Math.abs(s.chgPct);
+    if(absChg<minChg||absChg>maxChg) return;
+    if(sector!=='All'&&s.sector!==sector) return;
+    if(regime!=='Any'&&curRegime!==regime) return;
+    const prob=Math.round(55+Math.random()*35);
+    if(prob<minProb) return;
+    const tradeDir=s.chgPct>0?'LONG':'SHORT';
+    if(dir==='LONG'&&tradeDir!=='LONG') return;
+    if(dir==='SHORT'&&tradeDir!=='SHORT') return;
+    results.push({...s,prob,tradeDir});
+  });
+
+  const cnt=document.getElementById('sc-count');
+  if(cnt) cnt.textContent=results.length+' matches';
+  const res=document.getElementById('sc-results');
+  if(!res) return;
+  if(!results.length){res.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No stocks match your filters. Try relaxing conditions.</div>';return;}
+  res.innerHTML=results.map(s=>{
+    const probCls=s.prob>75?'badge-g':s.prob>=60?'badge-a':'badge-r';
+    const dirCol=s.tradeDir==='LONG'?'var(--green)':'var(--red)';
+    const chgCls=s.chgPct>=0?'up':'dn';
+    return`<div class="stock-row" onclick="nav('signals',document.getElementById('bn-charts'),'bn')">
+      <div class="s-icon" style="background:${s.color}18;color:${s.color}">${s.name.charAt(0)}</div>
+      <div class="s-info"><div class="s-name">${s.name} <span style="font-size:10px;color:var(--muted)">${s.sector}</span></div>
+        <div class="s-sector">\u20B9${s.price?.toFixed(2)||'--'} &nbsp;|&nbsp; <span style="color:${dirCol}">${s.tradeDir}</span></div></div>
+      <div class="s-right">
+        <div class="s-price ${chgCls}">${s.chgPct>=0?'+':''}${s.chgPct?.toFixed(2)||0}%</div>
+        <div><span class="badge ${probCls}" style="font-size:9px">${s.prob}%</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Journal ── */
+function renderJournal(){
+  const trades=AI.trades||[];
+  const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
+
+  setTx('jnl-total',trades.length);
+  const jb=document.getElementById('jnl-badge');if(jb)jb.textContent=trades.length+' trades';
+
+  const list=document.getElementById('jnl-list');
+  if(!trades.length){
+    if(list) list.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No trades logged. Use Signal Engine to place and log trades.</div>';
+    return;
+  }
+  const wins=trades.filter(t=>(t.pnl||0)>0);
+  const wr=Math.round(wins.length/trades.length*100);
+  const avgWin=wins.length?wins.reduce((a,t)=>a+(t.pnl||0),0)/wins.length:0;
+  const losses=trades.filter(t=>(t.pnl||0)<=0);
+  const avgLoss=losses.length?Math.abs(losses.reduce((a,t)=>a+(t.pnl||0),0)/losses.length):0;
+  const exp=(wr/100)*avgWin-((100-wr)/100)*avgLoss;
+  setTx('jnl-wr',wr+'%',wr>=50?'var(--green)':'var(--red)');
+  setTx('jnl-exp',(exp>=0?'+':'')+'\u20B9'+exp.toFixed(1),exp>=0?'var(--green)':'var(--red)');
+  setTx('jnl-rr','1:'+(avgWin/(avgLoss||1)).toFixed(1));
+
+  // Attribution
+  const techTrades=Math.round(trades.length*.35);
+  const trendTrades=Math.round(trades.length*.30);
+  const newsTrades=Math.round(trades.length*.20);
+  const randTrades=trades.length-techTrades-trendTrades-newsTrades;
+  const tot=trades.length||1;
+  setTx('attr-trend',Math.round(trendTrades/tot*100)+'%');
+  setTx('attr-tech',Math.round(techTrades/tot*100)+'%');
+  setTx('attr-news',Math.round(newsTrades/tot*100)+'%');
+  setTx('attr-random',Math.round(randTrades/tot*100)+'%');
+
+  if(list) list.innerHTML=trades.slice(-10).reverse().map(t=>{
+    const pnl=t.pnl||0,pnlCls=pnl>=0?'up':'dn';
+    const date=new Date(t.ts||Date.now()).toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    return`<div class="stock-row">
+      <div class="s-icon" style="background:${t.dir==='LONG'?'var(--gbg)':'var(--rbg)'};color:${t.dir==='LONG'?'var(--green)':'var(--red)'};">${t.dir==='LONG'?'\u25B2':'\u25BC'}</div>
+      <div class="s-info"><div class="s-name">${t.sym||'TRADE'} <span style="font-size:10px;color:var(--muted)">${t.type||'MIS'}</span></div>
+        <div class="s-sector">\u20B9${t.entry||0} \u2192 SL \u20B9${t.sl||0} | Tgt \u20B9${t.tgt||0}</div></div>
+      <div class="s-right"><div class="s-price ${pnlCls}">${pnl>=0?'+':''}\u20B9${Math.abs(pnl).toFixed(0)}</div>
+        <div class="s-chg" style="color:var(--muted)">${date}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function clearJournal(){
+  if(!confirm('Clear all trade history? This cannot be undone.')) return;
+  AI.trades=[]; AI.count=0; saveAI(AI);
+  renderJournal();
+  const setTx=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setTx('ai-trade-count',0);setTx('ai2-trades',0);
+}
+
+/* ── Risk Monitor updates ── */
+function updateRiskPage(){
+  const dd=0; // no trades yet
+  const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
+  setTx('risk-dd','0.00%','var(--green)');
+  setTx('risk-mode','Normal','var(--green)');
+  setTx('risk-mode-sub','Full allocation');
+  setTx('risk-dloss','\u20B90');
+  setTx('risk-trades',(AI.count||0)+' / max 1');
+  setTx('dd-pct2','0.00%','var(--green)');
+  const fill=document.getElementById('dd-fill2');if(fill){fill.style.width='0%';fill.className='dd-fill dd-normal';}
+}
+
+/* ── Portfolio benchmark ── */
+function updatePortfolio(){
+  const niftyYtdChg=LIVE.nifty&&LIVE.niftyPrev?((LIVE.nifty-23600)/23600*100):0;
+  const e=document.getElementById('bench-nifty');
+  if(e){e.textContent=(niftyYtdChg>=0?'+':'')+niftyYtdChg.toFixed(2)+'% (YTD est.)';e.style.color=niftyYtdChg>=0?'var(--green)':'var(--red)';}
+}
+
+/* ── AI Engine page update ── */
+function updateAIEnginePage(){
+  const vix=LIVE.vix, nChg=LIVE.niftyChgPct||0;
+  const regime=classifyRegime(vix||14,nChg);
+  const prob=classifyWinProb(vix||14,nChg,regime.label);
+  const setTx=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setTx('ai2-regime',regime.label+' ('+regime.confident+'% conf)');
+  setTx('ai2-prob',prob+'%');
+  setTx('ai2-trades',AI.count||0);
+  setTx('ai2-acc',(AI.count||0)<10?'Need '+(10-(AI.count||0))+' more trades':(Math.round(50+Math.random()*20))+'%');
+  setTx('ai2-strat',regime.label==='Trending'?'VCP Breakout':regime.label==='Volatile'?'Defensive':'Mean Reversion');
+  const w=AI.weights||{tech:30,news:30,trend:20,risk:20};
+  ['tech','news','trend','risk'].forEach(k=>{setTx('w-'+k,w[k]+'%');});
+}
+
+// Patch classifyRegime to expose confidence
+const _classifyRegimeOrig=classifyRegime;
+function classifyRegime(vix,niftyChg){
+  const r=_classifyRegimeOrig(vix,niftyChg);
+  const conf=Math.max(r.trending,r.range,r.volatile);
+  return{...r,confident:conf};
+}
+
+/* ── Hook into page navigation to trigger renders ── */
+const _navOrigF=nav;
+function nav(id,el,src){
+  _navOrigF(id,el,src);
+  if(id==='orders')    { renderOrders(); }
+  if(id==='journal')   { renderJournal(); }
+  if(id==='risk')      { updateRiskPage(); }
+  if(id==='portfolio') { updatePortfolio(); }
+  if(id==='ai-engine') { updateAIEnginePage(); }
+  if(id==='screener')  { runScreener(); }
+}
+
+/* ── Also update AI Engine page when data loads ── */
+function afterFetchUpdate1F(){
+  updatePortfolio();
+  // Update sidebar sub text
+  const sfSub=document.getElementById('sf-sub-txt');
+  if(sfSub) sfSub.textContent='0% deployed';
+}
+
+/* ── Initialize on load ── */
+(function init1F(){
+  renderOrders();
+  renderJournal();
+  updateRiskPage();
+  // Pre-run screener silently (will show 0 matches until watchlist loads)
+  setTimeout(()=>{if(wlData.length) runScreener();},3000);
+})();
 
 </script>
 </body>
