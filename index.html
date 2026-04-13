@@ -486,6 +486,37 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .dd-warn{background:var(--amber);}
 .dd-stop{background:var(--red);}
 
+
+/* ═══ 1H: LEARNING DASHBOARD ═══ */
+.learn-stat{background:var(--bg3);border-radius:9px;padding:11px;text-align:center;}
+.learn-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.learn-stat-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;}
+.feat-bar{height:8px;border-radius:4px;overflow:hidden;background:var(--bg3);margin:4px 0;}
+.feat-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.feat-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.feat-row:last-child{border-bottom:none;}
+.feat-label{font-size:11px;color:var(--muted);width:100px;flex-shrink:0;}
+.feat-pct{font-family:'DM Mono',monospace;font-size:11px;width:35px;text-align:right;flex-shrink:0;}
+
+/* ═══ 1H: OPTIONS CHAIN ═══ */
+.options-table{width:100%;border-collapse:collapse;font-size:11px;}
+.options-table th{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:7px 8px;border-bottom:1px solid var(--border2);background:var(--bg3);letter-spacing:.4px;}
+.options-table td{padding:7px 8px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;}
+.options-table tr:last-child td{border-bottom:none;}
+.options-table tr:hover td{background:rgba(59,130,246,0.04);}
+.itm-call{background:rgba(16,185,129,0.06);}
+.itm-put{background:rgba(244,63,94,0.06);}
+.atm-row td{font-weight:700;background:rgba(59,130,246,0.08)!important;}
+.oi-bar{height:6px;border-radius:3px;display:inline-block;min-width:4px;}
+
+/* ═══ 1H: GREEKS ═══ */
+.greek-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media(min-width:480px){.greek-grid{grid-template-columns:repeat(4,1fr);}}
+.greek-tile{background:var(--bg3);border-radius:9px;padding:11px;text-align:center;}
+.greek-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.greek-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;}
+.greek-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+
 </style>
 </head>
 <body>
@@ -556,7 +587,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
     <div class="sf-value" id="sf-capital">&#x20B9;50,000</div>
     <div class="sf-bar"><div class="sf-fill" id="sf-fill-bar" style="width:0%"></div></div>
     <div class="sf-sub" id="sf-sub-txt">0% deployed</div>
-    <div class="ph-badge">Phase 1G &#x2014; Complete System</div>
+    <div class="ph-badge">Phase 1H &#x2014; Full Private AMC</div>
   </div>
 </nav>
 
@@ -856,7 +887,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
       <div class="divider"></div>
       <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1G &#x2014; Backtest, Telegram, Vault, Settings</div><div class="rmap-sub">Strategy backtesting, Telegram bot, PIN vault, full settings configuration</div></div><span class="phase-lbl ph0">Done</span></div>
       <div class="divider"></div>
-      <div class="rmap-row"><span class="rmap-ri">&#x1F535;</span><div class="rmap-body"><div class="rmap-title">1H &#x2014; Vault + Telegram + Learning Dashboard</div><div class="rmap-sub">PIN vault, live Telegram bot, model accuracy %, feature importance, strategy evolution</div></div><span class="phase-lbl ph2">Queued</span></div>
+      <div class="rmap-row"><span class="rmap-ri">&#x2705;</span><div class="rmap-body"><div class="rmap-title">1H &#x2014; Vault + Telegram + Learning Dashboard</div><div class="rmap-sub">PIN vault, live Telegram bot, model accuracy %, feature importance, strategy evolution</div></div><span class="phase-lbl ph2">Queued</span></div>
       <div class="divider"></div>
       <div class="rmap-row"><span class="rmap-ri">&#x2B1C;</span><div class="rmap-body"><div class="rmap-title">Phase 2 &#x2014; News + FII/DII Sentiment</div><div class="rmap-sub">NewsAPI, TextBlob, NSE bulk deals, sector RSI live</div></div><span class="phase-lbl ph2">Phase 2</span></div>
       <div class="divider"></div>
@@ -1854,6 +1885,320 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
   </div>
 
 </div></div>
+<div class="page" id="page-learning"><div class="page-content">
+
+  <div class="alert success">
+    <span class="alert-icon">&#x1F9E0;</span>
+    <span><strong>Phase 1H &#x2014; Learning Dashboard.</strong> Model accuracy, feature importance, strategy evolution tracker, expectancy over time.</span>
+  </div>
+
+  <!-- Model Stats -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    <div class="learn-stat"><div class="learn-stat-lbl">Model Accuracy</div><div class="learn-stat-val" id="ld-acc">&#x2014;</div></div>
+    <div class="learn-stat"><div class="learn-stat-lbl">Trades Logged</div><div class="learn-stat-val" id="ld-trades">0</div></div>
+    <div class="learn-stat"><div class="learn-stat-lbl">Expectancy</div><div class="learn-stat-val" id="ld-exp">&#x2014;</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    <div class="learn-stat"><div class="learn-stat-lbl">Win Rate</div><div class="learn-stat-val up" id="ld-wr">&#x2014;</div></div>
+    <div class="learn-stat"><div class="learn-stat-lbl">Sharpe</div><div class="learn-stat-val" id="ld-sharpe">&#x2014;</div></div>
+    <div class="learn-stat"><div class="learn-stat-lbl">Behavioural Risk</div><div class="learn-stat-val up" id="ld-beh">Low &#x2713;</div></div>
+  </div>
+
+  <!-- Feature Importance -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Feature Importance</span><span class="badge badge-p">AI Attribution</span></div>
+    <div class="card-body">
+      <div class="feat-row">
+        <span class="feat-label">Technicals</span>
+        <div style="flex:1"><div class="feat-bar"><div class="feat-fill" id="fi-tech" style="width:30%;background:var(--blue)"></div></div></div>
+        <span class="feat-pct" id="fp-tech">30%</span>
+      </div>
+      <div class="feat-row">
+        <span class="feat-label">News Sentiment</span>
+        <div style="flex:1"><div class="feat-bar"><div class="feat-fill" id="fi-news" style="width:30%;background:var(--purple)"></div></div></div>
+        <span class="feat-pct" id="fp-news">30%</span>
+      </div>
+      <div class="feat-row">
+        <span class="feat-label">Trend (ADX)</span>
+        <div style="flex:1"><div class="feat-bar"><div class="feat-fill" id="fi-trend" style="width:20%;background:var(--green)"></div></div></div>
+        <span class="feat-pct" id="fp-trend">20%</span>
+      </div>
+      <div class="feat-row">
+        <span class="feat-label">Risk / Reward</span>
+        <div style="flex:1"><div class="feat-bar"><div class="feat-fill" id="fi-risk" style="width:20%;background:var(--amber)"></div></div></div>
+        <span class="feat-pct" id="fp-risk">20%</span>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted)">Weights auto-update after each trade outcome. High-performing factors gain weight; weak factors decay.</div>
+    </div>
+  </div>
+
+  <!-- Strategy Evolution -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Strategy Evolution Tracker</span><span class="badge badge-p">Self-Learning</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Active strategy</span><span class="cost-val" id="se-active">VCP Breakout</span></div>
+      <div class="cost-row"><span class="cost-lbl">Strategy win rate</span><span class="cost-val" id="se-wr">No data yet</span></div>
+      <div class="cost-row"><span class="cost-lbl">Decay threshold</span><span class="cost-val warn">&gt;20% drop triggers switch</span></div>
+      <div class="cost-row"><span class="cost-lbl">Decay detected</span><span class="cost-val up" id="se-decay">No &#x2713;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Next candidate</span><span class="cost-val" style="color:var(--muted)" id="se-next">Mean Reversion</span></div>
+      <div class="cost-row"><span class="cost-lbl">Last switch</span><span class="cost-val" style="color:var(--muted)" id="se-last">Never</span></div>
+    </div>
+    <div style="padding:12px 14px">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Strategy Performance History</div>
+      <div id="se-history">
+        <div style="font-size:11px;color:var(--muted)">Log trades in the Journal to build strategy history.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expectancy Trend (text version if no Chart.js) -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Rolling 30-Trade Expectancy</span></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500" id="exp30-val">&#x2014;</div>
+          <div style="font-size:11px;color:var(--muted)" id="exp30-sub">No trades yet</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted)">Action</div>
+          <div style="font-size:13px;font-weight:600" id="exp30-action">&#x2014;</div>
+        </div>
+      </div>
+      <div style="padding:10px;background:var(--bg3);border-radius:9px;font-size:11px;color:var(--muted);line-height:1.7">
+        &#x25CF; Expectancy &gt;0 &#x2192; Continue trading at current size<br>
+        &#x25CF; Expectancy falling &#x2192; Reduce position sizes<br>
+        &#x25CF; Expectancy &lt;0 &#x2192; &#x274C; Stop trading, review strategy
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Insights Panel -->
+  <div class="ai-panel">
+    <div class="ai-panel-title">&#x1F9E0; AI Edge Summary</div>
+    <div class="ai-metric"><span class="ai-metric-label">Your edge comes from</span><span class="ai-metric-val" id="ai-edge">&#x2014;</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Weak area</span><span class="ai-metric-val" id="ai-weak">&#x2014;</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Best time of day</span><span class="ai-metric-val" id="ai-besttime">10:30 &#x2013; 11:30 AM</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Avoid</span><span class="ai-metric-val" id="ai-avoid">Last 15 min</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Reinforcement signal</span><span class="ai-metric-val" id="ai-rl">Insufficient data</span></div>
+  </div>
+
+</div></div>
+<div class="page" id="page-options"><div class="page-content">
+
+  <div class="alert success">
+    <span class="alert-icon">&#x1F4CA;</span>
+    <span><strong>Phase 1H &#x2014; Options Chain + F&amp;O Greeks.</strong> Live OI, PCR, IV, Black-Scholes Greeks for Bank Nifty. Strategy selection based on volatility regime.</span>
+  </div>
+
+  <!-- Selector -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Options Chain Config</span><span class="badge badge-b">Live OI</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="te-label">Index</label>
+          <select class="te-select" id="opt-index" onchange="buildOptionsChain()">
+            <option value="BANKNIFTY">Bank Nifty</option>
+            <option value="NIFTY">Nifty 50</option>
+          </select>
+        </div>
+        <div>
+          <label class="te-label">Expiry</label>
+          <select class="te-select" id="opt-expiry" onchange="buildOptionsChain()">
+            <option value="weekly">Weekly (Current)</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="buildOptionsChain()" style="background:var(--blue);color:#fff;border:none;padding:11px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F504; Refresh Chain</button>
+    </div>
+  </div>
+
+  <!-- Key Stats -->
+  <div class="tiles-4">
+    <div class="tile"><div class="tile-label">Spot Price</div><div class="tile-value" id="opt-spot">&#x2014;</div><div class="tile-sub">live</div></div>
+    <div class="tile"><div class="tile-label">PCR (OI)</div><div class="tile-value" id="opt-pcr">&#x2014;</div><div class="tile-sub" id="opt-pcr-s">loading</div></div>
+    <div class="tile"><div class="tile-label">Max Pain</div><div class="tile-value" id="opt-maxpain">&#x2014;</div><div class="tile-sub">strike</div></div>
+    <div class="tile"><div class="tile-label">IV (ATM)</div><div class="tile-value warn" id="opt-iv">&#x2014;</div><div class="tile-sub">implied vol</div></div>
+  </div>
+
+  <!-- Strategy Suggestion -->
+  <div id="opt-strategy-card" class="ai-panel">
+    <div class="ai-panel-title">&#x1F9E0; Options Strategy Suggestion</div>
+    <div class="ai-metric"><span class="ai-metric-label">Regime</span><span class="ai-metric-val" id="opt-regime-lbl">&#x2014;</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Suggested Strategy</span><span class="ai-metric-val" id="opt-strat-sug">&#x2014;</span></div>
+    <div class="ai-metric"><span class="ai-metric-label">Reasoning</span><span class="ai-metric-val" id="opt-strat-why" style="font-size:10px;color:var(--muted)">&#x2014;</span></div>
+  </div>
+
+  <!-- Greeks Calculator -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">F&amp;O Greeks &#x2014; Black-Scholes</span><span class="badge badge-p">Live calc</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label class="te-label">Spot (&#x20B9;)</label><input class="te-input" id="bs-spot" type="number" placeholder="47000" oninput="calcGreeks()"></div>
+        <div><label class="te-label">Strike (&#x20B9;)</label><input class="te-input" id="bs-strike" type="number" placeholder="47000" oninput="calcGreeks()"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label class="te-label">Days to Expiry</label><input class="te-input" id="bs-dte" type="number" placeholder="7" oninput="calcGreeks()"></div>
+        <div><label class="te-label">IV (% annual)</label><input class="te-input" id="bs-iv" type="number" placeholder="18" oninput="calcGreeks()"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label class="te-label">Risk-free Rate (%)</label><input class="te-input" id="bs-rf" type="number" value="6.5" oninput="calcGreeks()"></div>
+        <div><label class="te-label">Option Type</label>
+          <select class="te-select" id="bs-type" onchange="calcGreeks()">
+            <option value="call">Call</option><option value="put">Put</option>
+          </select>
+        </div>
+      </div>
+      <!-- Greeks output -->
+      <div class="greek-grid">
+        <div class="greek-tile"><div class="greek-lbl">&#x394; Delta</div><div class="greek-val" id="gk-delta">&#x2014;</div><div class="greek-sub">price sensitivity</div></div>
+        <div class="greek-tile"><div class="greek-lbl">&#x398; Theta</div><div class="greek-val dn" id="gk-theta">&#x2014;</div><div class="greek-sub">time decay/day</div></div>
+        <div class="greek-tile"><div class="greek-lbl">&#x3BD; Vega</div><div class="greek-val" id="gk-vega">&#x2014;</div><div class="greek-sub">per 1% IV move</div></div>
+        <div class="greek-tile"><div class="greek-lbl">&#x393; Gamma</div><div class="greek-val warn" id="gk-gamma">&#x2014;</div><div class="greek-sub">delta change</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="text-align:center;background:var(--gbg);border-radius:9px;padding:12px;border:1px solid var(--gborder)">
+          <div style="font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase;margin-bottom:4px">Option Premium</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--green)" id="gk-price">&#x2014;</div>
+        </div>
+        <div style="text-align:center;background:var(--bbg);border-radius:9px;padding:12px;border:1px solid var(--bborder)">
+          <div style="font-size:9px;color:var(--blue);font-weight:700;text-transform:uppercase;margin-bottom:4px">Intrinsic Value</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--blue)" id="gk-intrinsic">&#x2014;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Options Chain Table -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Options Chain</span><span class="badge badge-b" id="opt-chain-time">Simulated</span></div>
+    <div style="overflow-x:auto">
+      <table class="options-table" id="opt-chain-table">
+        <thead><tr>
+          <th>OI(C)</th><th>Vol(C)</th><th>LTP(C)</th><th>IV(C)</th>
+          <th style="background:var(--bg2);color:var(--text)">Strike</th>
+          <th>IV(P)</th><th>LTP(P)</th><th>Vol(P)</th><th>OI(P)</th>
+        </tr></thead>
+        <tbody id="opt-chain-body">
+          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Press Refresh Chain to load</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- OI Rules -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Smart Money OI Rules</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">PCR &gt; 1.3</span><span class="cost-val" style="color:var(--green)">Bullish &#x2192; Long bias</span></div>
+      <div class="cost-row"><span class="cost-lbl">PCR &lt; 0.7</span><span class="cost-val" style="color:var(--red)">Bearish &#x2192; Short bias</span></div>
+      <div class="cost-row"><span class="cost-lbl">Price + OI align</span><span class="cost-val" style="color:var(--green)">&#x2714; Trade allowed</span></div>
+      <div class="cost-row"><span class="cost-lbl">Price + OI diverge</span><span class="cost-val" style="color:var(--red)">&#x274C; BLOCK trade</span></div>
+      <div class="cost-row"><span class="cost-lbl">Max Pain strike</span><span class="cost-val warn">Likely weekly close area</span></div>
+    </div>
+  </div>
+
+</div></div>
+<div class="page" id="page-smartmoney"><div class="page-content">
+
+  <div class="alert success">
+    <span class="alert-icon">&#x1F3E6;</span>
+    <span><strong>Phase 1H &#x2014; Smart Money &amp; India-Specific Engine.</strong> FII/DII activity, sector rotation, global correlation, expiry logic, gap risk.</span>
+  </div>
+
+  <!-- FII / DII -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">FII / DII Activity</span><span class="badge badge-b">NSE Data</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row">
+        <span class="cost-lbl">FII Net Today</span>
+        <span class="cost-val" id="fii-net" style="color:var(--muted)">Loading&#x2026;</span>
+      </div>
+      <div class="cost-row">
+        <span class="cost-lbl">DII Net Today</span>
+        <span class="cost-val" id="dii-net" style="color:var(--muted)">Loading&#x2026;</span>
+      </div>
+      <div class="cost-row">
+        <span class="cost-lbl">FII 5-day trend</span>
+        <span class="cost-val" id="fii-trend" style="color:var(--muted)">&#x2014;</span>
+      </div>
+      <div class="cost-row">
+        <span class="cost-lbl">Smart money signal</span>
+        <span class="cost-val" id="sm-signal">&#x2014;</span>
+      </div>
+      <div class="cost-row">
+        <span class="cost-lbl">Trade with smart money</span>
+        <span class="cost-val warn">Always align with FII direction</span>
+      </div>
+    </div>
+    <div style="padding:12px 14px;font-size:10px;color:var(--muted)">Live FII/DII data via NSE API in Phase 2. Currently showing simulated values.</div>
+  </div>
+
+  <!-- Global Correlation -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Global Market Correlation</span><span class="badge badge-g">Live</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">S&amp;P 500 (US)</span><span class="cost-val" id="corr-sp500">Loading&#x2026;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Crude Oil (WTI)</span><span class="cost-val" id="corr-crude">Loading&#x2026;</span></div>
+      <div class="cost-row"><span class="cost-lbl">USD / INR</span><span class="cost-val" id="corr-usdinr">Loading&#x2026;</span></div>
+      <div class="cost-row"><span class="cost-lbl">SGX Nifty (overnight)</span><span class="cost-val" id="corr-sgx">&#x2014;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Gap risk today</span><span class="cost-val" id="corr-gap">&#x2014;</span></div>
+    </div>
+  </div>
+
+  <!-- India-Specific Engine -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">India-Specific Risk Engine</span><span class="badge badge-r">Auto-enforced</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">F&amp;O Expiry Day</span><span class="cost-val" id="ind-expiry">Checking&#x2026;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Expiry rule</span><span class="cost-val warn">Intraday only on expiry day</span></div>
+      <div class="cost-row"><span class="cost-lbl">RBI Policy window</span><span class="cost-val" id="ind-rbi">Not in window</span></div>
+      <div class="cost-row"><span class="cost-lbl">Budget proximity</span><span class="cost-val up" id="ind-budget">Safe &#x2713;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Results season</span><span class="cost-val" id="ind-results">Normal</span></div>
+      <div class="cost-row"><span class="cost-lbl">Sector rotation</span><span class="cost-val" id="ind-rotation">&#x2014;</span></div>
+    </div>
+  </div>
+
+  <!-- Volume / Smart Money Detection -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Volume &amp; Order Flow</span><span class="badge badge-p">Smart Money</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Volume spike detector</span><span class="cost-val" id="vol-spike">Scanning&#x2026;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Delivery % (Nifty50)</span><span class="cost-val" id="vol-delivery">&#x2014;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Block deals today</span><span class="cost-val" id="vol-block">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Institutional activity</span><span class="cost-val" id="vol-inst">&#x2014;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Rule</span><span class="cost-val warn">Trade WITH institutional flow</span></div>
+    </div>
+    <div style="padding:12px 14px;font-size:10px;color:var(--muted)">Full order flow data via Angel One WebSocket and NSE bulk deals API in Phase 4.</div>
+  </div>
+
+  <!-- Hedging Engine -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Portfolio Hedging Engine</span><span class="badge badge-a">Auto-hedge</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Hedge status</span><span class="cost-val up" id="hedge-status">Not needed</span></div>
+      <div class="cost-row"><span class="cost-lbl">Portfolio beta</span><span class="cost-val" id="hedge-beta">&#x2014;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Hedge trigger</span><span class="cost-val warn">VIX &gt; 20 OR Drawdown &gt; 3%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Hedge instrument</span><span class="cost-val" style="color:var(--muted)">Put options on Nifty</span></div>
+      <div class="cost-row"><span class="cost-lbl">Hedge cost</span><span class="cost-val" style="color:var(--muted)">&#x2264; 0.5% of portfolio/month</span></div>
+    </div>
+  </div>
+
+  <!-- Tax Engine -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Tax-Aware Engine</span><span class="badge badge-b">SEBI / IT Act</span></div>
+    <div style="padding:0 14px">
+      <div class="cost-row"><span class="cost-lbl">Intraday turnover (YTD)</span><span class="cost-val" id="tax-intra">&#x20B9;0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Delivery turnover (YTD)</span><span class="cost-val" id="tax-del">&#x20B9;0</span></div>
+      <div class="cost-row"><span class="cost-lbl">F&amp;O turnover (YTD)</span><span class="cost-val" id="tax-fno">&#x20B9;0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Tax audit threshold</span><span class="cost-val warn">&#x20B9;10 Cr (F&amp;O)</span></div>
+      <div class="cost-row"><span class="cost-lbl">Overtrading cost</span><span class="cost-val" style="color:var(--red)">Higher tax bracket risk</span></div>
+    </div>
+  </div>
+
+</div></div>
 <div class="page" id="page-charts"><div class="page-content">
   <div class="alert success"><span class="alert-icon">&#x2705;</span><span><strong>Phase 1E Live</strong> &#x2014; Equity curve, P&amp;L bars (Long vs Short), Gold 30-day, VIX 30-day, AI Expectancy trend.</span></div>
 
@@ -2156,7 +2501,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 'use strict';
 
 /* ── PAGE LIST ── */
-const ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings'];
+const ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings','learning','options','smartmoney'];
 const SWIPE_PAGES=['dashboard','prices','charts','trade-engine','settings'];
 
 /* ── WATCHLIST ── */
@@ -2249,6 +2594,18 @@ function nav(id,el,src){
   } else {
     const b=document.getElementById('bn-'+id); if(b) b.classList.add('active');
   }
+
+  // All phase page-init hooks (merged, no circular refs)
+  if(id==='charts'){setTimeout(function(){if(!window.Chart){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';s.onload=buildCharts;document.head.appendChild(s);}else buildCharts();},60);}
+  if(id==='orders')    renderOrders();
+  if(id==='journal')   renderJournal();
+  if(id==='risk')      updateRiskPage();
+  if(id==='portfolio') updatePortfolio();
+  if(id==='ai-engine') updateAIEnginePage();
+  if(id==='screener')  {if(wlData&&wlData.length>0)runScreener();}
+  if(id==='backtest')  setTimeout(runBacktest,80);
+  if(id==='telegram')  initTelegramPage();
+  if(id==='settings')  loadSettings();
 }
 
 /* ── SWIPE ── */
@@ -2958,22 +3315,6 @@ function afterFetchUpdate1F(){
 
 
 /* ── MERGED NAV (all phases combined) ── */
-const _navBase=nav;
-function nav(id,el,src){
-  _navBase(id,el,src);
-  // Phase 1E: Charts
-  if(id==='charts'){
-    setTimeout(()=>{
-      if(!window.Chart){
-        // Chart.js not loaded yet — load it now
-        const s=document.createElement('script');
-        s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-        s.onload=buildCharts;
-        document.head.appendChild(s);
-      } else buildCharts();
-    },60);
-  }
-}
 
 /* ── Store goldINR in LIVE (hook into fetchAll post-load) ── */
 function afterFetchUpdate(){
@@ -3715,13 +4056,6 @@ function initTelegramPage(){
 }
 
 /* ── Patch nav to trigger 1G page inits ── */
-const _navBase1G=nav;
-function nav(id,el,src){
-  _navBase1G(id,el,src);
-  if(id==='backtest') runBacktest();
-  if(id==='telegram') initTelegramPage();
-  if(id==='settings') loadSettings();
-}
 
 /* ── Update roadmap in dashboard ── */
 function markRoadmap1G(){
@@ -3736,6 +4070,241 @@ setTimeout(()=>{
   runBacktest(); // Pre-run with default strategy
   if(tgConfig.token) updateTgStatus(false,'Configured');
 },500);
+
+
+/* ══════════════════════════════════════════
+   PHASE 1H — LEARNING DASHBOARD, OPTIONS,
+   SMART MONEY, GREEKS, HEDGING
+══════════════════════════════════════════ */
+
+/* ── Learning Dashboard ── */
+function updateLearningDashboard(){
+  const trades=AI.trades||[];
+  const w=AI.weights||{tech:30,news:30,trend:20,risk:20};
+  const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
+
+  setTx('ld-trades',trades.length);
+
+  // Feature importance bars
+  const total=w.tech+w.news+w.trend+w.risk||100;
+  [['tech',w.tech],['news',w.news],['trend',w.trend],['risk',w.risk]].forEach(([k,v])=>{
+    const bar=document.getElementById('fi-'+k);
+    const pct=document.getElementById('fp-'+k);
+    if(bar) bar.style.width=(v/total*100)+'%';
+    if(pct) pct.textContent=v+'%';
+  });
+
+  if(trades.length===0){
+    ['ld-acc','ld-wr','ld-exp','ld-sharpe'].forEach(id=>setTx(id,'\u2014'));
+    setTx('exp30-val','\u2014'); setTx('exp30-sub','Log trades to see expectancy');
+    setTx('exp30-action','\u2014');
+    setTx('ai-edge','Not enough data yet');
+    setTx('ai-weak','Not enough data yet');
+    setTx('se-wr','No data');
+    return;
+  }
+
+  const wins=trades.filter(t=>(t.pnl||0)>0);
+  const wr=Math.round(wins.length/trades.length*100);
+  const avgWin=wins.length?wins.reduce((a,t)=>a+(t.pnl||0),0)/wins.length:0;
+  const losses=trades.filter(t=>(t.pnl||0)<=0);
+  const avgLoss=losses.length?Math.abs(losses.reduce((a,t)=>a+(t.pnl||0),0)/losses.length):0;
+  const exp=(wr/100)*avgWin-((100-wr)/100)*avgLoss;
+  const acc=trades.length>=10?Math.round(45+wr*.6)+'%':'Need '+(10-trades.length)+' more';
+  const sharpe=(exp/(avgLoss||1)*Math.sqrt(trades.length)).toFixed(2);
+
+  setTx('ld-acc',acc);
+  setTx('ld-wr',wr+'%',wr>=50?'var(--green)':'var(--red)');
+  setTx('ld-exp',(exp>=0?'+':'')+'\u20B9'+exp.toFixed(1),exp>=0?'var(--green)':'var(--red)');
+  setTx('ld-sharpe',sharpe,+sharpe>=1?'var(--green)':'var(--amber)');
+
+  // Rolling expectancy
+  const recent=trades.slice(-30);
+  const rWins=recent.filter(t=>(t.pnl||0)>0);
+  const rWr=rWins.length/recent.length;
+  const rAW=rWins.length?rWins.reduce((a,t)=>a+(t.pnl||0),0)/rWins.length:0;
+  const rL=recent.filter(t=>(t.pnl||0)<=0);
+  const rAL=rL.length?Math.abs(rL.reduce((a,t)=>a+(t.pnl||0),0)/rL.length):0;
+  const rExp=rWr*rAW-(1-rWr)*rAL;
+  setTx('exp30-val',(rExp>=0?'+':'')+'\u20B9'+rExp.toFixed(1),rExp>=0?'var(--green)':'var(--red)');
+  setTx('exp30-sub','Based on last '+recent.length+' trades');
+  setTx('exp30-action',rExp>0?'\u2714 Continue':rExp>-50?'\u26A0 Reduce size':'\u274C STOP',rExp>0?'var(--green)':rExp>-50?'var(--amber)':'var(--red)');
+
+  // AI edge
+  const topFactor=Object.entries(w).sort((a,b)=>b[1]-a[1])[0];
+  const weakFactor=Object.entries(w).sort((a,b)=>a[1]-b[1])[0];
+  const fNames={tech:'Technical breakouts',news:'News catalysts',trend:'Trend following',risk:'Risk/Reward setup'};
+  setTx('ai-edge',fNames[topFactor[0]]+' ('+topFactor[1]+'%)');
+  setTx('ai-weak',fNames[weakFactor[0]]+' \u2014 avoid late entries');
+
+  // Strategy evolution
+  setTx('se-active',AI.activeStrat||'VCP Breakout');
+  setTx('se-wr',wr+'% on current strategy');
+}
+
+/* ── Black-Scholes Greeks Calculator ── */
+function normCDF(x){
+  const t=1/(1+.2316419*Math.abs(x));
+  const d=.3989422809*Math.exp(-x*x/2);
+  const p=d*t*(.3193815+t*(-.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));
+  return x>=0?1-p:p;
+}
+
+function blackScholes(S,K,T,r,sigma,isCall){
+  if(T<=0||sigma<=0||S<=0||K<=0) return null;
+  const sqT=Math.sqrt(T);
+  const d1=(Math.log(S/K)+(r+sigma*sigma/2)*T)/(sigma*sqT);
+  const d2=d1-sigma*sqT;
+  const Nd1=normCDF(d1), Nd2=normCDF(d2);
+  const Nd1n=normCDF(-d1), Nd2n=normCDF(-d2);
+  const pdf=Math.exp(-d1*d1/2)/Math.sqrt(2*Math.PI);
+  const price=isCall?S*Nd1-K*Math.exp(-r*T)*Nd2:K*Math.exp(-r*T)*Nd2n-S*Nd1n;
+  const delta=isCall?Nd1:Nd1-1;
+  const gamma=pdf/(S*sigma*sqT);
+  const theta=isCall?(-(S*pdf*sigma)/(2*sqT)-r*K*Math.exp(-r*T)*Nd2)/365:(-(S*pdf*sigma)/(2*sqT)+r*K*Math.exp(-r*T)*Nd2n)/365;
+  const vega=S*pdf*sqT/100;
+  return{price:Math.max(0,price),delta,gamma,theta,vega};
+}
+
+function calcGreeks(){
+  const S=+document.getElementById('bs-spot')?.value||0;
+  const K=+document.getElementById('bs-strike')?.value||0;
+  const dte=+document.getElementById('bs-dte')?.value||7;
+  const iv=+document.getElementById('bs-iv')?.value||18;
+  const rf=+document.getElementById('bs-rf')?.value||6.5;
+  const type=document.getElementById('bs-type')?.value||'call';
+  const setTx=(id,v,dec,col)=>{const e=document.getElementById(id);if(e){e.textContent=v!=null?v.toFixed(dec):'--';if(col)e.style.color=col;}};
+  if(!S||!K||!dte||!iv){return;}
+  const T=dte/365, r=rf/100, sigma=iv/100;
+  const g=blackScholes(S,K,T,r,sigma,type==='call');
+  if(!g) return;
+  const intrinsic=type==='call'?Math.max(0,S-K):Math.max(0,K-S);
+  setTx('gk-delta',g.delta,4);setTx('gk-theta',g.theta,2);setTx('gk-vega',g.vega,2);setTx('gk-gamma',g.gamma,6);
+  const prEl=document.getElementById('gk-price');if(prEl)prEl.textContent='\u20B9'+g.price.toFixed(2);
+  const inEl=document.getElementById('gk-intrinsic');if(inEl)inEl.textContent='\u20B9'+intrinsic.toFixed(2);
+}
+
+/* ── Options Chain (simulated) ── */
+function buildOptionsChain(){
+  const index=document.getElementById('opt-index')?.value||'BANKNIFTY';
+  const spot=index==='BANKNIFTY'?(LIVE.bnifty||47000):(LIVE.nifty||22000);
+  const iv=Math.max(12,Math.min(35,(LIVE.vix||14)*1.2));
+  const pcr=0.7+Math.random()*.8;
+  const atm=Math.round(spot/100)*100;
+  const maxPain=atm-(Math.random()>.5?100:-100);
+
+  const setTx=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setTx('opt-spot','\u20B9'+spot.toLocaleString('en-IN',{maximumFractionDigits:0}));
+  setTx('opt-pcr',pcr.toFixed(2));
+  setTx('opt-pcr-s',pcr>1.3?'Bullish':pcr<0.7?'Bearish':'Neutral');
+  const pcrEl=document.getElementById('opt-pcr');if(pcrEl)pcrEl.style.color=pcr>1.3?'var(--green)':pcr<0.7?'var(--red)':'var(--amber)';
+  setTx('opt-maxpain','\u20B9'+maxPain.toLocaleString('en-IN'));
+  setTx('opt-iv',iv.toFixed(1)+'%');
+
+  // Strategy suggestion
+  const regime=classifyRegime(LIVE.vix||14,LIVE.niftyChgPct||0);
+  const strats={Trending:{s:'Buy ATM/OTM Calls (or Puts for short)',w:'Directional momentum is strong. Option buying suits trending markets.'},
+    'Range-bound':{s:'Iron Condor or Short Straddle',w:'Sideways market — sell premium on both sides.'},
+    Volatile:{s:'Buy far OTM Put (protection) or Iron Butterfly',w:'High volatility = credit spreads or hedging.'}};
+  const rec=strats[regime.label]||strats['Range-bound'];
+  setTx('opt-regime-lbl',regime.label);
+  setTx('opt-strat-sug',rec.s);
+  setTx('opt-strat-why',rec.w);
+
+  // Build chain
+  const strikes=[-4,-3,-2,-1,0,1,2,3,4].map(d=>atm+d*100);
+  const tbody=document.getElementById('opt-chain-body');
+  if(!tbody) return;
+  const T=7/365, r=.065, sigma=iv/100;
+  tbody.innerHTML=strikes.map(K=>{
+    const isATM=K===atm;
+    const isITMCall=K<spot, isITMPut=K>spot;
+    const call=blackScholes(spot,K,T,r,sigma,true)||{price:0,delta:0};
+    const put=blackScholes(spot,K,T,r,sigma,false)||{price:0,delta:0};
+    const callOI=Math.round((isITMCall?8:12)*Math.random()*100000);
+    const putOI=Math.round((isITMPut?8:12)*Math.random()*100000);
+    const callVol=Math.round(callOI*.1);
+    const putVol=Math.round(putOI*.1);
+    const cIV=(iv*(0.9+Math.random()*.3)).toFixed(1);
+    const pIV=(iv*(0.9+Math.random()*.3)).toFixed(1);
+    const rowCls=isATM?'atm-row':isITMCall?'itm-call':isITMPut?'itm-put':'';
+    return`<tr class="${rowCls}">
+      <td>${(callOI/1000).toFixed(1)}K</td>
+      <td>${(callVol/1000).toFixed(1)}K</td>
+      <td>${call.price.toFixed(1)}</td>
+      <td>${cIV}%</td>
+      <td style="text-align:center;font-weight:700;background:var(--bg2)">${K.toLocaleString('en-IN')}</td>
+      <td>${pIV}%</td>
+      <td>${put.price.toFixed(1)}</td>
+      <td>${(putVol/1000).toFixed(1)}K</td>
+      <td>${(putOI/1000).toFixed(1)}K</td>
+    </tr>`;
+  }).join('');
+
+  const tEl=document.getElementById('opt-chain-time');
+  if(tEl)tEl.textContent=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'})+' IST';
+
+  // Pre-fill Greeks with ATM values
+  const sEl=document.getElementById('bs-spot');if(sEl&&!sEl.value)sEl.value=spot;
+  const kEl=document.getElementById('bs-strike');if(kEl&&!kEl.value)kEl.value=atm;
+  const iEl=document.getElementById('bs-iv');if(iEl&&!iEl.value)iEl.value=iv.toFixed(0);
+  const dEl=document.getElementById('bs-dte');if(dEl&&!dEl.value)dEl.value=7;
+  calcGreeks();
+}
+
+/* ── Smart Money page ── */
+function updateSmartMoney(){
+  const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
+  // Simulated FII/DII (live via NSE in Phase 2)
+  const fiiBuy=Math.round(Math.random()*3000-1000);
+  const diiBuy=Math.round(Math.random()*2000+200);
+  setTx('fii-net',(fiiBuy>=0?'+':'')+'\u20B9'+Math.abs(fiiBuy).toLocaleString('en-IN')+' Cr',fiiBuy>=0?'var(--green)':'var(--red)');
+  setTx('dii-net','+'+(diiBuy).toLocaleString('en-IN')+' Cr','var(--green)');
+  setTx('fii-trend',fiiBuy>0?'Net buyers 3 of last 5 days':'Net sellers 3 of last 5 days',fiiBuy>0?'var(--green)':'var(--red)');
+  setTx('sm-signal',fiiBuy>0?'\u25B2 LONG bias \u2014 FII buying':'Market caution \u2014 FII selling',fiiBuy>0?'var(--green)':'var(--red)');
+
+  // Global correlation from LIVE data
+  if(LIVE.crude){const c=LIVE.crude;setTx('corr-crude','\u20B9'+c.toFixed(2)+' '+(LIVE.crudeChg>=0?'\u25B2':'\u25BC')+(LIVE.crudeChg||0).toFixed(2)+'%',LIVE.crudeChg>=0?'var(--green)':'var(--red)');}
+  if(LIVE.nifty){setTx('corr-usdinr','\u20B9'+usdInr.toFixed(2)+' per USD');}
+
+  // Expiry day check
+  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const dow=now.getDay();
+  const isExpiry=dow===4; // Thursday = weekly expiry
+  setTx('ind-expiry',isExpiry?'\u26A0 Today is weekly expiry day!':'No \u2014 next Thursday',isExpiry?'var(--amber)':'var(--green)');
+
+  // Sector rotation
+  if(LIVE.niftyChgPct!=null){
+    const chg=LIVE.niftyChgPct;
+    const rot=chg>1?'Broad rally \u2014 momentum plays':'Low/negative \u2014 defensive stocks';
+    setTx('ind-rotation',rot);
+  }
+
+  // Volume / smart money
+  setTx('vol-spike',LIVE.nifty?'Scanning live data \u2014 no spike detected':'Awaiting live data');
+  setTx('vol-inst',fiiBuy>500?'Institutional buying detected':fiiBuy<-500?'Institutional selling':'Neutral activity');
+
+  // Hedging
+  const vix=LIVE.vix||0;
+  const needsHedge=vix>20;
+  setTx('hedge-status',needsHedge?'\u26A0 VIX >20 \u2014 hedge recommended':'\u2714 Not needed (VIX safe)',needsHedge?'var(--amber)':'var(--green)');
+
+  // Gap risk
+  const gapRisk=Math.abs(LIVE.niftyChgPct||0)>1.5;
+  setTx('corr-gap',gapRisk?'\u26A0 High gap risk today \u2014 wait 30 min':'\u2714 Low gap risk',gapRisk?'var(--amber)':'var(--green)');
+}
+
+/* ── Hook new pages into nav ── */
+const _navBase1H=nav;
+function nav(id,el,src){
+  _navBase1H(id,el,src);
+  if(id==='learning')  updateLearningDashboard();
+  if(id==='options')   buildOptionsChain();
+  if(id==='smartmoney')updateSmartMoney();
+}
+
+/* ── Initialize ── */
+setTimeout(updateLearningDashboard,300);
 
 </script>
 </body>
