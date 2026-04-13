@@ -4937,13 +4937,7 @@ function installPWA(){
   alert('To install Prism Analytics as an app:\n\n📱 iOS Safari: Share \u2192 Add to Home Screen\n\n📱 Android Chrome: Menu \u2192 Add to Home Screen\n\n💻 Desktop Chrome: Click install icon in address bar');
 }
 
-/* ── Load Telegram config into Telegram page on open ── */
-function initTelegramPage(){
-  const tEl=document.getElementById('tg-token');if(tEl&&tgConfig.token)tEl.value=tgConfig.token;
-  const cEl=document.getElementById('tg-chatid');if(cEl&&tgConfig.chatId)cEl.value=tgConfig.chatId;
-  const lEl=document.getElementById('tg-last');if(lEl)lEl.textContent=tgConfig.lastSent||'\u2014';
-  const cntEl=document.getElementById('tg-count');if(cntEl)cntEl.textContent=tgConfig.count||0;
-  if(tgConfig.token) updateTgStatus(false,'Configured \u2014 send a test to verify');
+/* ── Load Telegramigured \u2014 send a test to verify');
 }
 
 /* ── Patch nav to trigger 1G page inits ── */
@@ -4957,10 +4951,8 @@ function markRoadmap1G(){
 
 /* ── Initialize ── */
 loadSettings();
-setTimeout(()=>{
-  runBacktest(); // Pre-run with default strategy
-  if(tgConfig.token) updateTgStatus(false,'Configured');
-},500);
+/* runBacktest pre-run moved to page init */
+setTimeout(function(){ runBacktest(); }, 500);
 
 
 /* ══════════════════════════════════════════
