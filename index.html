@@ -1757,67 +1757,71 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
   <div class="alert info">
     <span class="alert-icon">&#x1F4E8;</span>
-    <span><strong>Phase 1G &#x2014; Telegram Bot Integration.</strong> Enter your Bot Token and Chat ID to receive live trade alerts, regime changes, and daily summaries.</span>
+    <span><strong>Phase 1G &#x2014; Telegram Bot.</strong> Paste your Bot Token and Chat ID below, then press <strong>Save Config</strong>.</span>
   </div>
 
-  <!-- Connection Status -->
   <div class="card">
     <div class="card-header"><span class="card-title">Bot Status</span><span class="badge" id="tg-status-badge" style="background:var(--bg3);color:var(--muted)">Not configured</span></div>
     <div style="padding:0 14px">
       <div class="cost-row"><span class="cost-lbl">Connection</span><div class="s-row"><div class="s-dot" id="tg-dot" style="background:var(--dim)"></div><span id="tg-status" style="font-size:11px;color:var(--muted)">Not connected</span></div></div>
       <div class="cost-row"><span class="cost-lbl">Last message sent</span><span class="cost-val" id="tg-last">&#x2014;</span></div>
-      <div class="cost-row"><span class="cost-lbl">Messages today</span><span class="cost-val" id="tg-count">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Messages sent</span><span class="cost-val" id="tg-count">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Saved token (last 4 chars)</span><span class="cost-val" id="tg-saved-preview" style="font-family:'DM Mono',monospace;color:var(--muted)">None</span></div>
     </div>
   </div>
 
-  <!-- Config -->
   <div class="card">
-    <div class="card-header"><span class="card-title">&#x1F510; Bot Configuration</span><span class="badge badge-g">Stored locally</span></div>
-    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+    <div class="card-header"><span class="card-title">&#x1F510; Bot Configuration</span><span class="badge badge-g">Stored in browser localStorage</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
       <div>
         <label class="te-label">Bot Token (from @BotFather)</label>
-        <input class="te-input" id="tg-token" type="password" placeholder="1234567890:ABC-DEF..." autocomplete="off">
+        <input class="te-input" id="tg-token"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          placeholder="1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+          style="font-size:12px;letter-spacing:.3px">
+        <div style="font-size:10px;color:var(--muted);margin-top:5px">Paste your full bot token. It will be masked after saving. Tap field to re-enter.</div>
       </div>
       <div>
         <label class="te-label">Chat ID (your Telegram user ID)</label>
-        <input class="te-input" id="tg-chatid" placeholder="e.g. 123456789">
+        <input class="te-input" id="tg-chatid"
+          autocomplete="off" inputmode="numeric"
+          placeholder="e.g. 785860467">
+        <div style="font-size:10px;color:var(--muted);margin-top:5px">Message @userinfobot on Telegram to get your numeric Chat ID.</div>
       </div>
       <div style="display:flex;gap:10px">
-        <button onclick="saveTgConfig()" style="flex:1;background:var(--blue);color:#fff;border:none;padding:12px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F4BE; Save Config</button>
-        <button onclick="testTgMessage()" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border2);padding:12px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F9EA; Send Test</button>
+        <button onclick="saveTgConfig()" style="flex:2;background:var(--blue);color:#fff;border:none;padding:15px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F4BE; Save Config</button>
+        <button onclick="testTgMessage()" style="flex:1;background:var(--bg3);color:var(--text);border:2px solid var(--border2);padding:15px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F9EA; Send Test</button>
       </div>
+      <div id="tg-feedback" style="display:none;padding:13px;border-radius:9px;font-size:13px;font-weight:600;text-align:center;border:1px solid transparent"></div>
+      <button onclick="clearTgConfig()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:underline;padding:0">Clear saved config</button>
     </div>
   </div>
 
-  <!-- Alert Types -->
   <div class="card">
     <div class="card-header"><span class="card-title">Alert Types</span></div>
     <div style="padding:0 14px">
       <div class="cost-row"><span class="cost-lbl">&#x2316; Trade signal (EXECUTE/BLOCK)</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x1F4CA; Regime change alert</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F4CA; Regime change</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
       <div class="cost-row"><span class="cost-lbl">&#x26A1; VIX spike (&gt;20)</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
       <div class="cost-row"><span class="cost-lbl">&#x26D4; Kill switch engaged</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
       <div class="cost-row"><span class="cost-lbl">&#x1F4CB; Daily 3:30 PM summary</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x1F4C9; Drawdown warning</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x23F3; Auto sq-off reminder</span><span class="cost-val" style="color:var(--green)">&#x2714; 3:00 PM IST</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x23F3; Auto sq-off reminder (3:00 PM)</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
     </div>
   </div>
 
-  <!-- Sample Message -->
   <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px">
-    <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">&#x1F4E9; Sample Alert Format</div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;line-height:1.8;color:var(--text)">
+    <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Sample Alert Format</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;line-height:1.9;color:var(--text)">
       &#x1F7E2; <strong>PRISM ANALYTICS &#x2014; EXECUTE</strong><br>
       &#x25B2; LONG &#x2014; HDFCBANK (MIS)<br>
       Entry: &#x20B9;1,642 | SL: &#x20B9;1,626 | Tgt: &#x20B9;1,674<br>
-      Qty: 6 shares | Exposure: &#x20B9;9,852<br>
-      AI: 72% | R:R: 1:2.0 | BE: 0.428%<br>
-      Regime: Trending | VIX: 14.2<br>
-      &#x23F0; 10:45 AM IST
+      Qty: 6 | AI: 72% | R:R: 1:2.0 | BE: 0.43%<br>
+      Regime: Trending | VIX: 14.2 | &#x23F0; 10:45 AM IST
     </div>
   </div>
 
 </div></div>
+
 <div class="page" id="page-vault"><div class="page-content">
 
   <div class="alert info">
@@ -4662,59 +4666,166 @@ function runBacktest(){
 }
 
 /* ── TELEGRAM BOT ── */
-const TG_KEY='prism-tg';
-let tgConfig={token:'',chatId:'',count:0,lastSent:''};
-try{tgConfig={...tgConfig,...JSON.parse(localStorage.getItem(TG_KEY)||'{}')};}catch(_){}
+const TG_KEY = 'prism-tg';
+let tgConfig = {token:'', chatId:'', count:0, lastSent:''};
+(function(){
+  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+})();
 
-function saveTgConfig(){
-  const token=document.getElementById('tg-token')?.value||'';
-  const chatId=document.getElementById('tg-chatid')?.value||'';
-  if(!token||!chatId){alert('Enter both Bot Token and Chat ID.');return;}
-  tgConfig.token=token; tgConfig.chatId=chatId;
-  localStorage.setItem(TG_KEY,JSON.stringify(tgConfig));
-  updateTgStatus(true,'Config saved \u2714 Send a test message.');
+function tgShowFeedback(msg, ok){
+  var el=document.getElementById('tg-feedback');
+  if(!el) return;
+  el.textContent=msg; el.style.display='block';
+  el.style.background=ok?'var(--gbg)':'var(--rbg)';
+  el.style.color=ok?'var(--green)':'var(--red)';
+  el.style.border='1px solid '+(ok?'var(--gborder)':'var(--rborder)');
+  clearTimeout(el._t); el._t=setTimeout(function(){el.style.display='none';},5000);
 }
 
-function updateTgStatus(connected,msg){
-  const dot=document.getElementById('tg-dot');
-  const status=document.getElementById('tg-status');
-  const badge=document.getElementById('tg-status-badge');
-  if(dot)dot.className='s-dot '+(connected?'s-on':'s-off');
-  if(status){status.textContent=msg||'';status.style.color=connected?'var(--green)':'var(--red)';}
-  if(badge){badge.textContent=connected?'Connected':tgConfig.token?'Saved':'Not configured';badge.className='badge '+(connected?'badge-g':tgConfig.token?'badge-a':'');}
-  if(badge&&!tgConfig.token)badge.style.cssText='background:var(--bg3);color:var(--muted)';
+function tgUpdatePreview(){
+  var el=document.getElementById('tg-saved-preview');
+  if(!el) return;
+  if(tgConfig.token && tgConfig.token.length>4){
+    el.textContent='...'+tgConfig.token.slice(-4)+' (Chat: '+(tgConfig.chatId||'none')+')';
+    el.style.color='var(--green)';
+  } else { el.textContent='None'; el.style.color='var(--muted)'; }
+}
+
+function saveTgConfig(){
+  var tokenEl=document.getElementById('tg-token');
+  var chatEl=document.getElementById('tg-chatid');
+  var token  = tokenEl ? tokenEl.value.trim() : '';
+  var chatId = chatEl  ? chatEl.value.trim()  : '';
+  // If field shows bullet mask, restore the stored token
+  if(token.indexOf('\u2022') !== -1){ token = tgConfig.token; }
+  if(!token){
+    tgShowFeedback('\u274C Bot Token is empty. Paste your token from @BotFather.', false);
+    if(tokenEl){ tokenEl.value=''; tokenEl.focus(); }
+    return;
+  }
+  if(!chatId){
+    tgShowFeedback('\u274C Chat ID is empty. Enter your Telegram user ID.', false);
+    if(chatEl) chatEl.focus();
+    return;
+  }
+  tgConfig.token = token;
+  tgConfig.chatId = chatId;
+  try {
+    localStorage.setItem(TG_KEY, JSON.stringify(tgConfig));
+    tgUpdatePreview();
+    updateTgStatus(false, 'Saved \u2714  Send a test to verify.');
+    tgShowFeedback('\u2714 Config saved!  Token ends: ...' + token.slice(-4) + '  Chat ID: ' + chatId, true);
+    // Mask token in input
+    if(tokenEl) tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + token.slice(-4);
+  } catch(e){
+    tgShowFeedback('\u274C Save error: ' + e.message, false);
+  }
+}
+
+function clearTgConfig(){
+  tgConfig = {token:'', chatId:'', count:0, lastSent:''};
+  try { localStorage.removeItem(TG_KEY); } catch(_){}
+  var t=document.getElementById('tg-token');  if(t) t.value='';
+  var c=document.getElementById('tg-chatid'); if(c) c.value='';
+  tgUpdatePreview();
+  updateTgStatus(false, 'Config cleared.');
+  tgShowFeedback('Config cleared.', true);
+}
+
+function updateTgStatus(connected, msg){
+  var dot    = document.getElementById('tg-dot');
+  var status = document.getElementById('tg-status');
+  var badge  = document.getElementById('tg-status-badge');
+  if(dot){
+    dot.className = 's-dot ' + (connected ? 's-on' : '');
+    if(!connected && !tgConfig.token) dot.style.background = 'var(--dim)';
+    else if(!connected) dot.style.background = 'var(--amber)';
+    else dot.style.background = '';
+  }
+  if(status){ status.textContent=msg||''; status.style.color=connected?'var(--green)':tgConfig.token?'var(--amber)':'var(--muted)'; }
+  if(badge){
+    if(connected){
+      badge.textContent='Connected \u2714'; badge.className='badge badge-g'; badge.removeAttribute('style');
+    } else if(tgConfig.token){
+      badge.textContent='Saved (not tested)'; badge.className='badge badge-a'; badge.removeAttribute('style');
+    } else {
+      badge.textContent='Not configured'; badge.className='badge';
+      badge.style.cssText='background:var(--bg3);color:var(--muted)';
+    }
+  }
 }
 
 async function testTgMessage(){
-  if(!tgConfig.token||!tgConfig.chatId){alert('Save config first.');return;}
-  const msg=encodeURIComponent('🟢 *PRISM ANALYTICS TEST*\n\nBot connected successfully!\n\u23F0 '+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'})+' IST\n\nYour trading alerts will appear here.');
-  try{
-    const res=await fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${msg}&parse_mode=Markdown`);
-    const data=await res.json();
+  if(!tgConfig.token || !tgConfig.chatId){
+    tgShowFeedback('\u274C Save your config first before testing.', false); return;
+  }
+  tgShowFeedback('\u23F3 Sending test message...', true);
+  var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
+  var txt = '🟢 *PRISM ANALYTICS \u2014 TEST*\n\nBot connected!\n\u23F0 ' + now + ' IST\n\nYour trade alerts will appear here.';
+  try {
+    var res = await fetch(
+      'https://api.telegram.org/bot' + tgConfig.token +
+      '/sendMessage?chat_id=' + tgConfig.chatId +
+      '&text=' + encodeURIComponent(txt) + '&parse_mode=Markdown',
+      {signal: AbortSignal.timeout(10000)}
+    );
+    var data = await res.json();
     if(data.ok){
-      tgConfig.count=(tgConfig.count||0)+1;
-      tgConfig.lastSent=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'});
-      localStorage.setItem(TG_KEY,JSON.stringify(tgConfig));
-      const lEl=document.getElementById('tg-last');if(lEl)lEl.textContent=tgConfig.lastSent+' IST';
-      const cEl=document.getElementById('tg-count');if(cEl)cEl.textContent=tgConfig.count;
-      updateTgStatus(true,'Test sent \u2714 Check your Telegram!');
+      tgConfig.count = (tgConfig.count||0) + 1;
+      tgConfig.lastSent = now + ' IST';
+      localStorage.setItem(TG_KEY, JSON.stringify(tgConfig));
+      var lEl=document.getElementById('tg-last');  if(lEl) lEl.textContent=tgConfig.lastSent;
+      var cEl=document.getElementById('tg-count'); if(cEl) cEl.textContent=tgConfig.count;
+      updateTgStatus(true, 'Connected \u2714  Test sent at ' + now);
+      tgShowFeedback('\u2714 Test message sent! Check your Telegram app.', true);
     } else {
-      updateTgStatus(false,'Error: '+(data.description||'Check token/chat ID'));
+      var err = data.description || 'Unknown error';
+      updateTgStatus(false, 'Error: ' + err);
+      tgShowFeedback('\u274C Telegram error: ' + err, false);
     }
-  }catch(e){
-    updateTgStatus(false,'Network error \u2014 check internet connection');
+  } catch(e){
+    updateTgStatus(false, 'Network error');
+    tgShowFeedback('\u274C Network error: ' + (e.message||'timeout'), false);
   }
 }
 
 async function sendTgAlert(msg){
-  if(!tgConfig.token||!tgConfig.chatId) return;
-  try{
-    await fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
-    tgConfig.count=(tgConfig.count||0)+1;
-    tgConfig.lastSent=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'});
-    localStorage.setItem(TG_KEY,JSON.stringify(tgConfig));
-  }catch(_){}
+  if(!tgConfig.token || !tgConfig.chatId) return;
+  try {
+    await fetch(
+      'https://api.telegram.org/bot' + tgConfig.token +
+      '/sendMessage?chat_id=' + tgConfig.chatId +
+      '&text=' + encodeURIComponent(msg) + '&parse_mode=Markdown',
+      {signal: AbortSignal.timeout(8000)}
+    );
+    tgConfig.count = (tgConfig.count||0) + 1;
+    tgConfig.lastSent = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST';
+    try { localStorage.setItem(TG_KEY, JSON.stringify(tgConfig)); } catch(_){}
+  } catch(_){}
 }
+
+function initTelegramPage(){
+  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+  var tokenEl=document.getElementById('tg-token');
+  var chatEl =document.getElementById('tg-chatid');
+  if(tokenEl){
+    tokenEl.value = tgConfig.token && tgConfig.token.length>4
+      ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + tgConfig.token.slice(-4)
+      : '';
+    tokenEl.onfocus = function(){
+      if(this.value.indexOf('\u2022') !== -1){
+        this.value = '';
+        this.placeholder = 'Paste your new token here...';
+      }
+    };
+  }
+  if(chatEl) chatEl.value = tgConfig.chatId || '';
+  var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent || '\u2014';
+  var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count || 0;
+  tgUpdatePreview();
+  updateTgStatus(false, tgConfig.token ? 'Config loaded. Send a test to verify.' : 'Not configured');
+}
+
 
 /* ── VAULT ── */
 const VAULT_KEY='prism-vault-v1';
