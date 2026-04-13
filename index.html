@@ -602,11 +602,19 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .ts3-sub{font-size:10px;color:var(--muted);}
 .ts3-prob{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;flex-shrink:0;}
 
+
+/* ═══ TOAST NOTIFICATION ═══ */
+#prism-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2338;color:#e8edf5;padding:13px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.45);z-index:9999;opacity:0;transition:all .3s ease;pointer-events:none;max-width:320px;text-align:center;border:1px solid rgba(255,255,255,.1);}
+#prism-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#prism-toast.toast-ok{border-color:var(--green);background:rgba(16,185,129,.15);}
+#prism-toast.toast-err{border-color:var(--red);background:rgba(244,63,94,.15);}
+
 </style>
 </head>
 <body>
 
 <!-- ══ TOPBAR ══ -->
+<div id="prism-toast"></div>
 <header class="topbar">
   <div class="logo">
     <div class="logo-mark">PA</div>
@@ -3395,6 +3403,10 @@ function nav(id,el,src){
   if(id==='histbt')   {}
   if(id==='walkfwd')  {}
   if(id==='rl')       {}
+
+  if(id==='risk')       { if(typeof updateRiskPageFull==='function') updateRiskPageFull(); }
+  if(id==='governance') { if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
+  if(id==='charts')     { setTimeout(function(){ if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); else if(typeof buildCharts==='function') buildCharts(); }, 80); }
 }
 
 /* ── SWIPE ── */
@@ -4465,15 +4477,7 @@ function updateAIEnginePage(){
   ['tech','news','trend','risk'].forEach(k=>{setTx('w-'+k,w[k]+'%');});
 }
 
-/* ── Hook into page navigation to trigger renders ── *
-  // Phase 1F: Page-specific renders
-  if(id==='orders')    { renderOrders(); }
-  if(id==='journal')   { renderJournal(); }
-  if(id==='risk')      { updateRiskPage(); }
-  if(id==='portfolio') { updatePortfolio(); }
-  if(id==='ai-engine') { updateAIEnginePage(); }
-  if(id==='screener')  { runScreener(); }
-}
+/* ── Nav hooks are in nav() function above ── */
 
 
 /* ══════════════════════════════════════════
@@ -4577,6 +4581,21 @@ function tgUpdatePreview(){
   } else { el.textContent='None'; el.style.color='var(--muted)'; }
 }
 
+
+/* ── Global toast notification ── */
+function showToast(msg, ok){
+  var t = document.getElementById('prism-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'prism-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.className = 'show ' + (ok ? 'toast-ok' : 'toast-err');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){t.className='';}, ok ? 3500 : 5000);
+}
+
 function saveTgConfig(){
   var tokenEl=document.getElementById('tg-token');
   var chatEl=document.getElementById('tg-chatid');
@@ -4601,6 +4620,7 @@ function saveTgConfig(){
     tgUpdatePreview();
     updateTgStatus(false, 'Saved \u2714  Send a test to verify.');
     tgShowFeedback('\u2714 Config saved!  Token ends: ...' + token.slice(-4) + '  Chat ID: ' + chatId, true);
+    showToast('\u2714 Config saved successfully! Bot: ...' + token.slice(-4) + ' | Chat: ' + chatId, true);
     // Mask token in input
     if(tokenEl) tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + token.slice(-4);
   } catch(e){
@@ -4616,6 +4636,7 @@ function clearTgConfig(){
   tgUpdatePreview();
   updateTgStatus(false, 'Config cleared.');
   tgShowFeedback('Config cleared.', true);
+  showToast('Telegram config cleared.', false);
 }
 
 function updateTgStatus(connected, msg){
@@ -4664,10 +4685,14 @@ async function testTgMessage(){
       var cEl=document.getElementById('tg-count'); if(cEl) cEl.textContent=tgConfig.count;
       updateTgStatus(true, 'Connected \u2714  Test sent at ' + now);
       tgShowFeedback('\u2714 Test message sent! Check your Telegram app.', true);
+      showToast('\u2714 Test message sent! Check Telegram.', true);
+      showToast('\u2714 Telegram test sent! Check your app.', true);
     } else {
       var err = data.description || 'Unknown error';
       updateTgStatus(false, 'Error: ' + err);
       tgShowFeedback('\u274C Telegram error: ' + err, false);
+      showToast('\u274C Telegram error: ' + err, false);
+      showToast('\u274C Error: ' + err, false);
     }
   } catch(e){
     updateTgStatus(false, 'Network error');
@@ -4823,10 +4848,6 @@ function installPWA(){
   alert('To install Prism Analytics as an app:\n\n📱 iOS Safari: Share \u2192 Add to Home Screen\n\n📱 Android Chrome: Menu \u2192 Add to Home Screen\n\n💻 Desktop Chrome: Click install icon in address bar');
 }
 
-/* ── Load Telegramigured \u2014 send a test to verify');
-}
-
-/* ── Patch nav to trigger 1G page inits ── */
 
 /* ── Update roadmap in dashboard ── */
 function markRoadmap1G(){
@@ -5443,7 +5464,6 @@ function buildCalendar(){
 }
 
 /* ── Hook Phase 2 pages into nav ── */
-const _p2_navRef = nav;
 // Directly extend nav[1] body — done via injection below
 
 /* ── Initialize Phase 2 ── */
@@ -6502,8 +6522,10 @@ function logTrade() {
 
   /* FIX 10: Update drawdown tracking */
   var expectedPnl = 0; // Will be updated when trade closes
-  var activeQty = isShort ? Math.max(1,Math.floor(((typeof CFG!=='undefined'?CFG.capital:50000)*0.01*0.75)/Math.abs(entry-sl)))
-                           : Math.max(1,Math.floor(((typeof CFG!=='undefined'?CFG.capital:50000)*0.01)/Math.abs(entry-sl)));
+  var _isShort = TE.dir === 'SHORT';
+  var _cap = (typeof CFG!=='undefined' && CFG.capital) ? CFG.capital : 50000;
+  var activeQty = _isShort ? Math.max(1,Math.floor((_cap*0.01*0.75)/Math.abs(entry-sl)))
+                           : Math.max(1,Math.floor((_cap*0.01)/Math.abs(entry-sl)));
 
   /* Log trade */
   AI.trades = AI.trades || [];
@@ -6522,7 +6544,7 @@ function logTrade() {
   var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
   var vix = LIVE.vix || 0;
   var regime = typeof classifyRegime==='function' ? classifyRegime(vix, LIVE.niftyChgPct||0).label : 'N/A';
-  var tgMsg = (TE.dir==='LONG' ? '0001F7E2' : '0001F534')
+  var tgMsg = (TE.dir==='LONG' ? '🟢' : '🔴')
     + ' *PRISM ANALYTICS \u2014 ' + (TE.dir==='LONG'?'EXECUTE \u25B2 LONG':'EXECUTE \u25BC SHORT') + '*\n'
     + sym + ' (' + TE.type + ')\n'
     + 'Entry: \u20B9' + entry + ' | SL: \u20B9' + sl + ' | Tgt: \u20B9' + tgt + '\n'
@@ -6597,13 +6619,6 @@ function updateRiskPageFull() {
 }
 
 /* ── Patch nav to use fixes ── */
-var _navFixed = nav;
-function nav(id, el, src) {
-  _navFixed(id, el, src);
-  if (id === 'risk')      updateRiskPageFull();
-  if (id === 'governance' && window._lastTrade) syncGovernanceFromSignal();
-  if (id === 'charts')    { setTimeout(function(){ buildChartsWithRetry(1); }, 80); }
-}
 
 /* ── Initialize ── */
 (function initFixes(){
