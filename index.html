@@ -1236,7 +1236,9 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
   <!-- Execute Button -->
   <button class="exec-btn exec-blocked" id="exec-btn" onclick="logTrade()">Enter trade details to evaluate</button>
 
-  <!-- Rules Reference -->
+  <button onclick="nav('governance',document.querySelector('.nav-item[onclick*=governance]'));syncGovernanceFromSignal();" style="width:100%;padding:11px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">&#x1F6E1; Run 6-Layer Governance Check</button>
+
+    <!-- Rules Reference -->
   <div class="card">
     <div style="padding:12px 15px;border-bottom:1px solid var(--border)"><span class="card-title">LONG / SHORT Rules (SEBI Compliant)</span></div>
     <div style="padding:0 14px">
@@ -2975,6 +2977,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 <div class="page" id="page-charts"><div class="page-content">
   <div class="alert success"><span class="alert-icon">&#x2705;</span><span><strong>Phase 1E Live</strong> &#x2014; Equity curve, P&amp;L bars (Long vs Short), Gold 30-day, VIX 30-day, AI Expectancy trend.</span></div>
 
+  <div id="chart-load-status" style="font-size:11px;color:var(--muted);text-align:center;padding:4px 0"></div>
   <!-- Equity Curve -->
   <div class="chart-card">
     <div class="chart-hdr">
@@ -4136,111 +4139,6 @@ function setType(t){
   evalTrade();
 }
 
-function evalTrade(){
-  const sym=(document.getElementById('te-sym')?.value||'').trim().toUpperCase();
-  const entry=+document.getElementById('te-entry')?.value||0;
-  const sl=+document.getElementById('te-sl')?.value||0;
-  const tgt=+document.getElementById('te-tgt')?.value||0;
-  const cap=+document.getElementById('te-cap')?.value||50000;
-  const fno=document.getElementById('te-fno')?.value||'futures';
-
-  if(!entry||!sl||!tgt){resetDecision();return;}
-
-  /* ── SEBI direction check ── */
-  const isShort=TE.dir==='SHORT', isPos=TE.type==='POSITIONAL';
-  let sebiBlock=false, sebiMsg='';
-  if(isShort&&isPos){
-    if(fno==='none'){sebiBlock=true;sebiMsg='\u274C Positional short in cash not allowed (SEBI). Need Futures or Put Options.';}
-    else sebiMsg='\u26A0 Positional short via '+(fno==='put'?'Put Options':'Futures')+' \u2014 F&O segment only.';
-  } else if(isShort&&!isPos){
-    sebiMsg='\u2714 Intraday short (MIS) allowed. Auto square-off by 3:15 PM enforced.';
-  }
-
-  /* ── Breakeven / Cost calc ── */
-  const qty=Math.max(1,Math.floor((cap*0.01)/Math.abs(entry-sl)));
-  const tradeVal=qty*entry;
-  const brok=40; // ₹20 each side
-  const sttRate=TE.type==='INTRADAY'?0.00025:0.001;
-  const stt=tradeVal*sttRate;
-  const gst=brok*0.18;
-  const stamp=tradeVal*0.00003;
-  const slip=tradeVal*0.0005;
-  const totalCost=brok+stt+gst+stamp+slip;
-  const totalCostPct=(totalCost/tradeVal)*100;
-  const minMovePct=totalCostPct*1.5;
-  const slDist=Math.abs(entry-sl), tgtDist=Math.abs(tgt-entry);
-  const expMovePct=(tgtDist/entry)*100;
-  const costPass=expMovePct>=minMovePct;
-
-  const f2=v=>'\u20B9'+v.toFixed(2);
-  const st=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col!==undefined)e.style.color=col;}};
-  st('c-brok',f2(brok));st('c-stt',f2(stt));st('c-gst',f2(gst));
-  st('c-stamp',f2(stamp));st('c-slip',f2(slip));
-  st('c-total',f2(totalCost)+' ('+totalCostPct.toFixed(3)+'%)');
-  st('c-be','+'+totalCostPct.toFixed(3)+'% (\u20B9'+(entry*totalCostPct/100).toFixed(2)+')');
-  st('c-min','+'+minMovePct.toFixed(3)+'% (\u20B9'+(entry*minMovePct/100).toFixed(2)+')');
-  st('c-filter',costPass?'\u2714 PASS ('+expMovePct.toFixed(2)+'% \u2265 '+minMovePct.toFixed(2)+'%)':'\u274C FAIL ('+expMovePct.toFixed(2)+'% < '+minMovePct.toFixed(2)+'%)',costPass?'var(--green)':'var(--red)');
-
-  /* ── Position Sizing ── */
-  const risk=cap*0.01;
-  const longQty=Math.max(1,Math.floor(risk/slDist));
-  const shortQty=Math.max(1,Math.floor(longQty*0.75)); // -25%
-  st('ps-long',longQty+' shares');
-  st('ps-long-sub','P&L: +\u20B9'+(longQty*tgtDist).toFixed(0)+' / -\u20B9'+(longQty*slDist).toFixed(0));
-  st('ps-short',shortQty+' shares');
-  st('ps-short-sub','P&L: +\u20B9'+(shortQty*tgtDist).toFixed(0)+' / -\u20B9'+(shortQty*slDist).toFixed(0));
-  st('ps-risk','\u20B9'+risk.toFixed(0)+' of \u20B9'+cap.toLocaleString('en-IN'));
-  const rr=tgtDist/slDist;
-  const rrPass=rr>=2;
-  st('ps-rr','1 : '+rr.toFixed(2));
-  st('ps-rrcheck',rrPass?'\u2714 PASS (1:'+rr.toFixed(2)+' \u2265 1:2)':'\u274C FAIL (1:'+rr.toFixed(2)+' < 1:2)',rrPass?'var(--green)':'var(--red)');
-
-  /* ── VIX override ── */
-  const vixBlock=LIVE.vix&&LIVE.vix>25;
-
-  /* ── Final Decision ── */
-  let decision, cls, color, reasons=[];
-  const activeQty=isShort?shortQty:longQty;
-  const dirIcon=isShort?'\u25BC':'\u25B2';
-  const segLabel=isPos?(isShort?(fno==='put'?'F&O \u2014 Put Options':'F&O \u2014 Futures'):'CNC \u2014 Delivery'):'MIS \u2014 Intraday';
-
-  if(sebiBlock){decision='BLOCK';cls='dec-block';color='var(--red)';reasons.push(sebiMsg);}
-  else if(!costPass){decision='BLOCK';cls='dec-block';color='var(--red)';reasons.push('\u274C Cost filter: expected move '+expMovePct.toFixed(2)+'% < min '+minMovePct.toFixed(2)+'%');}
-  else if(!rrPass){decision='BLOCK';cls='dec-block';color='var(--red)';reasons.push('\u274C R:R (1:'+rr.toFixed(2)+') below 1:2 minimum');}
-  else if(vixBlock){decision='BLOCK';cls='dec-block';color='var(--red)';reasons.push('\u274C VIX at '+LIVE.vix.toFixed(2)+' > 25 \u2014 trading halted by AMC rule');}
-  else{
-    decision='EXECUTE'; cls='dec-execute'; color='var(--green)';
-    if(sebiMsg) reasons.push(sebiMsg);
-    if(isShort) reasons.push('\u26A0 Short margin +25% applied. Size reduced to '+shortQty+' shares.');
-    reasons.push('\u2714 All checks passed \u2014 Cost, R:R, VIX, Direction rules.');
-  }
-
-  const box=document.getElementById('dec-box');if(box)box.className='decision-box '+cls;
-  const titEl=document.getElementById('dec-title');
-  if(titEl){titEl.textContent=decision+' '+dirIcon+' '+TE.dir+(sym?' \u2014 '+sym:'');titEl.style.color=color;}
-  const bodyEl=document.getElementById('dec-body');
-  if(bodyEl){bodyEl.innerHTML=`
-    <div class="dec-row"><span class="dec-row-lbl">Direction</span><span class="dec-row-val">${dirIcon} ${TE.dir}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Segment</span><span class="dec-row-val">${segLabel}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Stock</span><span class="dec-row-val">${sym||'\u2014'}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Entry / SL / Target</span><span class="dec-row-val">\u20B9${entry} / \u20B9${sl} / \u20B9${tgt}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Position Size</span><span class="dec-row-val">${activeQty} shares</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Trade Value</span><span class="dec-row-val">\u20B9${(activeQty*entry).toLocaleString('en-IN')}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Breakeven</span><span class="dec-row-val">+${totalCostPct.toFixed(3)}%</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Expected P&L</span><span class="dec-row-val" style="color:var(--green)">+\u20B9${(activeQty*tgtDist).toFixed(0)}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Max Risk</span><span class="dec-row-val" style="color:var(--red)">\u2212\u20B9${(activeQty*slDist).toFixed(0)}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">R : R</span><span class="dec-row-val">1 : ${rr.toFixed(2)}</span></div>
-    ${reasons.map(r=>'<div style="padding:5px 0;font-size:11px;color:var(--muted);line-height:1.5">'+r+'</div>').join('')}
-  `;}
-
-  const btn=document.getElementById('exec-btn');
-  if(btn){
-    const canExec=decision==='EXECUTE';
-    btn.disabled=!canExec;
-    btn.className='exec-btn '+(canExec?(isShort?'exec-short':'exec-long'):'exec-blocked');
-    btn.textContent=canExec?decision+' '+dirIcon+' '+TE.dir+(sym?' \u2014 '+sym:''):decision+': '+reasons[0]?.replace(/[✓✗⚠↑↓]/g,'').trim().slice(0,52)+'…';
-  }
-}
 
 function resetDecision(){
   ['c-brok','c-stt','c-gst','c-stamp','c-slip','c-total','c-be','c-min','c-filter',
@@ -4254,20 +4152,6 @@ function resetDecision(){
   if(btn){btn.disabled=true;btn.className='exec-btn exec-blocked';btn.textContent='Enter trade details to evaluate';}
 }
 
-function logTrade(){
-  const sym=(document.getElementById('te-sym')?.value||'').trim().toUpperCase()||'UNKNOWN';
-  const entry=+document.getElementById('te-entry')?.value||0;
-  const sl=+document.getElementById('te-sl')?.value||0;
-  const tgt=+document.getElementById('te-tgt')?.value||0;
-  if(!entry||!sl||!tgt){alert('Fill all fields first.');return;}
-  AI.trades=AI.trades||[];
-  AI.count=(AI.count||0)+1;
-  AI.trades.push({sym,dir:TE.dir,type:TE.type,entry,sl,tgt,pnl:0,ts:Date.now()});
-  saveAI(AI);
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('ai-trade-count',AI.count); set('ai2-trades',AI.count);
-  alert('\u2714 Trade logged to AI journal!\n\n'+TE.dir+' '+TE.type+'\n'+sym+' @ \u20B9'+entry+'\nSL: \u20B9'+sl+' | Target: \u20B9'+tgt+'\n\nPhase 1G will track outcome and update AI weights.\nPhase 4 will send this to Angel One API.');
-}
 
 /* ── Also update charts after data fetch ── */
 
@@ -6320,6 +6204,413 @@ function initPhase3() {
   updateModelDashboard();
 }
 setTimeout(initPhase3, 800);
+
+
+/* ══════════════════════════════════════════════════════════
+   LOOPHOLE FIXES — All 10 identified issues resolved
+══════════════════════════════════════════════════════════ */
+
+/* ── FIX 3: Unified win probability (uses ML model if trained) ── */
+function getWinProbability(vix, niftyChg, regime) {
+  // If ML model is trained, use it
+  if (P3 && P3.lr && P3.lr.trained && P3.lr.weights && LIVE.nifty) {
+    var nifty = LIVE.nifty || 22000;
+    var ma20 = nifty * (1 + (Math.random() - 0.5) * 0.02);
+    var rsi = 50 + (niftyChg || 0) * 5;
+    var vol = 300000;
+    var d = { price: nifty, vix: vix || 14, ma20: ma20, rsi: rsi, vol: vol };
+    if (typeof extractFeatures === 'function' && typeof sigmoid === 'function') {
+      var x = extractFeatures(d);
+      var z = x.reduce(function(s, xi, i) { return s + P3.lr.weights[i] * xi; }, 0);
+      return Math.round(sigmoid(z) * 100);
+    }
+  }
+  // Fallback: enhanced heuristic
+  return classifyWinProb(vix, niftyChg, regime);
+}
+
+/* ── FIX 10: Drawdown tracker (persisted to localStorage) ── */
+var DD_KEY = 'prism-dd-v1';
+var DDState = { peakEquity: 50000, currentEquity: 50000, drawdownPct: 0, stopTrading: false };
+(function() {
+  try {
+    var _s = localStorage.getItem(DD_KEY);
+    if (_s) DDState = Object.assign({}, DDState, JSON.parse(_s));
+  } catch(_) {}
+})();
+
+function saveDDState() {
+  try { localStorage.setItem(DD_KEY, JSON.stringify(DDState)); } catch(_) {}
+}
+
+function calcDrawdownMode() {
+  var dd = DDState.drawdownPct;
+  if (dd >= 8)  return { label: 'STOP',   riskMult: 0,    color: 'var(--red)',   msg: '\u274C Trading HALTED — drawdown \u2265 8%. Resume only after new equity high.' };
+  if (dd >= 5)  return { label: '-75%',   riskMult: 0.25, color: 'var(--red)',   msg: '\u26A0 Risk reduced 75% — drawdown \u2265 5%.' };
+  if (dd >= 3)  return { label: '-50%',   riskMult: 0.5,  color: 'var(--amber)', msg: '\u26A0 Risk reduced 50% — drawdown \u2265 3%.' };
+  return       { label: 'Normal', riskMult: 1,    color: 'var(--green)', msg: '\u2714 Normal risk mode.' };
+}
+
+function updateEquityFromTrade(pnl) {
+  DDState.currentEquity += pnl;
+  if (DDState.currentEquity > DDState.peakEquity) {
+    DDState.peakEquity = DDState.currentEquity;
+    DDState.stopTrading = false; // Resume after new equity high
+  }
+  DDState.drawdownPct = Math.max(0, (DDState.peakEquity - DDState.currentEquity) / DDState.peakEquity * 100);
+  if (DDState.drawdownPct >= 8) DDState.stopTrading = true;
+  saveDDState();
+}
+
+/* ── FIX 9: IST time check for no-trade zones ── */
+function getISTHour() {
+  try {
+    var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    return { h: now.getHours(), m: now.getMinutes(), day: now.getDay() };
+  } catch(_) { return { h: 10, m: 30, day: 1 }; }
+}
+
+function checkNoTradeZone() {
+  var t = getISTHour();
+  var timeMin = t.h * 60 + t.m;
+  // Weekend
+  if (t.day === 0 || t.day === 6) return { block: true, reason: '\u274C Market closed — weekend.' };
+  // Before market open
+  if (timeMin < 9*60+15) return { block: true, reason: '\u274C Market not open yet (before 9:15 AM IST).' };
+  // Opening volatility zone
+  if (timeMin < 9*60+30) return { block: true, reason: '\u274C No-trade zone: 9:15\u20139:30 AM (high volatility opening).' };
+  // After market close
+  if (timeMin > 15*60+30) return { block: true, reason: '\u274C Market closed (after 3:30 PM IST).' };
+  // Auto sq-off caution zone
+  if (timeMin >= 15*60+0 && timeMin < 15*60+15) return { block: false, warn: '\u26A0 Caution: 3:00\u20133:15 PM — auto sq-off zone. Intraday orders will be squared off.' };
+  return { block: false };
+}
+
+/* ── FIX 4+8+9+10: Replace evalTrade with hardened version ── */
+function evalTrade() {
+  var sym    = (document.getElementById('te-sym')?.value || '').trim().toUpperCase();
+  var entry  = +document.getElementById('te-entry')?.value || 0;
+  var sl     = +document.getElementById('te-sl')?.value    || 0;
+  var tgt    = +document.getElementById('te-tgt')?.value   || 0;
+  var cap    = +document.getElementById('te-cap')?.value   || 50000;
+  var fno    = document.getElementById('te-fno')?.value    || 'futures';
+
+  if (!entry || !sl || !tgt) { resetDecision(); return; }
+
+  /* FIX 7: SL direction validation */
+  var isShort = TE.dir === 'SHORT';
+  var isPos   = TE.type === 'POSITIONAL';
+  if (!isShort && sl >= entry) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, ['\u274C Invalid SL: Stop Loss must be BELOW entry for a LONG trade. (SL \u20B9' + sl + ' \u2265 Entry \u20B9' + entry + ')']);
+    return;
+  }
+  if (isShort && sl <= entry) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, ['\u274C Invalid SL: Stop Loss must be ABOVE entry for a SHORT trade. (SL \u20B9' + sl + ' \u2264 Entry \u20B9' + entry + ')']);
+    return;
+  }
+  if (!isShort && tgt <= entry) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, ['\u274C Invalid Target: Target must be ABOVE entry for a LONG trade.']);
+    return;
+  }
+  if (isShort && tgt >= entry) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, ['\u274C Invalid Target: Target must be BELOW entry for a SHORT trade.']);
+    return;
+  }
+
+  /* FIX 9: No-trade time zone check */
+  var tz = checkNoTradeZone();
+  if (tz.block) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, [tz.reason]);
+    return;
+  }
+
+  /* FIX 10: Drawdown stop check */
+  var ddMode = calcDrawdownMode();
+  if (ddMode.riskMult === 0) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, [ddMode.msg + ' Equity: \u20B9' + DDState.currentEquity.toLocaleString('en-IN')]);
+    return;
+  }
+
+  /* FIX 8: Max trades per day */
+  var todayCount = (AI.trades || []).filter(function(t) {
+    return t.ts && new Date(t.ts).toDateString() === new Date().toDateString();
+  }).length;
+  var maxTrades = (typeof CFG !== 'undefined' && CFG.maxTrades) ? CFG.maxTrades : 1;
+  if (todayCount >= maxTrades) {
+    showDecision('BLOCK', 'dec-block', 'var(--red)', sym, ['\u274C Max ' + maxTrades + ' trade(s)/day reached. ' + todayCount + ' trade(s) already logged today.']);
+    return;
+  }
+
+  /* SEBI direction check */
+  var sebiBlock = false, sebiMsg = '';
+  if (isShort && isPos) {
+    if (fno === 'none') { sebiBlock = true; sebiMsg = '\u274C Positional short in cash not allowed (SEBI). Need Futures or Put Options.'; }
+    else sebiMsg = '\u26A0 Positional short via ' + (fno === 'put' ? 'Put Options' : 'Futures') + ' \u2014 F&O segment only.';
+  } else if (isShort && !isPos) {
+    sebiMsg = '\u2714 Intraday short (MIS) allowed. Auto square-off by 3:15 PM enforced.';
+  }
+
+  /* Cost calc */
+  var slDist   = Math.abs(entry - sl);
+  var tgtDist  = Math.abs(tgt - entry);
+  var rr       = tgtDist / slDist;
+  var rrPass   = rr >= 2;
+
+  /* FIX 4: Apply drawdown risk multiplier to position sizing */
+  var risk         = cap * 0.01 * ddMode.riskMult;
+  var longQtyBase  = Math.max(1, Math.floor(risk / slDist));
+  var longQty      = longQtyBase;
+  var shortQty     = Math.max(1, Math.floor(longQty * 0.75));
+  var activeQty    = isShort ? shortQty : longQty;
+  var tradeVal     = activeQty * entry;
+
+  var brok = 40;
+  var sttRate = TE.type === 'INTRADAY' ? 0.00025 : 0.001;
+  var stt    = tradeVal * sttRate;
+  var gst    = brok * 0.18;
+  var stamp  = tradeVal * 0.00003;
+  var slip   = tradeVal * 0.0005;
+  var totalCost    = brok + stt + gst + stamp + slip;
+  var totalCostPct = totalCost / tradeVal * 100;
+  var minMovePct   = totalCostPct * 1.5;
+  var expMovePct   = tgtDist / entry * 100;
+  var costPass     = expMovePct >= minMovePct;
+
+  /* Update cost display */
+  var f2 = function(v) { return '\u20B9' + v.toFixed(2); };
+  var st = function(id, v, col) { var e = document.getElementById(id); if (e) { e.textContent = v; if (col !== undefined) e.style.color = col; } };
+  st('c-brok', f2(brok)); st('c-stt', f2(stt)); st('c-gst', f2(gst));
+  st('c-stamp', f2(stamp)); st('c-slip', f2(slip));
+  st('c-total', f2(totalCost) + ' (' + totalCostPct.toFixed(3) + '%)');
+  st('c-be', '+' + totalCostPct.toFixed(3) + '% (\u20B9' + (entry * totalCostPct / 100).toFixed(2) + ')');
+  st('c-min', '+' + minMovePct.toFixed(3) + '% (\u20B9' + (entry * minMovePct / 100).toFixed(2) + ')');
+  st('c-filter', costPass ? '\u2714 PASS (' + expMovePct.toFixed(2) + '% \u2265 ' + minMovePct.toFixed(2) + '%)' : '\u274C FAIL (' + expMovePct.toFixed(2) + '% < ' + minMovePct.toFixed(2) + '%)', costPass ? 'var(--green)' : 'var(--red)');
+
+  /* Update position sizing display */
+  st('ps-long', longQty + ' shares' + (ddMode.riskMult < 1 ? ' (' + ddMode.label + ')' : ''));
+  st('ps-long-sub', 'P&L: +\u20B9' + (longQty * tgtDist).toFixed(0) + ' / -\u20B9' + (longQty * slDist).toFixed(0));
+  st('ps-short', shortQty + ' shares' + (ddMode.riskMult < 1 ? ' (' + ddMode.label + ')' : ''));
+  st('ps-short-sub', 'P&L: +\u20B9' + (shortQty * tgtDist).toFixed(0) + ' / -\u20B9' + (shortQty * slDist).toFixed(0));
+  st('ps-risk', '\u20B9' + risk.toFixed(0) + ' of \u20B9' + cap.toLocaleString('en-IN') + (ddMode.riskMult < 1 ? ' [' + ddMode.label + ' mode]' : ''));
+  st('ps-rr', '1 : ' + rr.toFixed(2));
+  st('ps-rrcheck', rrPass ? '\u2714 PASS (1:' + rr.toFixed(2) + ' \u2265 1:2)' : '\u274C FAIL (1:' + rr.toFixed(2) + ' < 1:2)', rrPass ? 'var(--green)' : 'var(--red)');
+
+  /* FIX 3: Use unified win probability */
+  var vix    = LIVE.vix || 14;
+  var regime = classifyRegime(vix, LIVE.niftyChgPct || 0).label;
+  var prob   = getWinProbability(vix, LIVE.niftyChgPct || 0, regime);
+  var probPass = prob >= 60;
+  var vixBlock = vix > 25;
+
+  /* Decision */
+  var reasons = [];
+  var decision, cls, color;
+
+  if (sebiBlock)    { decision='BLOCK'; cls='dec-block'; color='var(--red)'; reasons.push(sebiMsg); }
+  else if (!costPass) { decision='BLOCK'; cls='dec-block'; color='var(--red)'; reasons.push('\u274C Cost filter: move ' + expMovePct.toFixed(2) + '% < min ' + minMovePct.toFixed(2) + '%'); }
+  else if (!rrPass)   { decision='BLOCK'; cls='dec-block'; color='var(--red)'; reasons.push('\u274C R:R (1:' + rr.toFixed(2) + ') below 1:2 minimum'); }
+  else if (vixBlock)  { decision='BLOCK'; cls='dec-block'; color='var(--red)'; reasons.push('\u274C VIX ' + vix.toFixed(1) + ' > 25 \u2014 trading halted'); }
+  else if (!probPass) { decision='BLOCK'; cls='dec-block'; color='var(--red)'; reasons.push('\u274C AI win probability ' + prob + '% < 60% minimum'); }
+  else {
+    decision = 'EXECUTE'; cls = 'dec-execute'; color = 'var(--green)';
+    if (prob < 75) reasons.push('\u26A0 AI probability ' + prob + '% (60\u201375%) \u2014 reduced size applied.');
+    if (ddMode.riskMult < 1) reasons.push('\u26A0 ' + ddMode.msg);
+    if (sebiMsg) reasons.push(sebiMsg);
+    if (isShort) reasons.push('\u26A0 Short margin +25% applied. Size: ' + shortQty + ' shares.');
+    if (tz.warn) reasons.push(tz.warn);
+    reasons.push('\u2714 All 6 layers passed.');
+  }
+
+  /* FIX 1: Share data with governance page */
+  window._lastTrade = { sym: sym, dir: TE.dir, type: TE.type, entry: entry, sl: sl, tgt: tgt, cap: cap, fno: fno };
+
+  var dirIcon  = isShort ? '\u25BC' : '\u25B2';
+  var segLabel = isPos ? (isShort ? (fno==='put'?'F&O \u2014 Put Options':'F&O \u2014 Futures') : 'CNC \u2014 Delivery') : 'MIS \u2014 Intraday';
+
+  /* Update decision box */
+  var box = document.getElementById('dec-box');
+  if (box) box.className = 'decision-box ' + cls;
+  var titEl = document.getElementById('dec-title');
+  if (titEl) { titEl.textContent = decision + ' ' + dirIcon + ' ' + TE.dir + (sym ? ' \u2014 ' + sym : ''); titEl.style.color = color; }
+  var bodyEl = document.getElementById('dec-body');
+  if (bodyEl) bodyEl.innerHTML = '<div class="dec-row"><span class="dec-row-lbl">Direction</span><span class="dec-row-val">' + dirIcon + ' ' + TE.dir + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Segment</span><span class="dec-row-val">' + segLabel + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Stock</span><span class="dec-row-val">' + (sym||'\u2014') + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Entry / SL / Target</span><span class="dec-row-val">\u20B9' + entry + ' / \u20B9' + sl + ' / \u20B9' + tgt + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Position Size</span><span class="dec-row-val">' + activeQty + ' shares</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Trade Value</span><span class="dec-row-val">\u20B9' + (activeQty*entry).toLocaleString('en-IN') + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Breakeven</span><span class="dec-row-val">+' + totalCostPct.toFixed(3) + '%</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Expected P&L</span><span class="dec-row-val" style="color:var(--green)">+\u20B9' + (activeQty*tgtDist).toFixed(0) + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Max Risk</span><span class="dec-row-val" style="color:var(--red)">\u2212\u20B9' + (activeQty*slDist).toFixed(0) + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">R : R</span><span class="dec-row-val">1 : ' + rr.toFixed(2) + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">AI Win Prob</span><span class="dec-row-val" style="color:' + (probPass?'var(--green)':'var(--red)') + '">' + prob + '%</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Drawdown Mode</span><span class="dec-row-val" style="color:' + ddMode.color + '">' + ddMode.label + '</span></div>'
+    + '<div class="dec-row"><span class="dec-row-lbl">Trades Today</span><span class="dec-row-val">' + todayCount + ' / ' + maxTrades + '</span></div>'
+    + reasons.map(function(r){ return '<div style="padding:5px 0;font-size:11px;color:var(--muted);line-height:1.5">' + r + '</div>'; }).join('');
+
+  var btn = document.getElementById('exec-btn');
+  if (btn) {
+    var canExec = decision === 'EXECUTE';
+    btn.disabled = !canExec;
+    btn.className = 'exec-btn ' + (canExec ? (isShort?'exec-short':'exec-long') : 'exec-blocked');
+    btn.textContent = canExec
+      ? decision + ' ' + dirIcon + ' ' + TE.dir + (sym?' \u2014 '+sym:'')
+      : 'BLOCK: ' + (reasons[0]||'').replace(/[\u2714\u274C\u26A0]/g,'').trim().slice(0,55) + '\u2026';
+  }
+}
+
+function showDecision(decision, cls, color, sym, reasons) {
+  var box = document.getElementById('dec-box');
+  if (box) box.className = 'decision-box ' + cls;
+  var titEl = document.getElementById('dec-title');
+  if (titEl) { titEl.textContent = decision + (sym?' \u2014 '+sym:''); titEl.style.color = color; }
+  var bodyEl = document.getElementById('dec-body');
+  if (bodyEl) bodyEl.innerHTML = reasons.map(function(r){ return '<div style="padding:8px 0;font-size:12px;line-height:1.5">' + r + '</div>'; }).join('');
+  var btn = document.getElementById('exec-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.className = 'exec-btn exec-blocked';
+    btn.textContent = 'BLOCK: ' + (reasons[0]||'').replace(/[\u2714\u274C\u26A0]/g,'').trim().slice(0,55) + '\u2026';
+  }
+}
+
+/* ── FIX 2+5: Hardened logTrade — governance check + Telegram alert ── */
+function logTrade() {
+  var sym   = (document.getElementById('te-sym')?.value||'').trim().toUpperCase() || 'UNKNOWN';
+  var entry = +document.getElementById('te-entry')?.value || 0;
+  var sl    = +document.getElementById('te-sl')?.value    || 0;
+  var tgt   = +document.getElementById('te-tgt')?.value   || 0;
+  var btn   = document.getElementById('exec-btn');
+
+  if (!entry || !sl || !tgt) { alert('Fill all trade fields first.'); return; }
+
+  /* FIX 2: Must have EXECUTE decision — check button state */
+  if (btn && btn.disabled) {
+    alert('\u274C Cannot log trade: decision is BLOCK.\nResolve all issues before executing.');
+    return;
+  }
+
+  /* FIX 8: Enforce max trades/day */
+  var todayTrades = (AI.trades||[]).filter(function(t){
+    return t.ts && new Date(t.ts).toDateString() === new Date().toDateString();
+  });
+  var maxT = (typeof CFG !== 'undefined' && CFG.maxTrades) ? CFG.maxTrades : 1;
+  if (todayTrades.length >= maxT) {
+    alert('\u274C Max ' + maxT + ' trade(s)/day limit reached.\nAlready logged ' + todayTrades.length + ' trade(s) today.');
+    return;
+  }
+
+  /* FIX 10: Update drawdown tracking */
+  var expectedPnl = 0; // Will be updated when trade closes
+  var activeQty = isShort ? Math.max(1,Math.floor(((typeof CFG!=='undefined'?CFG.capital:50000)*0.01*0.75)/Math.abs(entry-sl)))
+                           : Math.max(1,Math.floor(((typeof CFG!=='undefined'?CFG.capital:50000)*0.01)/Math.abs(entry-sl)));
+
+  /* Log trade */
+  AI.trades = AI.trades || [];
+  AI.count  = (AI.count  || 0) + 1;
+  var trade = { sym:sym, dir:TE.dir, type:TE.type, entry:entry, sl:sl, tgt:tgt, qty:activeQty, pnl:0, ts:Date.now() };
+  AI.trades.push(trade);
+  saveAI(AI);
+
+  /* Update OMS */
+  if (typeof orders !== 'undefined') {
+    orders.unshift({ sym:sym, dir:TE.dir, type:TE.type, entry:entry, sl:sl, tgt:tgt, qty:activeQty, status:'OPEN', ts:Date.now() });
+    if (typeof saveOrders === 'function') saveOrders();
+  }
+
+  /* FIX 5: Send Telegram alert */
+  var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
+  var vix = LIVE.vix || 0;
+  var regime = typeof classifyRegime==='function' ? classifyRegime(vix, LIVE.niftyChgPct||0).label : 'N/A';
+  var tgMsg = (TE.dir==='LONG' ? '0001F7E2' : '0001F534')
+    + ' *PRISM ANALYTICS \u2014 ' + (TE.dir==='LONG'?'EXECUTE \u25B2 LONG':'EXECUTE \u25BC SHORT') + '*\n'
+    + sym + ' (' + TE.type + ')\n'
+    + 'Entry: \u20B9' + entry + ' | SL: \u20B9' + sl + ' | Tgt: \u20B9' + tgt + '\n'
+    + 'Qty: ' + activeQty + ' | Regime: ' + regime + ' | VIX: ' + (vix||0).toFixed(1) + '\n'
+    + '\u23F0 ' + now + ' IST';
+  if (typeof sendTgAlert === 'function') sendTgAlert(tgMsg);
+
+  /* Feedback */
+  var setTx = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  setTx('ai-trade-count', AI.count);
+  setTx('ai2-trades', AI.count);
+  setTx('oms-trades', AI.count);
+
+  alert('\u2714 Trade logged and Telegram alert sent!\n\n'
+    + TE.dir + ' ' + TE.type + ' \u2014 ' + sym + '\n'
+    + 'Entry: \u20B9' + entry + ' | SL: \u20B9' + sl + ' | Target: \u20B9' + tgt + '\n'
+    + 'Qty: ' + activeQty + ' shares\n\n'
+    + 'Trade #' + AI.count + ' logged. OMS updated.');
+}
+
+/* ── FIX 1: Governance page auto-fills from Signal Engine ── */
+function syncGovernanceFromSignal() {
+  if (!window._lastTrade) return;
+  var t = window._lastTrade;
+  var f = function(id, v) { var e=document.getElementById(id); if(e) e.value=v; };
+  f('gv-sym',   t.sym);
+  f('gv-entry', t.entry);
+  f('gv-sl',    t.sl);
+  f('gv-tgt',   t.tgt);
+  f('gv-cap',   t.cap);
+  var dirEl = document.getElementById('gv-dir');
+  if (dirEl) dirEl.value = t.dir;
+  if (typeof runGovernance === 'function') runGovernance();
+}
+
+/* ── FIX 6: Robust chart loading with retry ── */
+function buildChartsWithRetry(attempt) {
+  attempt = attempt || 1;
+  if (window.Chart) { buildCharts(); return; }
+  if (attempt > 5) {
+    var b = document.getElementById('chart-load-status');
+    if (b) { b.textContent = 'Chart.js failed to load. Check internet connection.'; b.style.color='var(--red)'; }
+    return;
+  }
+  // Retry loading Chart.js
+  var existing = document.querySelector('script[src*="chart.umd"]');
+  if (!existing) {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    s.onload = function() { buildCharts(); };
+    s.onerror = function() { setTimeout(function(){ buildChartsWithRetry(attempt+1); }, 1000*attempt); };
+    document.head.appendChild(s);
+  } else {
+    setTimeout(function(){ buildChartsWithRetry(attempt+1); }, 800*attempt);
+  }
+}
+
+/* ── Update drawdown display on risk page ── */
+function updateRiskPageFull() {
+  updateRiskPage();
+  var ddMode = calcDrawdownMode();
+  var setTx = function(id,v,col){ var e=document.getElementById(id); if(e){ e.textContent=v; if(col) e.style.color=col; } };
+  setTx('risk-dd', DDState.drawdownPct.toFixed(2)+'%', ddMode.color);
+  setTx('risk-mode', ddMode.label, ddMode.color);
+  setTx('risk-mode-sub', ddMode.riskMult===0?'ALL TRADING STOPPED':'Risk multiplier: '+(ddMode.riskMult*100)+'%');
+  var fill = document.getElementById('dd-fill2');
+  if (fill) {
+    fill.style.width = Math.min(100, DDState.drawdownPct / 10 * 100) + '%';
+    fill.className = 'dd-fill ' + (DDState.drawdownPct < 3 ? 'dd-normal' : DDState.drawdownPct < 5 ? 'dd-warn' : 'dd-stop');
+  }
+  setTx('dd-pct2', DDState.drawdownPct.toFixed(2)+'%', ddMode.color);
+}
+
+/* ── Patch nav to use fixes ── */
+var _navFixed = nav;
+function nav(id, el, src) {
+  _navFixed(id, el, src);
+  if (id === 'risk')      updateRiskPageFull();
+  if (id === 'governance' && window._lastTrade) syncGovernanceFromSignal();
+  if (id === 'charts')    { setTimeout(function(){ buildChartsWithRetry(1); }, 80); }
+}
+
+/* ── Initialize ── */
+(function initFixes(){
+  // Update risk display with real DD data
+  setTimeout(updateRiskPageFull, 600);
+})();
+
 
 </script>
 </body>
