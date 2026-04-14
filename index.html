@@ -5,12 +5,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="202604140509">
+  <meta name="version" content="20260414165109">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="themeColorMeta" content="#0a0e1a">
-<title>Prism Analytics</title>
+<title>Prism Analytics v165109</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── THEME ── */
@@ -627,7 +627,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
       <div class="logo-sub">AMC Intelligence Engine</div>
     </div>
   </div>
-  <div class="topbar-right">
+  <div class="topbar-right"><span id="ver-badge" style="font-size:9px;color:var(--muted);margin-left:8px;font-family:monospace">v165109</span>
     <span class="ist-clock" id="ist-clock">--:--:--</span>
     <div class="mkt-pill closed" id="mkt-pill"><div class="pulse"></div><span id="mkt-text">CLOSED</span></div>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#x1F319;</button>
@@ -3335,14 +3335,20 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
   </div>
 </div>
 
-<script>
+<script>/* Force cache bypass */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(r){ r.unregister(); });
+  });
+}
+
 /* ════════════════════════════════════════
    PRISM ANALYTICS — PHASE 1D
    Clean single-file JS, no duplicates
 ════════════════════════════════════════ */
 
 /* ── PAGE LIST ── */
-var ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings','learning','options','smartmoney','news','fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash'];
+var ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings','learning','options','smartmoney','news','fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash','charts'];
 var SWIPE_PAGES=['dashboard','prices','charts','trade-engine','settings'];
 
 /* ── WATCHLIST ── */
@@ -3424,46 +3430,57 @@ setInterval(()=>{
 
 /* ── NAVIGATION ── */
 function nav(id,el,src){
-  ALL_PAGES.forEach(p=>{const pg=document.getElementById('page-'+p);if(pg)pg.classList.remove('active');});
-  const t=document.getElementById('page-'+id); if(t) t.classList.add('active');
-  document.getElementById('scroll-area').scrollTop=0;
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
-  if(el) el.classList.add('active');
-  if(src==='bn'){
-    document.querySelectorAll('.nav-item').forEach(n=>{if((n.getAttribute('onclick')||'').includes("'"+id+"'"))n.classList.add('active');});
-  } else {
-    const b=document.getElementById('bn-'+id); if(b) b.classList.add('active');
+  try {
+    /* Hide all pages */
+    var _pages = typeof ALL_PAGES !== 'undefined' ? ALL_PAGES : [];
+    _pages.forEach(function(p){
+      var pg = document.getElementById('page-'+p);
+      if(pg) pg.classList.remove('active');
+    });
+    /* Show target page */
+    var t = document.getElementById('page-'+id);
+    if(t) t.classList.add('active');
+    /* Scroll to top */
+    var sa = document.getElementById('scroll-area');
+    if(sa) sa.scrollTop = 0;
+    /* Update nav highlights */
+    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+    document.querySelectorAll('.bnav-btn').forEach(function(b){ b.classList.remove('active'); });
+    if(el) el.classList.add('active');
+    if(src==='bn'){
+      document.querySelectorAll('.nav-item').forEach(function(n){
+        if((n.getAttribute('onclick')||'').includes("'"+id+"'")) n.classList.add('active');
+      });
+    } else {
+      var bn = document.getElementById('bn-'+id);
+      if(bn) bn.classList.add('active');
+    }
+    /* Page init hooks */
+    if(id==='charts')    { setTimeout(function(){if(!window.Chart){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';s.onload=buildCharts;document.head.appendChild(s);}else buildCharts();},60); }
+    if(id==='orders')    { if(typeof renderOrders==='function') renderOrders(); }
+    if(id==='journal')   { if(typeof renderJournal==='function') renderJournal(); }
+    if(id==='risk')      { if(typeof updateRiskPage==='function') updateRiskPage(); }
+    if(id==='portfolio') { if(typeof updatePortfolio==='function') updatePortfolio(); }
+    if(id==='ai-engine') { if(typeof updateAIEnginePage==='function') updateAIEnginePage(); }
+    if(id==='screener')  { if(typeof runScreener==='function' && wlData && wlData.length) runScreener(); }
+    if(id==='backtest')  { setTimeout(function(){ if(typeof runBacktest==='function') runBacktest(); },80); }
+    if(id==='telegram')  { if(typeof initTelegramPage==='function') initTelegramPage(); }
+    if(id==='settings')  { if(typeof loadSettings==='function') loadSettings(); }
+    if(id==='learning')  { if(typeof updateLearningDashboard==='function') updateLearningDashboard(); }
+    if(id==='options')   { if(typeof buildOptionsChain==='function') buildOptionsChain(); }
+    if(id==='smartmoney'){ if(typeof updateSmartMoney==='function') updateSmartMoney(); }
+    if(id==='news')      { if(typeof fetchNews==='function') fetchNews(); }
+    if(id==='fiidii')    { if(typeof buildFIIDII==='function') buildFIIDII(); }
+    if(id==='sectorrsi') { if(typeof buildSectorRSI==='function') buildSectorRSI(); setTimeout(function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); },2000); }
+    if(id==='global')    { if(typeof fetchGlobalMarkets==='function') fetchGlobalMarkets(); }
+    if(id==='ml')        { if(typeof updateMLLivePrediction==='function') try{updateMLLivePrediction();}catch(_){} }
+    if(id==='modeldash') { if(typeof updateModelDashboard==='function') updateModelDashboard(); }
+    if(id==='risk')      { if(typeof updateRiskPageFull==='function') updateRiskPageFull(); }
+    if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
+    if(id==='charts')    { setTimeout(function(){ if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); },80); }
+  } catch(navErr) {
+    console.error('nav() error for page '+id+':', navErr);
   }
-
-  // All phase page-init hooks (merged, no circular refs)
-  if(id==='charts'){setTimeout(function(){if(!window.Chart){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';s.onload=buildCharts;document.head.appendChild(s);}else buildCharts();},60);}
-  if(id==='orders')    renderOrders();
-  if(id==='journal')   renderJournal();
-  if(id==='risk')      updateRiskPage();
-  if(id==='portfolio') updatePortfolio();
-  if(id==='ai-engine') updateAIEnginePage();
-  if(id==='screener')  {if(wlData&&wlData.length>0)runScreener();}
-  if(id==='backtest')  setTimeout(runBacktest,80);
-  if(id==='telegram')  initTelegramPage();
-  if(id==='settings')  loadSettings();
-
-  if(id==='learning')  { if(typeof updateLearningDashboard==='function') updateLearningDashboard(); }
-  if(id==='options')   { if(typeof buildOptionsChain==='function') buildOptionsChain(); }
-  if(id==='smartmoney'){ if(typeof updateSmartMoney==='function') updateSmartMoney(); }
-  if(id==='news')     { if(typeof fetchNews==='function') fetchNews(); }
-  if(id==='fiidii')   { if(typeof buildFIIDII==='function') buildFIIDII(); }
-  if(id==='sectorrsi'){ if(typeof buildSectorRSI==='function') buildSectorRSI(); }
-  if(id==='global')   { if(typeof fetchGlobalMarkets==='function') fetchGlobalMarkets(); }
-  if(id==='ml')       { if(typeof updateMLLivePrediction==='function'&&P3.lr.trained&&P3.lr.weights) updateMLLivePrediction(P3.lr.weights); }
-  if(id==='modeldash'){ if(typeof updateModelDashboard==='function') updateModelDashboard(); }
-  if(id==='histbt')   {}
-  if(id==='walkfwd')  {}
-  if(id==='rl')       {}
-
-  if(id==='risk')       { if(typeof updateRiskPageFull==='function') updateRiskPageFull(); }
-  if(id==='governance') { if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
-  if(id==='charts')     { setTimeout(function(){ if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); else if(typeof buildCharts==='function') buildCharts(); }, 80); }
 }
 
 /* ── SWIPE ── */
@@ -3477,7 +3494,7 @@ sa.addEventListener('touchend',e=>{
   const idx=SWIPE_PAGES.indexOf(cur); if(idx===-1) return;
   const ni=dx<0?Math.min(idx+1,SWIPE_PAGES.length-1):Math.max(idx-1,0);
   if(ni!==idx){const b=document.getElementById('bn-'+SWIPE_PAGES[ni]);nav(SWIPE_PAGES[ni],b,'bn');}
-},{passive:true});
+});
 
 /* ── CORS-RESILIENT YAHOO FINANCE FETCH ── */
 async function yFetch(sym){
@@ -5252,7 +5269,8 @@ function filterNews(cat, el){
 }
 
 function sentimentScore(articles){
-  const pos = articles.filter(a=>a.sentiment==='positive').length;
+  if(!articles||!articles.length) return {pos:0,neg:0,neu:0,score:0,pct:50};
+  var pos = articles.filter(a=>a.sentiment==='positive').length;
   const neg = articles.filter(a=>a.sentiment==='negative').length;
   const neu = articles.filter(a=>a.sentiment==='neutral').length;
   const score = articles.length ? (pos-neg)/articles.length : 0; // -1 to +1
@@ -5260,30 +5278,46 @@ function sentimentScore(articles){
 }
 
 function renderNews(){
-  const filtered = newsFilter==='all' ? allNews : allNews.filter(n=>n.cat===newsFilter);
-  const feed = document.getElementById('news-feed');
+  var feed = document.getElementById('news-feed');
   if(!feed) return;
-  if(!filtered.length){
-    feed.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">No news in this category.</div>';
+  var src = newsFilter==='all' ? allNews : allNews.filter(function(n){ return n.cat===newsFilter; });
+  if(!src || !src.length){
+    feed.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">No news available.</div>';
     return;
   }
-  feed.innerHTML = filtered.map(n=>{
-    const scls = n.sentiment==='positive'?'sent-pos':n.sentiment==='negative'?'sent-neg':'sent-neu';
-    const sicon = n.sentiment==='positive'?'\u25B2':n.sentiment==='negative'?'\u25BC':'\u25CF';
-    return `<div class="news-card" onclick="window.open('https://economictimes.indiatimes.com/markets','_blank')">
-      <div class="news-headline">${n.headline}</div>
-      <div class="news-meta">
-        <span class="news-source">${n.source}</span>
-        <span class="news-time">${n.age} ago</span>
-        <span class="sent-badge ${scls}">${sicon} ${n.sentiment.toUpperCase()}</span>
-        <span class="sent-score" style="color:var(--muted)">Score: ${n.score.toFixed(2)}</span>
-      </div>
-    </div>`;
-  }).join('');
+  var out = '';
+  for(var i=0; i<src.length; i++){
+    var n    = src[i];
+    var scls = n.sentiment==='positive'?'sent-pos':n.sentiment==='negative'?'sent-neg':'sent-neu';
+    var sico = n.sentiment==='positive'?'\u25B2':n.sentiment==='negative'?'\u25BC':'\u25CF';
+    var sc   = (+n.score||0).toFixed(2);
+    var hl   = (n.headline||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var src2 = (n.source||'ET Markets');
+    var age  = (n.age||'Today');
+    var sent = (n.sentiment||'neutral').toUpperCase();
+    out += '<div class="news-card" style="cursor:pointer" data-url="https://economictimes.indiatimes.com/markets">';
+    out += '<div class="news-headline">' + hl + '</div>';
+    out += '<div class="news-meta">';
+    out += '<span class="news-source">' + src2 + '</span>';
+    out += ' <span class="news-time">' + age + '</span>';
+    out += ' <span class="sent-badge ' + scls + '">' + sico + ' ' + sent + '</span>';
+    out += ' <span style="color:var(--muted);font-size:10px">Score:' + sc + '</span>';
+    out += '</div></div>';
+  }
+  feed.innerHTML = out;
+  /* Add click handlers after setting innerHTML */
+  var cards = feed.querySelectorAll('.news-card[data-url]');
+  for(var j=0;j<cards.length;j++){
+    (function(card){
+      card.addEventListener('click', function(){ window.open(card.getAttribute('data-url'),'_blank'); });
+    })(cards[j]);
+  }
 }
 
+
 function updateSentimentPanel(articles){
-  const s = sentimentScore(articles);
+  if(!articles || !articles.length){ articles = NEWS_DB || []; }
+  var s = sentimentScore(articles);
   const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
   const fill = document.getElementById('sent-fill');
   if(fill) fill.style.width = s.pct + '%';
@@ -5307,37 +5341,35 @@ function updateSentimentPanel(articles){
 }
 
 function fetchNews(){
-  const upd = document.getElementById('news-updated');
+  /* Always render curated news immediately */
+  allNews = allNews && allNews.length ? allNews : (NEWS_DB ? NEWS_DB.slice() : []);
+  var upd = document.getElementById('news-updated');
   if(upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST';
-  updateSentimentPanel(allNews);
+  if(typeof updateSentimentPanel === 'function') updateSentimentPanel(allNews);
   renderNews();
 
-  /* Live fetch attempt via free RSS proxy (no API key needed) */
-  const rssUrls = [
+  /* Try live RSS in background */
+  var rssUrls = [
     'https://api.rss2json.com/v1/api.json?rss_url=https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms',
-    'https://api.rss2json.com/v1/api.json?rss_url=https://www.moneycontrol.com/rss/MCtopnews.xml',
+    'https://api.rss2json.com/v1/api.json?rss_url=https://www.moneycontrol.com/rss/MCtopnews.xml'
   ];
-  rssUrls.forEach(async url=>{
-    try{
-      const r = await fetch(url, {signal:AbortSignal.timeout(6000)});
-      if(!r.ok) return;
-      const data = await r.json();
-      if(!data.items?.length) return;
-      const liveItems = data.items.slice(0,5).map((item,i)=>({
-        id: 100+i, cat:'nifty',
-        headline: item.title,
-        source: data.feed?.title||'ET Markets',
-        sentiment: Math.random()>.5?'positive':Math.random()>.5?'negative':'neutral',
-        score: +(0.2+Math.random()*.6).toFixed(2),
-        age:'Just now'
-      }));
-      allNews = [...liveItems, ...NEWS_DB];
-      updateSentimentPanel(allNews);
+  rssUrls.forEach(function(url){
+    fetch(url).then(function(r){ return r.json(); }).then(function(data){
+      if(!data.items || !data.items.length) return;
+      var live = data.items.slice(0,6).map(function(item,i){
+        return { id:100+i, cat:'nifty', headline:item.title,
+          source:(data.feed&&data.feed.title)||'ET Markets',
+          sentiment:Math.random()>.5?'positive':Math.random()>.5?'negative':'neutral',
+          score:(0.3+Math.random()*0.5).toFixed(2), age:'Just now' };
+      });
+      allNews = live.concat(NEWS_DB||[]);
+      if(typeof updateSentimentPanel==='function') updateSentimentPanel(allNews);
       renderNews();
-      if(upd) upd.textContent='Live RSS \u2713 ' + new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'})+' IST';
-    }catch(_){}
+      if(upd) upd.textContent = 'Live ✓ ' + new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST';
+    }).catch(function(){});
   });
 }
+
 
 /* ── FII / DII ── */
 function buildFIIDII(){
@@ -5427,9 +5459,10 @@ function buildSectorRSI(){
   const rotEl = document.getElementById('rotation-rows');
   if(!rows) return;
 
-  // Estimate RSI from price change
+  // Estimate RSI from price change (uses live wlData if available, simulated otherwise)
   const rsiData = SECTORS_RSI.map(sec=>{
-    const stocks = wlData.filter(s=>s.sector===sec.name&&s.chgPct!=null);
+    var _wd = (typeof wlData !== "undefined" && wlData) ? wlData : [];
+    var stocks = _wd.filter(s=>s.sector===sec.name&&s.chgPct!=null);
     const avgChg = stocks.length ? stocks.reduce((a,s)=>a+s.chgPct,0)/stocks.length : (Math.random()*4-1.5);
     const rsi = Math.max(15,Math.min(85, 50 + avgChg*6 + (Math.random()*10-5)));
     return {...sec, rsi:Math.round(rsi), avgChg:avgChg.toFixed(2)};
@@ -5492,33 +5525,63 @@ var GLOBAL_SYMS = [
 ];
 
 async function fetchGlobalMarkets(){
-  const srcEl = document.getElementById('global-src');
-  for(const s of GLOBAL_SYMS){
-    const d = await yFetch(s.sym);
-    if(!d) continue;
-    const pe = document.getElementById('g-'+s.id);
-    const ce = document.getElementById('g-'+s.id+'-c');
-    if(pe) pe.textContent = fN(d.price, s.id==='hsi'?0:2);
-    if(ce){
-      const sign = d.chg>=0?'+':'';
-      ce.textContent = sign+d.chgPct.toFixed(2)+'%';
-      ce.className = 'global-chg '+(d.chg>=0?'up':'dn');
-    }
-  }
-  if(srcEl) srcEl.textContent = 'Yahoo Finance \u2713';
+  var srcEl = document.getElementById('global-src');
 
-  // Correlation to Nifty
-  const sp500Data = await yFetch('^GSPC');
-  if(sp500Data){
-    const spChg = sp500Data.chgPct;
-    const niftyEst = (spChg*0.55).toFixed(2);
-    const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
-    setTx('corr2-sp500','0.72 (moderate-high)');
-    setTx('corr2-gap',spChg>=0?'Nifty likely +'+niftyEst+'% at open':'Nifty likely '+niftyEst+'% at open',spChg>=0?'var(--green)':'var(--red)');
-    setTx('corr2-signal',spChg>1?'\u25B2 Risk-on: LONG bias':spChg<-1?'\u25BC Risk-off: reduce exposure':'\u25CF Neutral: normal sizing',spChg>1?'var(--green)':spChg<-1?'var(--red)':'var(--amber)');
-  }
-  buildCalendar();
+  /* Show realistic simulated values IMMEDIATELY */
+  var sim = [
+    {id:'sp500',  p:'5,234.18', c:'+0.62%', up:true},
+    {id:'nasdaq', p:'16,340.87',c:'+0.89%', up:true},
+    {id:'dow',    p:'38,892.80',c:'+0.31%', up:true},
+    {id:'hsi',    p:'17,284.60',c:'-0.45%', up:false},
+    {id:'sse',    p:'3,165.42', c:'-0.22%', up:false},
+    {id:'nikkei', p:'38,405.66',c:'+0.72%', up:true},
+    {id:'ftse',   p:'8,312.89', c:'+0.18%', up:true}
+  ];
+  sim.forEach(function(s){
+    var pe = document.getElementById('g-'+s.id);
+    var ce = document.getElementById('g-'+s.id+'-c');
+    if(pe) pe.textContent = s.p;
+    if(ce){ ce.textContent = s.c; ce.className = 'global-chg '+(s.up?'up':'dn'); }
+  });
+  if(srcEl) srcEl.textContent = 'Simulated data';
+
+  /* Set static correlation data */
+  var setTx = function(id,v,col){ var e=document.getElementById(id); if(e){ e.textContent=v; if(col) e.style.color=col; } };
+  setTx('corr2-sp500','0.72 (moderate-high)');
+  setTx('corr2-us1','Nifty likely +0.4-0.7%','var(--green)');
+  setTx('corr2-us2','Nifty likely -0.3-0.6%','var(--red)');
+  setTx('corr2-gap','Loading live data…','var(--muted)');
+  setTx('corr2-signal','Loading…','var(--muted)');
+
+  /* Calendar always loads immediately */
+  if(typeof buildCalendar === 'function') buildCalendar();
+
+  /* Try live fetch in background - silent fail */
+  try {
+    for(var i=0; i<GLOBAL_SYMS.length; i++){
+      var s = GLOBAL_SYMS[i];
+      var d = await yFetch(s.sym);
+      if(!d) continue;
+      var pe2 = document.getElementById('g-'+s.id);
+      var ce2 = document.getElementById('g-'+s.id+'-c');
+      if(pe2) pe2.textContent = d.price.toLocaleString('en-IN',{maximumFractionDigits:2});
+      if(ce2){
+        var sign = d.chgPct>=0?'+':'';
+        ce2.textContent = sign+d.chgPct.toFixed(2)+'%';
+        ce2.className = 'global-chg '+(d.chgPct>=0?'up':'dn');
+      }
+    }
+    if(srcEl) srcEl.textContent = 'Yahoo Finance ✓';
+    /* Update correlation with live S&P */
+    var sp = await yFetch('^GSPC');
+    if(sp){
+      var est = (sp.chgPct*0.55).toFixed(2);
+      setTx('corr2-gap', sp.chgPct>=0?'Nifty likely +'+est+'%':'Nifty likely '+est+'%', sp.chgPct>=0?'var(--green)':'var(--red)');
+      setTx('corr2-signal', sp.chgPct>1?'▲ Risk-on: LONG bias':sp.chgPct<-1?'▼ Risk-off: reduce exposure':'● Neutral: normal sizing', sp.chgPct>1?'var(--green)':sp.chgPct<-1?'var(--red)':'var(--amber)');
+    }
+  } catch(_){}
 }
+
 
 function buildCalendar(){
   const calEl = document.getElementById('cal-rows');
@@ -5569,9 +5632,9 @@ function initPhase2(){
   buildFIIDII();
   // Sector RSI and global require live data; trigger when watchlist ready
   setTimeout(()=>{
-    if(wlData&&wlData.length>0) buildSectorRSI();
+    buildSectorRSI();      // works with or without live wlData
     fetchGlobalMarkets();
-  }, 2000);
+  }, 1500);
 }
 setTimeout(initPhase2, 1500);
 
