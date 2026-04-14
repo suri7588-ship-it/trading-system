@@ -608,8 +608,8 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
 
 /* ═══ TOAST NOTIFICATION ═══ */
-#prism-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2338;color:#e8edf5;padding:13px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.45);z-index:9999;opacity:0;transition:all .3s ease;pointer-events:none;max-width:320px;text-align:center;border:1px solid rgba(255,255,255,.1);}
-#prism-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#prism-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2338;color:#e8edf5;padding:13px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.45);z-index:9999;opacity:0;transition:all .3s ease;pointer-events:none !important;max-width:320px;text-align:center;border:1px solid rgba(255,255,255,.1);}
+#prism-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:none !important;}
 #prism-toast.toast-ok{border-color:var(--green);background:rgba(16,185,129,.15);}
 #prism-toast.toast-err{border-color:var(--red);background:rgba(244,63,94,.15);}
 
@@ -4164,11 +4164,10 @@ function afterFetchUpdate1F(){
 
 /* ── Initialize on load ── */
 (function init1F(){
-  renderOrders();
-  renderJournal();
-  updateRiskPage();
-  // Pre-run screener silently (will show 0 matches until watchlist loads)
-  setTimeout(()=>{if(wlData.length) runScreener();},3000);
+  if(typeof renderOrders==='function') renderOrders();
+  if(typeof renderJournal==='function') renderJournal();
+  if(typeof updateRiskPage==='function') updateRiskPage();
+  setTimeout(function(){if(wlData&&wlData.length) runScreener();},3000);
 })();
 
 
@@ -4615,39 +4614,53 @@ function runBacktest(){
 /* ── TELEGRAM BOT ── */
 var TG_KEY = 'prism-tg';
 var tgConfig = {token:'', chatId:'', count:0, lastSent:''};
+
+/* Load saved config immediately at script start */
 (function(){
-  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+  try {
+    var _raw = localStorage.getItem(TG_KEY);
+    if(_raw){
+      var _parsed = JSON.parse(_raw);
+      if(_parsed && typeof _parsed === 'object'){
+        tgConfig = _parsed;
+      }
+    }
+  } catch(_e){}
 })();
 
-/* ── Toast popup ── */
+/* ── Toast popup (bottom-center) ── */
 function showToast(msg, ok){
   var t = document.getElementById('prism-toast');
   if(!t){ t=document.createElement('div'); t.id='prism-toast'; document.body.appendChild(t); }
   t.textContent = msg;
+  t.style.pointerEvents = 'none';
   t.className = 'show ' + (ok ? 't-ok' : 't-err');
   clearTimeout(t._timer);
-  t._timer = setTimeout(function(){ t.className=''; }, ok ? 4000 : 5000);
+  t._timer = setTimeout(function(){
+    t.className = '';
+    t.style.pointerEvents = 'none';
+  }, ok ? 4000 : 5500);
 }
 
-/* ── Feedback banner inside TG page ── */
+/* ── In-page feedback banner ── */
 function tgShowFeedback(msg, ok){
   var el = document.getElementById('tg-feedback');
   if(!el) return;
   el.textContent = msg;
   el.style.display = 'block';
-  el.style.background  = ok ? 'var(--gbg)'     : 'var(--rbg)';
-  el.style.color       = ok ? 'var(--green)'   : 'var(--red)';
+  el.style.background  = ok ? 'var(--gbg)'   : 'var(--rbg)';
+  el.style.color       = ok ? 'var(--green)' : 'var(--red)';
   el.style.border      = '1px solid ' + (ok ? 'var(--gborder)' : 'var(--rborder)');
   clearTimeout(el._t);
-  el._t = setTimeout(function(){ el.style.display='none'; }, ok ? 5000 : 7000);
+  el._t = setTimeout(function(){ el.style.display='none'; }, ok ? 6000 : 8000);
 }
 
-/* ── Preview row: shows last-4 of stored token ── */
+/* ── Update preview row showing last-4 of saved token ── */
 function tgUpdatePreview(){
   var el = document.getElementById('tg-saved-preview');
   if(!el) return;
   if(tgConfig.token && tgConfig.token.length > 4){
-    el.textContent = '...' + tgConfig.token.slice(-4) + ' (Chat: ' + (tgConfig.chatId||'none') + ')';
+    el.textContent = '...' + tgConfig.token.slice(-4) + '  (Chat: ' + (tgConfig.chatId||'none') + ')';
     el.style.color = 'var(--green)';
   } else {
     el.textContent = 'None';
@@ -4655,202 +4668,278 @@ function tgUpdatePreview(){
   }
 }
 
-/* ── Status badge + dot ── */
+/* ── Status badge ── */
 function updateTgStatus(connected, msg){
   var dot   = document.getElementById('tg-dot');
   var label = document.getElementById('tg-status');
   var badge = document.getElementById('tg-status-badge');
   if(dot){
-    dot.className = 's-dot ' + (connected ? 's-on' : '');
-    dot.style.background = connected ? '' : tgConfig.token ? 'var(--amber)' : 'var(--dim)';
+    dot.style.background = connected ? 'var(--green)' : tgConfig.token ? 'var(--amber)' : 'var(--dim)';
   }
   if(label){ label.textContent = msg||''; label.style.color = connected ? 'var(--green)' : tgConfig.token ? 'var(--amber)' : 'var(--muted)'; }
   if(badge){
-    if(connected){ badge.textContent='Connected \u2714'; badge.className='badge badge-g'; badge.removeAttribute('style'); }
-    else if(tgConfig.token){ badge.textContent='Saved (not tested)'; badge.className='badge badge-a'; badge.removeAttribute('style'); }
-    else { badge.textContent='Not configured'; badge.className='badge'; badge.style.cssText='background:var(--bg3);color:var(--muted)'; }
+    if(connected){
+      badge.textContent = 'Connected \u2714';
+      badge.className = 'badge badge-g';
+      badge.removeAttribute('style');
+    } else if(tgConfig.token){
+      badge.textContent = 'Saved \u2714';
+      badge.className = 'badge badge-a';
+      badge.removeAttribute('style');
+    } else {
+      badge.textContent = 'Not configured';
+      badge.className = 'badge';
+      badge.style.cssText = 'background:var(--bg3);color:var(--muted)';
+    }
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   SAVE CONFIG — single responsibility, no side effects
-═══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   SAVE CONFIG
+   Reads fields directly — NO bullet-mask logic.
+   Token field is always plain text.
+══════════════════════════════════════════════════ */
 function saveTgConfig(){
   var tokenEl = document.getElementById('tg-token');
   var chatEl  = document.getElementById('tg-chatid');
-  var token   = tokenEl ? tokenEl.value.trim() : '';
-  var chatId  = chatEl  ? chatEl.value.trim()  : '';
 
-  /* If field is masked (bullets), use whatever is stored */
-  if(token.indexOf('\u2022') !== -1){ token = tgConfig.token || ''; }
-
-  if(!token){
-    tgShowFeedback('\u274C Bot Token is empty. Paste your token from @BotFather.', false);
-    showToast('\u274C Bot Token is empty', false);
-    if(tokenEl){ tokenEl.value=''; tokenEl.focus(); }
-    return;
-  }
-  if(!chatId){
-    tgShowFeedback('\u274C Chat ID is empty. Message @userinfobot on Telegram.', false);
-    showToast('\u274C Chat ID is empty', false);
-    if(chatEl) chatEl.focus();
+  if(!tokenEl || !chatEl){
+    showToast('\u274C Page not ready. Wait and try again.', false);
     return;
   }
 
-  /* Save to memory and localStorage */
+  var token  = tokenEl.value.trim();
+  var chatId = chatEl.value.trim();
+
+  /* Strip any accidentally pasted bullets */
+  token  = token.replace(/\u2022/g, '');
+  chatId = chatId.replace(/\u2022/g, '');
+
+  /* If field was displaying masked value and user didn't retype,
+     load the real token from storage */
+  if(token.length < 10){
+    try {
+      var _raw = localStorage.getItem(TG_KEY);
+      var _stored = _raw ? JSON.parse(_raw) : {};
+      if(_stored.token && _stored.token.length >= 10){
+        token = _stored.token;
+      }
+    } catch(_){}
+  }
+
+  if(!token || token.length < 10){
+    tgShowFeedback('\u274C Bot Token is too short. Paste the full token from @BotFather.', false);
+    showToast('\u274C Bot Token is empty or too short', false);
+    tokenEl.value = '';
+    tokenEl.focus();
+    return;
+  }
+  if(!chatId || isNaN(chatId)){
+    tgShowFeedback('\u274C Chat ID must be a number. Message @userinfobot on Telegram.', false);
+    showToast('\u274C Chat ID is missing or invalid', false);
+    chatEl.focus();
+    return;
+  }
+
+  /* Write to memory */
   tgConfig.token  = token;
   tgConfig.chatId = chatId;
+
+  /* Write to localStorage */
+  var saveOk = false;
   try {
     localStorage.setItem(TG_KEY, JSON.stringify(tgConfig));
+    /* Verify it was actually written */
+    var _verify = localStorage.getItem(TG_KEY);
+    if(_verify && JSON.parse(_verify).token === token){
+      saveOk = true;
+    }
   } catch(e){
     tgShowFeedback('\u274C localStorage error: ' + e.message, false);
     showToast('\u274C Save failed: ' + e.message, false);
     return;
   }
 
+  if(!saveOk){
+    tgShowFeedback('\u274C Save verification failed. Try a different browser.', false);
+    showToast('\u274C Verification failed', false);
+    return;
+  }
+
   /* Update UI */
   tgUpdatePreview();
-  updateTgStatus(false, 'Saved \u2714  Now send a test message to verify.');
+  updateTgStatus(false, 'Saved \u2714  Click Test to verify connection.');
+
+  /* In-page feedback */
   tgShowFeedback(
-    '\u2714 Bot Token and Chat ID saved successfully!\nToken: ...' + token.slice(-4) + '  |  Chat ID: ' + chatId,
+    '\u2714 Saved!\nToken: ...' + token.slice(-4) + '  |  Chat ID: ' + chatId + '\nNow click Test to verify.',
     true
   );
 
-  /* Prominent modal-style toast popup (required by user) */
+  /* Toast popup */
   showToast('\u2714 Bot ID and Chat ID are saved and ready to send test message!', true);
 
-  /* Mask token in input field */
-  if(tokenEl) tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + token.slice(-4);
+  /* Show masked token */
+  tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + token.slice(-4);
+
+  /* Refresh diagnostics if visible */
+  if(typeof tgRunDiag === 'function') setTimeout(tgRunDiag, 200);
 }
 
-/* ═══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    CLEAR CONFIG
-═══════════════════════════════════════════════════ */
+══════════════════════════════════════════════════ */
 function clearTgConfig(){
   tgConfig = {token:'', chatId:'', count:0, lastSent:''};
   try { localStorage.removeItem(TG_KEY); } catch(_){}
   var t = document.getElementById('tg-token');  if(t) t.value = '';
   var c = document.getElementById('tg-chatid'); if(c) c.value = '';
   tgUpdatePreview();
-  updateTgStatus(false, 'Config cleared.');
-  tgShowFeedback('Config cleared.', true);
-  showToast('Telegram config cleared.', false);
+  updateTgStatus(false, 'Cleared. Paste your credentials and Save.');
+  tgShowFeedback('Config cleared. Enter your token and Chat ID.', true);
+  showToast('Config cleared.', false);
+  if(typeof tgRunDiag === 'function') setTimeout(tgRunDiag, 100);
 }
 
-/* ═══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    SEND TEST MESSAGE
-═══════════════════════════════════════════════════ */
+══════════════════════════════════════════════════ */
 async function testTgMessage(){
-  /* Reload from storage in case save was recent */
-  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+  /* Always load fresh from storage before testing */
+  try {
+    var _raw = localStorage.getItem(TG_KEY);
+    if(_raw){ var _p = JSON.parse(_raw); tgConfig.token = _p.token||''; tgConfig.chatId = _p.chatId||''; }
+  } catch(_){}
 
-  if(!tgConfig.token || !tgConfig.chatId){
-    tgShowFeedback('\u274C No saved config. Press Save Config first.', false);
-    showToast('\u274C Save config before testing', false);
+  if(!tgConfig.token || tgConfig.token.length < 10){
+    tgShowFeedback('\u274C No token saved. Click Save Config first.', false);
+    showToast('\u274C Save config first', false);
     return;
   }
-  tgShowFeedback('\u23F3 Sending test message...', true);
+  if(!tgConfig.chatId){
+    tgShowFeedback('\u274C No Chat ID saved. Click Save Config first.', false);
+    showToast('\u274C Save config first', false);
+    return;
+  }
+
+  tgShowFeedback('\u23F3 Sending test...', true);
   showToast('\u23F3 Sending test message...', true);
 
-  var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
-  var txt = '🟢 *PRISM ANALYTICS \u2014 TEST*\n\n'
+  var t = getISTTime ? getISTTime() : {timeStr:'--:-- IST'};
+  var txt = '\U0001F7E2 *PRISM ANALYTICS \u2014 TEST*\n\n'
     + 'Bot connected successfully!\n'
-    + '\u23F0 ' + now + ' IST\n\n'
+    + '\u23F0 ' + t.timeStr + '\n\n'
     + 'Your trade alerts will appear here.\n'
-    + 'Token: ...' + tgConfig.token.slice(-4);
+    + 'Token ends: ...' + tgConfig.token.slice(-4);
 
   try {
     var url = 'https://api.telegram.org/bot' + tgConfig.token
             + '/sendMessage?chat_id=' + tgConfig.chatId
             + '&text=' + encodeURIComponent(txt)
             + '&parse_mode=Markdown';
-    var res  = await fetch(url, {signal: AbortSignal.timeout(12000)});
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 12000);
+    var res  = await fetch(url, {signal: controller.signal});
+    clearTimeout(timer);
     var data = await res.json();
 
     if(data.ok){
       tgConfig.count    = (tgConfig.count||0) + 1;
-      tgConfig.lastSent = now + ' IST';
+      tgConfig.lastSent = t.timeStr;
       localStorage.setItem(TG_KEY, JSON.stringify(tgConfig));
-
       var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent;
       var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count;
-
-      updateTgStatus(true, 'Connected \u2714  Test sent at ' + now);
-      tgShowFeedback('\u2714 Test message sent! Check your Telegram app now.', true);
-      showToast('\u2714 Test message sent! Check Telegram.', true);
-      if(typeof updateTgActivityLog === 'function') updateTgActivityLog('Test message sent', now + ' IST', true);
+      updateTgStatus(true, 'Connected \u2714  Test sent at ' + t.timeStr);
+      tgShowFeedback('\u2714 Test sent! Check your Telegram app now.', true);
+      showToast('\u2714 Test message sent! Check Telegram now.', true);
+      if(typeof updateTgActivityLog === 'function') updateTgActivityLog('Test message sent', t.timeStr, true);
+      if(typeof tgRunDiag === 'function') setTimeout(tgRunDiag, 300);
     } else {
-      var err = (data.description || 'Unknown error');
+      var err = data.description || 'Unknown Telegram error';
       updateTgStatus(false, 'Error: ' + err);
-      tgShowFeedback('\u274C Telegram error: ' + err + '\n\nCheck your Bot Token is correct.', false);
-      showToast('\u274C Telegram error: ' + err, false);
+      tgShowFeedback('\u274C ' + err + '\n\nDouble-check your Bot Token.', false);
+      showToast('\u274C ' + err, false);
     }
   } catch(e){
-    var errMsg = e.name === 'TimeoutError' ? 'Request timed out (12s). Check internet.' : (e.message || 'Network error');
-    updateTgStatus(false, errMsg);
-    tgShowFeedback('\u274C ' + errMsg, false);
-    showToast('\u274C ' + errMsg, false);
+    var msg = (e.name === 'AbortError') ? 'Timed out (12s). Check internet.' : (e.message || 'Network error');
+    updateTgStatus(false, msg);
+    tgShowFeedback('\u274C ' + msg, false);
+    showToast('\u274C ' + msg, false);
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   SEND ALERT (used by all auto-alert functions)
-═══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   SEND ALERT (called by auto-alert functions)
+══════════════════════════════════════════════════ */
 async function sendTgAlert(msg){
-  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+  try {
+    var _raw = localStorage.getItem(TG_KEY);
+    if(_raw){ var _p = JSON.parse(_raw); tgConfig.token=_p.token||''; tgConfig.chatId=_p.chatId||''; }
+  } catch(_){}
   if(!tgConfig.token || !tgConfig.chatId) return;
   try {
-    var url = 'https://api.telegram.org/bot' + tgConfig.token
-            + '/sendMessage?chat_id=' + tgConfig.chatId
-            + '&text=' + encodeURIComponent(msg)
-            + '&parse_mode=Markdown';
-    await fetch(url, {signal: AbortSignal.timeout(10000)});
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 10000);
+    await fetch(
+      'https://api.telegram.org/bot' + tgConfig.token +
+      '/sendMessage?chat_id=' + tgConfig.chatId +
+      '&text=' + encodeURIComponent(msg) + '&parse_mode=Markdown',
+      {signal: controller.signal}
+    );
+    clearTimeout(timer);
     tgConfig.count    = (tgConfig.count||0) + 1;
-    tgConfig.lastSent = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST';
+    tgConfig.lastSent = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'})+' IST';
+    try { localStorage.setItem(TG_KEY, JSON.stringify(tgConfig)); } catch(_){}
     var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent;
     var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count;
-    try { localStorage.setItem(TG_KEY, JSON.stringify(tgConfig)); } catch(_){}
   } catch(_){}
 }
 
-/* ═══════════════════════════════════════════════════
-   INIT PAGE (called every time Telegram tab is opened)
-═══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   INIT PAGE — called every time Telegram tab opens
+══════════════════════════════════════════════════ */
 function initTelegramPage(){
-  /* Always reload fresh from storage */
-  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+  /* Always reload from storage */
+  try {
+    var _raw = localStorage.getItem(TG_KEY);
+    if(_raw){
+      var _p = JSON.parse(_raw);
+      tgConfig.token   = _p.token   || '';
+      tgConfig.chatId  = _p.chatId  || '';
+      tgConfig.count   = _p.count   || 0;
+      tgConfig.lastSent= _p.lastSent|| '';
+    }
+  } catch(_){}
 
   var tokenEl = document.getElementById('tg-token');
   var chatEl  = document.getElementById('tg-chatid');
 
+  /* Show masked token if saved, blank if not */
   if(tokenEl){
-    /* Show masked token if saved, blank if not */
-    tokenEl.value = (tgConfig.token && tgConfig.token.length > 4)
-      ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + tgConfig.token.slice(-4)
-      : '';
-    /* Clear mask when user taps to re-enter */
-    tokenEl.onfocus = function(){
-      if(this.value.indexOf('\u2022') !== -1){
-        this.value = '';
-        this.placeholder = 'Paste your new token here...';
-      }
+    if(tgConfig.token && tgConfig.token.length > 4){
+      tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + tgConfig.token.slice(-4);
+    } else {
+      tokenEl.value = '';
+    }
+    /* When user clicks to type, clear the masked value */
+    tokenEl.onclick = function(){
+      if(this.value.indexOf('\u2022') !== -1){ this.value = ''; }
     };
-    tokenEl.onblur = function(){
-      if(!this.value && tgConfig.token && tgConfig.token.length > 4){
-        this.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + tgConfig.token.slice(-4);
-      }
+    tokenEl.onfocus = function(){
+      if(this.value.indexOf('\u2022') !== -1){ this.value = ''; }
     };
   }
   if(chatEl) chatEl.value = tgConfig.chatId || '';
 
-  var lEl  = document.getElementById('tg-last');  if(lEl)  lEl.textContent  = tgConfig.lastSent || '\u2014';
-  var cEl  = document.getElementById('tg-count'); if(cEl)  cEl.textContent  = tgConfig.count    || 0;
+  var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent || '\u2014';
+  var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count    || 0;
 
   tgUpdatePreview();
-  updateTgStatus(false, tgConfig.token ? 'Config loaded. Send a test to verify.' : 'Not configured \u2014 paste token above.');
+  updateTgStatus(false, tgConfig.token ? 'Config loaded. Click Test to verify.' : 'Enter token and Chat ID below.');
   if(typeof renderTgActivityLog === 'function') renderTgActivityLog();
-  setTimeout(tgRunDiag, 100);
+  if(typeof tgRunDiag === 'function') setTimeout(tgRunDiag, 150);
 }
+
 
 
 
