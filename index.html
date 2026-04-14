@@ -4232,7 +4232,7 @@ function toggleKillSwitch(){
     if(btn){btn.textContent = '\u26D4 Engage Kill Switch';btn.style.background='var(--red)';}
   }
   saveAI(AI);
-}
+  if(typeof alertKillSwitch==='function') alertKillSwitch(killSwitchActive);}
 
 /* ── Trade Governance Engine ── */
 function runGovernance(){
@@ -4598,180 +4598,238 @@ let tgConfig = {token:'', chatId:'', count:0, lastSent:''};
   try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
 })();
 
-function tgShowFeedback(msg, ok){
-  var el=document.getElementById('tg-feedback');
-  if(!el) return;
-  el.textContent=msg; el.style.display='block';
-  el.style.background=ok?'var(--gbg)':'var(--rbg)';
-  el.style.color=ok?'var(--green)':'var(--red)';
-  el.style.border='1px solid '+(ok?'var(--gborder)':'var(--rborder)');
-  clearTimeout(el._t); el._t=setTimeout(function(){el.style.display='none';},5000);
-}
-
-function tgUpdatePreview(){
-  var el=document.getElementById('tg-saved-preview');
-  if(!el) return;
-  if(tgConfig.token && tgConfig.token.length>4){
-    el.textContent='...'+tgConfig.token.slice(-4)+' (Chat: '+(tgConfig.chatId||'none')+')';
-    el.style.color='var(--green)';
-  } else { el.textContent='None'; el.style.color='var(--muted)'; }
-}
-
-
-/* ── Global toast notification ── */
+/* ── Toast popup ── */
 function showToast(msg, ok){
   var t = document.getElementById('prism-toast');
-  if(!t){
-    t = document.createElement('div');
-    t.id = 'prism-toast';
-    document.body.appendChild(t);
-  }
+  if(!t){ t=document.createElement('div'); t.id='prism-toast'; document.body.appendChild(t); }
   t.textContent = msg;
-  t.className = 'show ' + (ok ? 'toast-ok' : 'toast-err');
+  t.className = 'show ' + (ok ? 't-ok' : 't-err');
   clearTimeout(t._timer);
-  t._timer = setTimeout(function(){t.className='';}, ok ? 3500 : 5000);
+  t._timer = setTimeout(function(){ t.className=''; }, ok ? 4000 : 5000);
 }
 
+/* ── Feedback banner inside TG page ── */
+function tgShowFeedback(msg, ok){
+  var el = document.getElementById('tg-feedback');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background  = ok ? 'var(--gbg)'     : 'var(--rbg)';
+  el.style.color       = ok ? 'var(--green)'   : 'var(--red)';
+  el.style.border      = '1px solid ' + (ok ? 'var(--gborder)' : 'var(--rborder)');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.display='none'; }, ok ? 5000 : 7000);
+}
+
+/* ── Preview row: shows last-4 of stored token ── */
+function tgUpdatePreview(){
+  var el = document.getElementById('tg-saved-preview');
+  if(!el) return;
+  if(tgConfig.token && tgConfig.token.length > 4){
+    el.textContent = '...' + tgConfig.token.slice(-4) + ' (Chat: ' + (tgConfig.chatId||'none') + ')';
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = 'None';
+    el.style.color = 'var(--muted)';
+  }
+}
+
+/* ── Status badge + dot ── */
+function updateTgStatus(connected, msg){
+  var dot   = document.getElementById('tg-dot');
+  var label = document.getElementById('tg-status');
+  var badge = document.getElementById('tg-status-badge');
+  if(dot){
+    dot.className = 's-dot ' + (connected ? 's-on' : '');
+    dot.style.background = connected ? '' : tgConfig.token ? 'var(--amber)' : 'var(--dim)';
+  }
+  if(label){ label.textContent = msg||''; label.style.color = connected ? 'var(--green)' : tgConfig.token ? 'var(--amber)' : 'var(--muted)'; }
+  if(badge){
+    if(connected){ badge.textContent='Connected \u2714'; badge.className='badge badge-g'; badge.removeAttribute('style'); }
+    else if(tgConfig.token){ badge.textContent='Saved (not tested)'; badge.className='badge badge-a'; badge.removeAttribute('style'); }
+    else { badge.textContent='Not configured'; badge.className='badge'; badge.style.cssText='background:var(--bg3);color:var(--muted)'; }
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   SAVE CONFIG — single responsibility, no side effects
+═══════════════════════════════════════════════════ */
 function saveTgConfig(){
-  var tokenEl=document.getElementById('tg-token');
-  var chatEl=document.getElementById('tg-chatid');
-  var token  = tokenEl ? tokenEl.value.trim() : '';
-  var chatId = chatEl  ? chatEl.value.trim()  : '';
-  // If field shows bullet mask, restore the stored token
-  if(token.indexOf('\u2022') !== -1){ token = tgConfig.token; }
+  var tokenEl = document.getElementById('tg-token');
+  var chatEl  = document.getElementById('tg-chatid');
+  var token   = tokenEl ? tokenEl.value.trim() : '';
+  var chatId  = chatEl  ? chatEl.value.trim()  : '';
+
+  /* If field is masked (bullets), use whatever is stored */
+  if(token.indexOf('\u2022') !== -1){ token = tgConfig.token || ''; }
+
   if(!token){
     tgShowFeedback('\u274C Bot Token is empty. Paste your token from @BotFather.', false);
+    showToast('\u274C Bot Token is empty', false);
     if(tokenEl){ tokenEl.value=''; tokenEl.focus(); }
     return;
   }
   if(!chatId){
-    tgShowFeedback('\u274C Chat ID is empty. Enter your Telegram user ID.', false);
+    tgShowFeedback('\u274C Chat ID is empty. Message @userinfobot on Telegram.', false);
+    showToast('\u274C Chat ID is empty', false);
     if(chatEl) chatEl.focus();
     return;
   }
-  tgConfig.token = token;
+
+  /* Save to memory and localStorage */
+  tgConfig.token  = token;
   tgConfig.chatId = chatId;
   try {
     localStorage.setItem(TG_KEY, JSON.stringify(tgConfig));
-    tgUpdatePreview();
-    updateTgStatus(false, 'Saved \u2714  Send a test to verify.');
-    tgShowFeedback('\u2714 Config saved!  Token ends: ...' + token.slice(-4) + '  Chat ID: ' + chatId, true);
-    showToast('\u2714 Config saved successfully! Bot: ...' + token.slice(-4) + ' | Chat: ' + chatId, true);
-    // Mask token in input
-    if(tokenEl) tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + token.slice(-4);
   } catch(e){
-    tgShowFeedback('\u274C Save error: ' + e.message, false);
+    tgShowFeedback('\u274C localStorage error: ' + e.message, false);
+    showToast('\u274C Save failed: ' + e.message, false);
+    return;
   }
+
+  /* Update UI */
+  tgUpdatePreview();
+  updateTgStatus(false, 'Saved \u2714  Now send a test message to verify.');
+  tgShowFeedback(
+    '\u2714 Bot Token and Chat ID saved successfully!\nToken: ...' + token.slice(-4) + '  |  Chat ID: ' + chatId,
+    true
+  );
+
+  /* Prominent modal-style toast popup (required by user) */
+  showToast('\u2714 Bot ID and Chat ID are saved and ready to send test message!', true);
+
+  /* Mask token in input field */
+  if(tokenEl) tokenEl.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + token.slice(-4);
 }
 
+/* ═══════════════════════════════════════════════════
+   CLEAR CONFIG
+═══════════════════════════════════════════════════ */
 function clearTgConfig(){
   tgConfig = {token:'', chatId:'', count:0, lastSent:''};
   try { localStorage.removeItem(TG_KEY); } catch(_){}
-  var t=document.getElementById('tg-token');  if(t) t.value='';
-  var c=document.getElementById('tg-chatid'); if(c) c.value='';
+  var t = document.getElementById('tg-token');  if(t) t.value = '';
+  var c = document.getElementById('tg-chatid'); if(c) c.value = '';
   tgUpdatePreview();
   updateTgStatus(false, 'Config cleared.');
   tgShowFeedback('Config cleared.', true);
   showToast('Telegram config cleared.', false);
 }
 
-function updateTgStatus(connected, msg){
-  var dot    = document.getElementById('tg-dot');
-  var status = document.getElementById('tg-status');
-  var badge  = document.getElementById('tg-status-badge');
-  if(dot){
-    dot.className = 's-dot ' + (connected ? 's-on' : '');
-    if(!connected && !tgConfig.token) dot.style.background = 'var(--dim)';
-    else if(!connected) dot.style.background = 'var(--amber)';
-    else dot.style.background = '';
-  }
-  if(status){ status.textContent=msg||''; status.style.color=connected?'var(--green)':tgConfig.token?'var(--amber)':'var(--muted)'; }
-  if(badge){
-    if(connected){
-      badge.textContent='Connected \u2714'; badge.className='badge badge-g'; badge.removeAttribute('style');
-    } else if(tgConfig.token){
-      badge.textContent='Saved (not tested)'; badge.className='badge badge-a'; badge.removeAttribute('style');
-    } else {
-      badge.textContent='Not configured'; badge.className='badge';
-      badge.style.cssText='background:var(--bg3);color:var(--muted)';
-    }
-  }
-}
-
+/* ═══════════════════════════════════════════════════
+   SEND TEST MESSAGE
+═══════════════════════════════════════════════════ */
 async function testTgMessage(){
+  /* Reload from storage in case save was recent */
+  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
+
   if(!tgConfig.token || !tgConfig.chatId){
-    tgShowFeedback('\u274C Save your config first before testing.', false); return;
+    tgShowFeedback('\u274C No saved config. Press Save Config first.', false);
+    showToast('\u274C Save config before testing', false);
+    return;
   }
   tgShowFeedback('\u23F3 Sending test message...', true);
+  showToast('\u23F3 Sending test message...', true);
+
   var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
-  var txt = '🟢 *PRISM ANALYTICS \u2014 TEST*\n\nBot connected!\n\u23F0 ' + now + ' IST\n\nYour trade alerts will appear here.';
+  var txt = '🟢 *PRISM ANALYTICS \u2014 TEST*\n\n'
+    + 'Bot connected successfully!\n'
+    + '\u23F0 ' + now + ' IST\n\n'
+    + 'Your trade alerts will appear here.\n'
+    + 'Token: ...' + tgConfig.token.slice(-4);
+
   try {
-    var res = await fetch(
-      'https://api.telegram.org/bot' + tgConfig.token +
-      '/sendMessage?chat_id=' + tgConfig.chatId +
-      '&text=' + encodeURIComponent(txt) + '&parse_mode=Markdown',
-      {signal: AbortSignal.timeout(10000)}
-    );
+    var url = 'https://api.telegram.org/bot' + tgConfig.token
+            + '/sendMessage?chat_id=' + tgConfig.chatId
+            + '&text=' + encodeURIComponent(txt)
+            + '&parse_mode=Markdown';
+    var res  = await fetch(url, {signal: AbortSignal.timeout(12000)});
     var data = await res.json();
+
     if(data.ok){
-      tgConfig.count = (tgConfig.count||0) + 1;
+      tgConfig.count    = (tgConfig.count||0) + 1;
       tgConfig.lastSent = now + ' IST';
       localStorage.setItem(TG_KEY, JSON.stringify(tgConfig));
-      var lEl=document.getElementById('tg-last');  if(lEl) lEl.textContent=tgConfig.lastSent;
-      var cEl=document.getElementById('tg-count'); if(cEl) cEl.textContent=tgConfig.count;
+
+      var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent;
+      var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count;
+
       updateTgStatus(true, 'Connected \u2714  Test sent at ' + now);
-      tgShowFeedback('\u2714 Test message sent! Check your Telegram app.', true);
+      tgShowFeedback('\u2714 Test message sent! Check your Telegram app now.', true);
       showToast('\u2714 Test message sent! Check Telegram.', true);
-      showToast('\u2714 Telegram test sent! Check your app.', true);
+      if(typeof updateTgActivityLog === 'function') updateTgActivityLog('Test message sent', now + ' IST', true);
     } else {
-      var err = data.description || 'Unknown error';
+      var err = (data.description || 'Unknown error');
       updateTgStatus(false, 'Error: ' + err);
-      tgShowFeedback('\u274C Telegram error: ' + err, false);
+      tgShowFeedback('\u274C Telegram error: ' + err + '\n\nCheck your Bot Token is correct.', false);
       showToast('\u274C Telegram error: ' + err, false);
-      showToast('\u274C Error: ' + err, false);
     }
   } catch(e){
-    updateTgStatus(false, 'Network error');
-    tgShowFeedback('\u274C Network error: ' + (e.message||'timeout'), false);
+    var errMsg = e.name === 'TimeoutError' ? 'Request timed out (12s). Check internet.' : (e.message || 'Network error');
+    updateTgStatus(false, errMsg);
+    tgShowFeedback('\u274C ' + errMsg, false);
+    showToast('\u274C ' + errMsg, false);
   }
 }
 
+/* ═══════════════════════════════════════════════════
+   SEND ALERT (used by all auto-alert functions)
+═══════════════════════════════════════════════════ */
 async function sendTgAlert(msg){
+  try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
   if(!tgConfig.token || !tgConfig.chatId) return;
   try {
-    await fetch(
-      'https://api.telegram.org/bot' + tgConfig.token +
-      '/sendMessage?chat_id=' + tgConfig.chatId +
-      '&text=' + encodeURIComponent(msg) + '&parse_mode=Markdown',
-      {signal: AbortSignal.timeout(8000)}
-    );
-    tgConfig.count = (tgConfig.count||0) + 1;
+    var url = 'https://api.telegram.org/bot' + tgConfig.token
+            + '/sendMessage?chat_id=' + tgConfig.chatId
+            + '&text=' + encodeURIComponent(msg)
+            + '&parse_mode=Markdown';
+    await fetch(url, {signal: AbortSignal.timeout(10000)});
+    tgConfig.count    = (tgConfig.count||0) + 1;
     tgConfig.lastSent = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST';
+    var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent;
+    var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count;
     try { localStorage.setItem(TG_KEY, JSON.stringify(tgConfig)); } catch(_){}
   } catch(_){}
 }
 
+/* ═══════════════════════════════════════════════════
+   INIT PAGE (called every time Telegram tab is opened)
+═══════════════════════════════════════════════════ */
 function initTelegramPage(){
+  /* Always reload fresh from storage */
   try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
-  var tokenEl=document.getElementById('tg-token');
-  var chatEl =document.getElementById('tg-chatid');
+
+  var tokenEl = document.getElementById('tg-token');
+  var chatEl  = document.getElementById('tg-chatid');
+
   if(tokenEl){
-    tokenEl.value = tgConfig.token && tgConfig.token.length>4
+    /* Show masked token if saved, blank if not */
+    tokenEl.value = (tgConfig.token && tgConfig.token.length > 4)
       ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + tgConfig.token.slice(-4)
       : '';
+    /* Clear mask when user taps to re-enter */
     tokenEl.onfocus = function(){
       if(this.value.indexOf('\u2022') !== -1){
         this.value = '';
         this.placeholder = 'Paste your new token here...';
       }
     };
+    tokenEl.onblur = function(){
+      if(!this.value && tgConfig.token && tgConfig.token.length > 4){
+        this.value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + tgConfig.token.slice(-4);
+      }
+    };
   }
   if(chatEl) chatEl.value = tgConfig.chatId || '';
-  var lEl = document.getElementById('tg-last');  if(lEl) lEl.textContent = tgConfig.lastSent || '\u2014';
-  var cEl = document.getElementById('tg-count'); if(cEl) cEl.textContent = tgConfig.count || 0;
+
+  var lEl  = document.getElementById('tg-last');  if(lEl)  lEl.textContent  = tgConfig.lastSent || '\u2014';
+  var cEl  = document.getElementById('tg-count'); if(cEl)  cEl.textContent  = tgConfig.count    || 0;
+
   tgUpdatePreview();
-  updateTgStatus(false, tgConfig.token ? 'Config loaded. Send a test to verify.' : 'Not configured');
+  updateTgStatus(false, tgConfig.token ? 'Config loaded. Send a test to verify.' : 'Not configured \u2014 paste token above.');
+  if(typeof renderTgActivityLog === 'function') renderTgActivityLog();
 }
+
 
 
 /* ── VAULT ── */
@@ -6316,7 +6374,8 @@ function updateEquityFromTrade(pnl) {
   DDState.drawdownPct = Math.max(0, (DDState.peakEquity - DDState.currentEquity) / DDState.peakEquity * 100);
   if (DDState.drawdownPct >= 8) DDState.stopTrading = true;
   saveDDState();
-}
+
+  if(typeof checkAndAlertDrawdown==='function') setTimeout(checkAndAlertDrawdown,300);}
 
 /* ── FIX 9: IST time check for no-trade zones ── */
 function getISTHour() {
@@ -6531,75 +6590,6 @@ function showDecision(decision, cls, color, sym, reasons) {
 }
 
 /* ── FIX 2+5: Hardened logTrade — governance check + Telegram alert ── */
-function logTrade() {
-  var sym   = (document.getElementById('te-sym')?.value||'').trim().toUpperCase() || 'UNKNOWN';
-  var entry = +document.getElementById('te-entry')?.value || 0;
-  var sl    = +document.getElementById('te-sl')?.value    || 0;
-  var tgt   = +document.getElementById('te-tgt')?.value   || 0;
-  var btn   = document.getElementById('exec-btn');
-
-  if (!entry || !sl || !tgt) { alert('Fill all trade fields first.'); return; }
-
-  /* FIX 2: Must have EXECUTE decision — check button state */
-  if (btn && btn.disabled) {
-    alert('\u274C Cannot log trade: decision is BLOCK.\nResolve all issues before executing.');
-    return;
-  }
-
-  /* FIX 8: Enforce max trades/day */
-  var todayTrades = (AI.trades||[]).filter(function(t){
-    return t.ts && new Date(t.ts).toDateString() === new Date().toDateString();
-  });
-  var maxT = (typeof CFG !== 'undefined' && CFG.maxTrades) ? CFG.maxTrades : 1;
-  if (todayTrades.length >= maxT) {
-    alert('\u274C Max ' + maxT + ' trade(s)/day limit reached.\nAlready logged ' + todayTrades.length + ' trade(s) today.');
-    return;
-  }
-
-  /* FIX 10: Update drawdown tracking */
-  var expectedPnl = 0; // Will be updated when trade closes
-  var _isShort = TE.dir === 'SHORT';
-  var _cap = (typeof CFG!=='undefined' && CFG.capital) ? CFG.capital : 50000;
-  var activeQty = _isShort ? Math.max(1,Math.floor((_cap*0.01*0.75)/Math.abs(entry-sl)))
-                           : Math.max(1,Math.floor((_cap*0.01)/Math.abs(entry-sl)));
-
-  /* Log trade */
-  AI.trades = AI.trades || [];
-  AI.count  = (AI.count  || 0) + 1;
-  var trade = { sym:sym, dir:TE.dir, type:TE.type, entry:entry, sl:sl, tgt:tgt, qty:activeQty, pnl:0, ts:Date.now() };
-  AI.trades.push(trade);
-  saveAI(AI);
-
-  /* Update OMS */
-  if (typeof orders !== 'undefined') {
-    orders.unshift({ sym:sym, dir:TE.dir, type:TE.type, entry:entry, sl:sl, tgt:tgt, qty:activeQty, status:'OPEN', ts:Date.now() });
-    if (typeof saveOrders === 'function') saveOrders();
-  }
-
-  /* FIX 5: Send Telegram alert */
-  var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
-  var vix = LIVE.vix || 0;
-  var regime = typeof classifyRegime==='function' ? classifyRegime(vix, LIVE.niftyChgPct||0).label : 'N/A';
-  var tgMsg = (TE.dir==='LONG' ? '🟢' : '🔴')
-    + ' *PRISM ANALYTICS \u2014 ' + (TE.dir==='LONG'?'EXECUTE \u25B2 LONG':'EXECUTE \u25BC SHORT') + '*\n'
-    + sym + ' (' + TE.type + ')\n'
-    + 'Entry: \u20B9' + entry + ' | SL: \u20B9' + sl + ' | Tgt: \u20B9' + tgt + '\n'
-    + 'Qty: ' + activeQty + ' | Regime: ' + regime + ' | VIX: ' + (vix||0).toFixed(1) + '\n'
-    + '\u23F0 ' + now + ' IST';
-  if (typeof sendTgAlert === 'function') sendTgAlert(tgMsg);
-
-  /* Feedback */
-  var setTx = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
-  setTx('ai-trade-count', AI.count);
-  setTx('ai2-trades', AI.count);
-  setTx('oms-trades', AI.count);
-
-  alert('\u2714 Trade logged and Telegram alert sent!\n\n'
-    + TE.dir + ' ' + TE.type + ' \u2014 ' + sym + '\n'
-    + 'Entry: \u20B9' + entry + ' | SL: \u20B9' + sl + ' | Target: \u20B9' + tgt + '\n'
-    + 'Qty: ' + activeQty + ' shares\n\n'
-    + 'Trade #' + AI.count + ' logged. OMS updated.');
-}
 
 /* ── FIX 1: Governance page auto-fills from Signal Engine ── */
 function syncGovernanceFromSignal() {
@@ -6945,28 +6935,9 @@ function renderTgActivityLog() {
   }).join('');
 }
 
-/* ── Patch toggleKillSwitch to send alert ── */
-var _ksBase = toggleKillSwitch;
-function toggleKillSwitch() {
-  _ksBase();
-  alertKillSwitch(killSwitchActive);
-}
 
 /* ── Patch updateEquityFromTrade to send DD alert ── */
-var _ueftBase = updateEquityFromTrade;
-function updateEquityFromTrade(pnl) {
-  _ueftBase(pnl);
-  setTimeout(checkAndAlertDrawdown, 500);
-}
 
-/* ── Patch fetchAll to run scheduler and check regime ── */
-var _fetchAllBase = fetchAll;
-async function fetchAll() {
-  await _fetchAllBase();
-  runTelegramScheduler();
-  checkAndAlertVIX();
-  checkAndAlertRegimeChange();
-}
 
 /* ── Patch sendTradeAlert into logTrade ── */
 var _logTradeBase = logTrade;
