@@ -3342,11 +3342,11 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 ════════════════════════════════════════ */
 
 /* ── PAGE LIST ── */
-const ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings','learning','options','smartmoney','news','fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash'];
-const SWIPE_PAGES=['dashboard','prices','charts','trade-engine','settings'];
+var ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings','learning','options','smartmoney','news','fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash'];
+var SWIPE_PAGES=['dashboard','prices','charts','trade-engine','settings'];
 
 /* ── WATCHLIST ── */
-const WATCHLIST=[
+var WATCHLIST=[
   {sym:'HDFCBANK.NS',  name:'HDFCBANK',  sector:'Banking', color:'#3b82f6'},
   {sym:'RELIANCE.NS',  name:'RELIANCE',  sector:'Energy',  color:'#10b981'},
   {sym:'INFY.NS',      name:'INFY',      sector:'IT',      color:'#8b5cf6'},
@@ -3361,7 +3361,7 @@ const WATCHLIST=[
   {sym:'WIPRO.NS',     name:'WIPRO',     sector:'IT',      color:'#64748b'},
 ];
 
-const INDEX_SYMS=[
+var INDEX_SYMS=[
   {sym:'^NSEI',    id:'nifty',  dec:2, pfx:''},
   {sym:'^NSEBANK', id:'bnifty', dec:2, pfx:''},
   {sym:'^BSESN',   id:'sensex', dec:2, pfx:''},
@@ -3373,14 +3373,14 @@ const INDEX_SYMS=[
 ];
 
 /* ── STATE ── */
-const LIVE={};
+var LIVE={};
 let usdInr=84.0, countdown=60, hbSecs=60;
 let wlData=[], activeSector='All', searchQ='';
 let currentPeriod='1D', activePnlTab='today';
 let dataLoadedOnce=false;
 
 /* ── AI STATE (localStorage) ── */
-const AI_KEY='prism-ai-v2';
+var AI_KEY='prism-ai-v2';
 function loadAI(){try{return JSON.parse(localStorage.getItem(AI_KEY))||{trades:[],weights:{tech:30,news:30,trend:20,risk:20},count:0};}catch(_){return{trades:[],weights:{tech:30,news:30,trend:20,risk:20},count:0};}}
 function saveAI(s){try{localStorage.setItem(AI_KEY,JSON.stringify(s));}catch(_){}}
 let AI=loadAI();
@@ -3540,13 +3540,13 @@ function setBanner(type,msg){
 }
 
 /* ── RETURNS CALCULATOR ── */
-const NIFTY_REF={
+var NIFTY_REF={
   '1D':null,'1W':null,'1M':null,'3M':null,'6M':null,
   '1Y':17000,'3Y':14700,'5Y':11300,'YTD':23600,'ALL':1000
 };
-const BNIFTY_REF={'1Y':40000,'3Y':33000,'5Y':22000,'YTD':48500,'ALL':5000};
-const SENSEX_REF={'1Y':57000,'3Y':49000,'5Y':36000,'YTD':78500,'ALL':3000};
-const NYRS={'1D':1/365,'1W':7/365,'1M':1/12,'3M':3/12,'6M':6/12,'1Y':1,'3Y':3,'5Y':5,'YTD':0.29,'ALL':24};
+var BNIFTY_REF={'1Y':40000,'3Y':33000,'5Y':22000,'YTD':48500,'ALL':5000};
+var SENSEX_REF={'1Y':57000,'3Y':49000,'5Y':36000,'YTD':78500,'ALL':3000};
+var NYRS={'1D':1/365,'1W':7/365,'1M':1/12,'3M':3/12,'6M':6/12,'1Y':1,'3Y':3,'5Y':5,'YTD':0.29,'ALL':24};
 
 function switchPeriod(p,el){
   currentPeriod=p;
@@ -3701,7 +3701,7 @@ function classifyWinProb(vix,niftyChg,regime){
 }
 
 /* ── SECTOR HEATMAP ── */
-const SECTORS=[
+var SECTORS=[
   {name:'Banking', sector:'Banking'},
   {name:'IT',      sector:'IT'},
   {name:'Auto',    sector:'Auto'},
@@ -3959,7 +3959,7 @@ fetchAll().then(()=>{
 ════════════════════════════════════════ */
 
 /* ── CHART OPTIONS ── */
-const COPTS = {
+var COPTS = {
   responsive: true, maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
@@ -4030,7 +4030,7 @@ function genExpSeries(){
 }
 
 /* ── Chart instances ── */
-const CHARTS={};
+var CHARTS={};
 let eqPeriod=30;
 
 function destroyChart(key){if(CHARTS[key]){CHARTS[key].destroy();delete CHARTS[key];}}
@@ -4542,7 +4542,7 @@ function updateAIEnginePage(){
 ══════════════════════════════════════════ */
 
 /* ── BACKTEST ENGINE ── */
-const BT_STRATEGIES={
+var BT_STRATEGIES={
   vcp:{name:'VCP Breakout',wr:62,exp:280,sharpe:1.42,dd:7.2,trades:34,note:'Best in trending markets'},
   ict:{name:'ICT Concepts',wr:58,exp:220,sharpe:1.18,dd:8.9,trades:28,note:'Needs precise execution'},
   fibonacci:{name:'Fibonacci',wr:55,exp:180,sharpe:1.05,dd:9.1,trades:41,note:'Good in range-bound'},
@@ -4613,8 +4613,8 @@ function runBacktest(){
 }
 
 /* ── TELEGRAM BOT ── */
-const TG_KEY = 'prism-tg';
-let tgConfig = {token:'', chatId:'', count:0, lastSent:''};
+var TG_KEY = 'prism-tg';
+var tgConfig = {token:'', chatId:'', count:0, lastSent:''};
 (function(){
   try { var _s=localStorage.getItem(TG_KEY); if(_s) tgConfig=Object.assign({},tgConfig,JSON.parse(_s)); } catch(_){}
 })();
@@ -4855,8 +4855,8 @@ function initTelegramPage(){
 
 
 /* ── VAULT ── */
-const VAULT_KEY='prism-vault-v1';
-const VAULT_PIN_KEY='prism-vault-pin';
+var VAULT_KEY='prism-vault-v1';
+var VAULT_PIN_KEY='prism-vault-pin';
 let vaultUnlocked=false;
 
 function hashPin(pin){
@@ -4935,7 +4935,7 @@ function clearVault(){
 }
 
 /* ── SETTINGS ── */
-const CFG_KEY='prism-config-v1';
+var CFG_KEY='prism-config-v1';
 let CFG={capital:50000,riskPct:1,dailyLoss:1,maxTrades:1,passive:80,active:20,minRR:2,sectorExp:25,vixHalt:25,ddStop:8,minProb:60,fullProb:75,strat:'vcp',refresh:60,sqoff:'15:15',noBefore:'09:30'};
 
 function loadSettings(){
@@ -5237,7 +5237,7 @@ setTimeout(function(){
    Add API key in Vault page, fetch via:
    https://gnews.io/api/v4/search?q=nifty+india+stock&lang=en&token=YOUR_KEY
 */
-const NEWS_DB = [
+var NEWS_DB = [
   {id:1,  cat:'nifty',   headline:'Nifty 50 closes above 22,500 as bulls maintain grip amid positive global cues',                          source:'ET Markets',      sentiment:'positive', score:.72, age:'2h'},
   {id:2,  cat:'fii',     headline:'FII net sellers for 3rd consecutive session; DII buying absorbs pressure',                              source:'Moneycontrol',    sentiment:'negative', score:.38, age:'3h'},
   {id:3,  cat:'banking', headline:'HDFC Bank Q4 results beat estimates: NII up 12% YoY, asset quality stable',                            source:'Business Today',  sentiment:'positive', score:.81, age:'4h'},
@@ -5431,7 +5431,7 @@ function buildFIIDII(){
 }
 
 /* ── SECTOR RSI ── */
-const SECTORS_RSI = [
+var SECTORS_RSI = [
   {name:'Banking',   color:'#3b82f6', stocks:['HDFCBANK','ICICIBANK','KOTAKBANK','SBIN']},
   {name:'IT',        color:'#8b5cf6', stocks:['INFY','TCS','WIPRO']},
   {name:'Energy',    color:'#10b981', stocks:['RELIANCE']},
@@ -5500,7 +5500,7 @@ function buildSectorRSI(){
 }
 
 /* ── GLOBAL MARKETS ── */
-const GLOBAL_SYMS = [
+var GLOBAL_SYMS = [
   {sym:'^GSPC', id:'sp500',  name:'S&P 500',   flag:'🇺🇸'},
   {sym:'^IXIC', id:'nasdaq', name:'NASDAQ',     flag:'🇺🇸'},
   {sym:'^DJI',  id:'dow',    name:'Dow Jones',  flag:'🇺🇸'},
@@ -5600,7 +5600,7 @@ setTimeout(initPhase2, 1500);
 ══════════════════════════════════════════════════════════════════ */
 
 /* ── Shared model state (persisted to localStorage) ── */
-const P3_KEY = 'prism-p3-v1';
+var P3_KEY = 'prism-p3-v1';
 let P3 = {
   lr: { trained: false, weights: null, accuracy: 0, samples: 0, trainedAt: null },
   rl: { trained: false, qTable: {}, bestReward: 0, episodes: 0, trainedAt: null },
@@ -5611,8 +5611,8 @@ try { P3 = { ...P3, ...JSON.parse(localStorage.getItem(P3_KEY) || '{}') }; } cat
 function saveP3() { try { localStorage.setItem(P3_KEY, JSON.stringify(P3)); } catch(_) {} }
 
 /* ── Helper: sigmoid ── */
-const sigmoid = x => 1 / (1 + Math.exp(-x));
-const fN2 = (n, d=2) => n == null ? '--' : n.toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
+var sigmoid = x => 1 / (1 + Math.exp(-x));
+var fN2 = (n, d=2) => n == null ? '--' : n.toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /* ── Generate synthetic OHLCV training data ── */
 function genSyntheticOHLCV(n = 500) {
@@ -6086,7 +6086,7 @@ function stateKey(vix, regime, drawdown) {
   return `${v}_${r}_${d}`;
 }
 
-const RL_ACTIONS = ['TRADE', 'NO_TRADE', 'REDUCE'];
+var RL_ACTIONS = ['TRADE', 'NO_TRADE', 'REDUCE'];
 
 function rlGetQ(qTable, state, action) {
   return (qTable[state] || {})[action] || 0;
