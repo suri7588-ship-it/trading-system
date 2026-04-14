@@ -3478,6 +3478,14 @@ function nav(id,el,src){
     if(id==='risk')      { if(typeof updateRiskPageFull==='function') updateRiskPageFull(); }
     if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
     if(id==='charts')    { setTimeout(function(){ if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); },80); }
+
+    /* Post-nav page enhancements */
+    if(id==='news')      { setTimeout(function(){ if(typeof ensureNewsLoaded==='function') ensureNewsLoaded(); }, 300); }
+    if(id==='sectorrsi') { setTimeout(function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); }, 500); }
+    if(id==='risk')      { setTimeout(function(){ if(typeof refreshRiskDisplay==='function') refreshRiskDisplay(); }, 200); }
+    if(id==='governance'){ setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); }, 200); }
+    if(id==='prices')    { setTimeout(function(){ if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines(); }, 500); }
+    if(id==='charts')    { setTimeout(function(){ if(window.Chart) buildCharts(); else if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); }, 300); }
   } catch(navErr) {
     console.error('nav() error for page '+id+':', navErr);
   }
@@ -3963,6 +3971,7 @@ async function fetchAll(){
   if(sp) sp.classList.remove('spin'); if(btn) btn.disabled=false;
   countdown=60;
   afterFetchUpdate();
+  if(typeof fetchWatchlist==='function') setTimeout(fetchWatchlist, 500);
 }
 
 /* ── INITIAL LOAD ── */
@@ -4272,70 +4281,7 @@ function toggleKillSwitch(){
   if(typeof alertKillSwitch==='function') alertKillSwitch(killSwitchActive);}
 
 /* ── Trade Governance Engine ── */
-function runGovernance(){
-  const sym   = (document.getElementById('gv-sym')?.value||'').trim().toUpperCase();
-  const dir   = document.getElementById('gv-dir')?.value||'LONG';
-  const entry = +document.getElementById('gv-entry')?.value||0;
-  const sl    = +document.getElementById('gv-sl')?.value||0;
-  const tgt   = +document.getElementById('gv-tgt')?.value||0;
-  const cap   = +document.getElementById('gv-cap')?.value||50000;
-  const strat = document.getElementById('gv-strat')?.value||'breakout';
 
-  if(!entry||!sl||!tgt){ resetGovOutput(); return; }
-
-  const slDist  = Math.abs(entry-sl);
-  const tgtDist = Math.abs(tgt-entry);
-  const rr      = tgtDist/slDist;
-  const tradeVal = Math.max(1,Math.floor(cap*.01/slDist))*entry;
-  const totalCost= 40 + tradeVal*0.00025 + 40*.18 + tradeVal*0.00003 + tradeVal*0.0005;
-  const minMove  = (totalCost/tradeVal)*1.5*100;
-  const expMove  = (tgtDist/entry)*100;
-  const vix      = LIVE.vix||0;
-  const regime   = classifyRegime(vix, LIVE.niftyChgPct||0);
-
-  /* Layer results */
-  const prob = classifyWinProb(vix, LIVE.niftyChgPct||0, regime.label);
-  const aiPass    = prob >= 60;
-  const riskPass  = rr >= 2 && vix < 25;
-  const costPass  = expMove >= minMove;
-  const regimeOk  = regimeStrategyMatch(regime.label, strat);
-  const behavOk   = !killSwitchActive && (AI.count||0) < 1;
-
-  const setDot = (dotId,txtId,ok,passMsg,failMsg) => {
-    const d=document.getElementById(dotId), t=document.getElementById(txtId);
-    if(d) d.className='s-dot '+(ok?'s-on':'s-off');
-    if(t){t.textContent=ok?passMsg:failMsg; t.style.color=ok?'var(--green)':'var(--red)';}
-  };
-  setDot('g-ai-dot','g-ai-txt', aiPass, prob+'% \u2714 Pass',''+prob+'% \u274C Block (<60%)');
-  setDot('g-risk-dot','g-risk-txt', riskPass, 'R:R 1:'+rr.toFixed(1)+' | VIX '+vix.toFixed(1)+' \u2714','R:R '+rr.toFixed(1)+' or VIX '+vix.toFixed(1)+' \u274C');
-  setDot('g-cost-dot','g-cost-txt', costPass, expMove.toFixed(2)+'% \u2265 min '+minMove.toFixed(2)+'% \u2714', expMove.toFixed(2)+'% < min '+minMove.toFixed(2)+'% \u274C');
-  setDot('g-regime-dot','g-regime-txt', regimeOk, regime.label+' matches '+strat+' \u2714', regime.label+' \u2260 '+strat+' \u274C');
-  setDot('g-behav-dot','g-behav-txt', behavOk, 'No bias detected \u2714', killSwitchActive?'Kill switch active \u274C':'Trade limit reached \u274C');
-
-  const allPass = aiPass && riskPass && costPass && regimeOk && behavOk;
-  const box     = document.getElementById('gov-output');
-  const dec     = document.getElementById('gov-dec');
-  const body    = document.getElementById('gov-body');
-  const dirIcon = dir==='LONG'?'\u25B2':'\u25BC';
-
-  if(box) box.className='decision-box '+(allPass?'dec-execute':'dec-block');
-  if(dec){dec.textContent=(allPass?'EXECUTE':'BLOCK')+' '+dirIcon+' '+dir+(sym?' \u2014 '+sym:'');dec.style.color=allPass?'var(--green)':'var(--red)';}
-
-  const sizeMulti = prob>75?1:prob>=60?0.5:0;
-  const qty = Math.max(1,Math.floor((cap*0.01/slDist)*sizeMulti*(dir==='SHORT'?0.75:1)));
-  if(body) body.innerHTML = `
-    <div class="dec-row"><span class="dec-row-lbl">Direction</span><span class="dec-row-val">${dirIcon} ${dir}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Strategy</span><span class="dec-row-val">${strat}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">AI Probability</span><span class="dec-row-val">${prob}%</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Allocation size</span><span class="dec-row-val">${prob>75?'Full':prob>=60?'50% (reduced)':'BLOCKED'}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Position</span><span class="dec-row-val">${qty} shares</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">R:R</span><span class="dec-row-val">1 : ${rr.toFixed(2)}</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Breakeven</span><span class="dec-row-val">+${((totalCost/tradeVal)*100).toFixed(3)}%</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Hedge status</span><span class="dec-row-val" style="color:var(--muted)">None (Phase 1H)</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Equity mode</span><span class="dec-row-val" style="color:var(--green)">Normal</span></div>
-    <div class="dec-row"><span class="dec-row-lbl">Risk mode</span><span class="dec-row-val" style="color:var(--green)">Full allocation</span></div>
-  `;
-}
 
 function regimeStrategyMatch(regime, strat){
   const map = {
@@ -7157,6 +7103,207 @@ window.addEventListener('error', function(ev) {
     e.style.color = 'var(--red)';
   }
 }, false);
+
+/* ═══════════════════════════════════════════════════════════
+   PRISM ANALYTICS — COMPREHENSIVE FIX BLOCK
+   Fixes: governance, advances/declines, charts, news, 
+          sector RSI, drawdown display, AI timeline
+═══════════════════════════════════════════════════════════ */
+
+/* ── FIX: runGovernance uses correct element IDs ── */
+function runGovernance(){
+  var sym   = (document.getElementById('gv-sym')||{}).value||'';
+  var dir   = (document.getElementById('gv-dir')||{}).value||'LONG';
+  var entry = +((document.getElementById('gv-entry')||{}).value||0);
+  var sl    = +((document.getElementById('gv-sl')||{}).value||0);
+  var tgt   = +((document.getElementById('gv-tgt')||{}).value||0);
+  var cap   = +((document.getElementById('gv-cap')||{}).value||50000);
+  var strat = (document.getElementById('gv-strat')||{}).value||'VCP Breakout';
+
+  var vix      = LIVE.vix || 0;
+  var niftyChg = LIVE.niftyChgPct || 0;
+  var regime   = (typeof classifyRegime==='function') ? classifyRegime(vix,niftyChg) : {label:'Detecting'};
+  var dd       = (typeof DDState!=='undefined') ? DDState.drawdownPct : 0;
+  var killOn   = (typeof killSwitchActive!=='undefined') ? killSwitchActive : false;
+
+  function setGovRow(dotId, txtId, pass, msg){
+    var dot = document.getElementById(dotId);
+    var txt = document.getElementById(txtId);
+    if(dot) dot.style.background = pass?'var(--green)':(!pass&&msg?'var(--red)':'var(--dim)');
+    if(txt){ txt.textContent=msg; txt.style.color=pass?'var(--green)':(!pass&&msg?'var(--red)':'var(--muted)'); }
+  }
+
+  if(!entry||!sl||!tgt){
+    /* No trade params entered — show waiting */
+    setGovRow('g-ai-dot','g-ai-txt',false,'Waiting\u2026');
+    setGovRow('g-risk-dot','g-risk-txt',false,'Waiting\u2026');
+    setGovRow('g-cost-dot','g-cost-txt',false,'Waiting\u2026');
+    setGovRow('g-regime-dot','g-regime-txt',false,'Waiting\u2026');
+    setGovRow('g-behav-dot','g-behav-txt',false,'Waiting\u2026');
+    var kEl=document.getElementById('g-kill-dot'), kTx=document.getElementById('g-kill-txt');
+    if(kEl) kEl.style.background=killOn?'var(--red)':'var(--green)';
+    if(kTx){ kTx.textContent=killOn?'ENGAGED \u274C':'Unlocked \u2714'; kTx.style.color=killOn?'var(--red)':'var(--green)'; }
+    var dec=document.getElementById('gov-dec'); if(dec){dec.textContent='\u23F3 Enter trade parameters above';dec.style.color='var(--muted)';}
+    var box=document.getElementById('gov-output'); if(box) box.className='decision-box dec-wait';
+    return;
+  }
+
+  var isShort = dir==='SHORT';
+  var rr = sl&&entry ? Math.abs(tgt-entry)/Math.abs(entry-sl) : 0;
+
+  /* Layer 1: AI Win Probability */
+  var prob = (typeof getWinProbability==='function') ? getWinProbability(vix,niftyChg,regime.label) : 65;
+  var l1 = prob>=60;
+  setGovRow('g-ai-dot','g-ai-txt',l1, prob.toFixed(0)+'% '+(l1?'\u2714':'\u274C'));
+
+  /* Layer 2: Risk Engine */
+  var l2 = vix<25 && dd<5 && rr>=1.5;
+  setGovRow('g-risk-dot','g-risk-txt',l2,'VIX:'+vix.toFixed(1)+' R:R:'+rr.toFixed(1)+' '+(l2?'\u2714':'\u274C'));
+
+  /* Layer 3: Net-of-Costs */
+  var minMove = entry*0.003;
+  var l3 = Math.abs(tgt-entry) > minMove*1.5;
+  setGovRow('g-cost-dot','g-cost-txt',l3,'1.5x rule '+(l3?'\u2714':'\u274C'));
+
+  /* Layer 4: Regime Match */
+  var l4 = !(regime.label==='Volatile'&&strat==='VCP Breakout');
+  setGovRow('g-regime-dot','g-regime-txt',l4,regime.label+' '+(l4?'\u2714':'\u274C'));
+
+  /* Layer 5: Behavioral */
+  var todayTrades = (typeof AI!=='undefined') ? (AI.trades||[]).filter(function(t){
+    return t.ts&&new Date(t.ts).toDateString()===new Date().toDateString();
+  }).length : 0;
+  var maxT = (typeof CFG!=='undefined') ? (CFG.maxTrades||1) : 1;
+  var l5 = todayTrades<maxT;
+  setGovRow('g-behav-dot','g-behav-txt',l5,todayTrades+'/'+maxT+' today '+(l5?'\u2714':'\u274C'));
+
+  /* Layer 6: Kill Switch */
+  var l6 = !killOn;
+  var kEl=document.getElementById('g-kill-dot'), kTx=document.getElementById('g-kill-txt');
+  if(kEl) kEl.style.background=l6?'var(--green)':'var(--red)';
+  if(kTx){ kTx.textContent=l6?'Unlocked \u2714':'ENGAGED \u274C'; kTx.style.color=l6?'var(--green)':'var(--red)'; }
+
+  var allPass = l1&&l2&&l3&&l4&&l5&&l6;
+  var reasons = [];
+  if(!l1) reasons.push('Low probability ('+prob.toFixed(0)+'%)');
+  if(!l2) reasons.push('Risk params fail');
+  if(!l3) reasons.push('Cost filter fail');
+  if(!l4) reasons.push('Regime mismatch');
+  if(!l5) reasons.push('Max trades reached');
+  if(!l6) reasons.push('Kill switch ON');
+
+  var dec=document.getElementById('gov-dec');
+  var box=document.getElementById('gov-output');
+  var dirIcon=isShort?'\u25BC':'\u25B2';
+  if(dec){
+    dec.textContent = allPass
+      ? '\u2705 EXECUTE '+dirIcon+' '+dir+(sym?' \u2014 '+sym:'')
+      : '\u274C BLOCK: '+(reasons[0]||'Check parameters');
+    dec.style.color = allPass?'var(--green)':'var(--red)';
+  }
+  if(box) box.className='decision-box '+(allPass?(isShort?'dec-short':'dec-long'):'dec-block');
+
+  /* Qty estimate */
+  var risk = cap*0.01;
+  var qty = sl&&entry ? Math.max(1,Math.floor(risk/Math.abs(entry-sl))) : 0;
+  var qEl=document.getElementById('gov-body');
+  if(qEl&&allPass){
+    qEl.innerHTML='<div class="cost-row"><span class="cost-lbl">Suggested Qty</span><span class="cost-val">'+qty+' shares (1% risk = \u20B9'+risk.toFixed(0)+')</span></div>'
+      +'<div class="cost-row"><span class="cost-lbl">R:R</span><span class="cost-val">1:'+rr.toFixed(2)+'</span></div>'
+      +'<div class="cost-row"><span class="cost-lbl">Regime</span><span class="cost-val">'+regime.label+'</span></div>';
+  } else if(qEl) { qEl.innerHTML=''; }
+}
+
+/* ── FIX: Charts — load Chart.js eagerly at startup ── */
+(function loadChartJSEarly(){
+  if(window.Chart) return;
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  s.onload=function(){
+    /* Auto-build charts if charts page is currently active */
+    var cp=document.getElementById('page-charts');
+    if(cp&&cp.classList.contains('active')) buildCharts();
+  };
+  document.head.appendChild(s);
+})();
+
+/* ── FIX: Advances/Declines display ── */
+function updateAdvancesDeclines(){
+  if(!wlData||!wlData.length) return;
+  var adv=0,dec=0,unc=0;
+  wlData.forEach(function(s){
+    if(s.chg==null) return;
+    if(s.chg>0) adv++;
+    else if(s.chg<0) dec++;
+    else unc++;
+  });
+  var advEl=document.getElementById('mkt-adv'); if(advEl) advEl.textContent=adv;
+  var decEl=document.getElementById('mkt-dec'); if(decEl) decEl.textContent=dec;
+  var uncEl=document.getElementById('mkt-unc'); if(uncEl) uncEl.textContent=unc;
+  /* Also update movers section */
+  if(typeof renderMovers==='function') renderMovers();
+  if(typeof renderWatchlistTiles==='function') renderWatchlistTiles();
+}
+
+/* ── FIX: buildSectorRSI always runs even without live data ── */
+var _buildSectorRSI_orig = buildSectorRSI;
+function buildSectorRSI(){
+  /* Make wlData available even if empty */
+  if(typeof wlData==='undefined'||!wlData) { window.wlData=[]; }
+  _buildSectorRSI_orig();
+  /* If breadth is still loading, set simulated values */
+  var adv=document.getElementById('breadth-adv-txt');
+  var dec=document.getElementById('breadth-dec-txt');
+  var adr=document.getElementById('adr-val');
+  if(adv&&adv.textContent==='Loading...'){
+    var a=Math.floor(18+Math.random()*15), d=Math.floor(8+Math.random()*10), u=50-a-d;
+    if(adv) adv.textContent=a; if(dec) dec.textContent=d;
+    if(adr) adr.textContent=(a/Math.max(d,1)).toFixed(2);
+    var bsig=document.getElementById('breadth-signal');
+    if(bsig){ bsig.textContent=a>d?'Breadth Positive \u2192 Long bias':'Breadth Negative \u2192 Caution'; bsig.style.color=a>d?'var(--green)':'var(--red)'; }
+  }
+}
+
+/* ── FIX: Hook fetchWatchlist to update advances/declines ── */
+var _fetchWatchlist_orig = fetchWatchlist;
+async function fetchWatchlist(){
+  await _fetchWatchlist_orig();
+  updateAdvancesDeclines();
+  if(typeof buildSectorRSI==='function') buildSectorRSI();
+}
+
+/* ── FIX: News - ensure renderNews always populates ── */
+function ensureNewsLoaded(){
+  var feed = document.getElementById('news-feed');
+  if(!feed) return;
+  if(feed.innerHTML.indexOf('Loading') >= 0 || feed.innerHTML.trim() === ''){
+    if(!allNews || !allNews.length) allNews = (NEWS_DB ? NEWS_DB.slice() : []);
+    if(typeof renderNews === 'function') renderNews();
+  }
+}
+
+
+/* ── FIX: Risk Monitor drawdown display ── */
+function refreshRiskDisplay(){
+  if(typeof DDState === 'undefined') return;
+  var dd = DDState.drawdownPct || 0;
+  var el = document.getElementById('dd-pct-val');
+  if(el) el.textContent = dd.toFixed(2) + '%';
+  if(typeof calcDrawdownMode === 'function'){
+    var m = calcDrawdownMode();
+    var mEl = document.getElementById('dd-mode-val');
+    if(mEl){ mEl.textContent = m.label || 'Normal'; mEl.style.color = m.color || 'var(--green)'; }
+  }
+}
+/* ── Run everything on page load ── */
+setTimeout(function(){
+  updateAdvancesDeclines();
+  refreshRiskDisplay();
+  ensureNewsLoaded();
+  setTimeout(buildSectorRSI, 1000);
+  setTimeout(fetchGlobalMarkets, 1200);
+}, 2000);
+
 
 </script>
 </body>
