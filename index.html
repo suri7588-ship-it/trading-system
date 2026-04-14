@@ -2,6 +2,10 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="version" content="202604140509">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1808,6 +1812,24 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
       <button onclick="clearTgConfig()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:underline;padding:0">Clear saved config</button>
     </div>
   </div>
+  <!-- Debug / Diagnostics Panel -->
+  <div class="card" id="tg-debug-card">
+    <div class="card-header"><span class="card-title">&#x1F527; Diagnostics</span><span class="badge badge-a">Live status</span></div>
+    <div style="padding:0 14px" id="tg-debug-rows">
+      <div class="cost-row"><span class="cost-lbl">JS loaded</span><span class="cost-val" style="color:var(--green)">&#x2714; Yes</span></div>
+      <div class="cost-row"><span class="cost-lbl">localStorage</span><span class="cost-val" id="dbg-ls">Checking...</span></div>
+      <div class="cost-row"><span class="cost-lbl">Saved token</span><span class="cost-val" id="dbg-token">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Saved chat ID</span><span class="cost-val" id="dbg-chatid">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">tgConfig in memory</span><span class="cost-val" id="dbg-memory">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Last error</span><span class="cost-val" id="dbg-error" style="color:var(--red)">None</span></div>
+    </div>
+    <div style="padding:10px 14px;display:flex;gap:8px">
+      <button onclick="tgRunDiag()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">&#x1F504; Refresh Diagnostics</button>
+      <button onclick="tgForceClear()" style="flex:1;background:var(--rbg);border:1px solid var(--rborder);color:var(--red);padding:10px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">&#x1F5D1; Force Clear &amp; Reset</button>
+    </div>
+  </div>
+
+
 
   <!-- Alert Types -->
   <div class="card">
@@ -3318,7 +3340,6 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
    PRISM ANALYTICS — PHASE 1D
    Clean single-file JS, no duplicates
 ════════════════════════════════════════ */
-'use strict';
 
 /* ── PAGE LIST ── */
 const ALL_PAGES=['dashboard','prices','mcx','governance','signals','trade-engine','orders','portfolio','ai-engine','screener','backtest','journal','risk','telegram','vault','settings','learning','options','smartmoney','news','fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash'];
@@ -4828,6 +4849,7 @@ function initTelegramPage(){
   tgUpdatePreview();
   updateTgStatus(false, tgConfig.token ? 'Config loaded. Send a test to verify.' : 'Not configured \u2014 paste token above.');
   if(typeof renderTgActivityLog === 'function') renderTgActivityLog();
+  setTimeout(tgRunDiag, 100);
 }
 
 
@@ -7041,6 +7063,56 @@ setInterval(function() {
   runTelegramScheduler();
 }, 60000);
 
+
+
+/* ── Telegram Diagnostics ── */
+function tgRunDiag() {
+  var setD = function(id, val, col) {
+    var e = document.getElementById(id);
+    if(e){ e.textContent = val; if(col) e.style.color = col; }
+  };
+  // Test localStorage
+  try {
+    localStorage.setItem('_prism_test', '1');
+    localStorage.removeItem('_prism_test');
+    setD('dbg-ls', 'Available ✓', 'var(--green)');
+  } catch(e) {
+    setD('dbg-ls', 'BLOCKED: ' + e.message, 'var(--red)');
+  }
+  // Show stored token
+  try {
+    var stored = JSON.parse(localStorage.getItem(TG_KEY) || '{}');
+    var tok = stored.token || '';
+    setD('dbg-token', tok ? ('...' + tok.slice(-6) + ' (' + tok.length + ' chars)') : 'NOT SAVED', tok ? 'var(--green)' : 'var(--red)');
+    setD('dbg-chatid', stored.chatId || 'NOT SAVED', stored.chatId ? 'var(--green)' : 'var(--red)');
+  } catch(e) {
+    setD('dbg-token', 'Error: ' + e.message, 'var(--red)');
+  }
+  // Show in-memory tgConfig
+  var memTok = tgConfig.token || '';
+  setD('dbg-memory', memTok ? ('token: ...' + memTok.slice(-4) + ', chat: ' + (tgConfig.chatId||'none')) : 'Empty', memTok ? 'var(--green)' : 'var(--amber)');
+}
+
+function tgForceClear() {
+  try { localStorage.removeItem(TG_KEY); localStorage.removeItem('prism-tg-state'); } catch(_){}
+  tgConfig = {token:'', chatId:'', count:0, lastSent:''};
+  var t = document.getElementById('tg-token');  if(t) t.value = '';
+  var c = document.getElementById('tg-chatid'); if(c) c.value = '';
+  tgUpdatePreview();
+  updateTgStatus(false, 'Reset. Paste your credentials and Save.');
+  tgShowFeedback('Force cleared. Now paste token + chat ID and click Save Config.', true);
+  showToast('Reset complete. Enter credentials and Save.', true);
+  setTimeout(tgRunDiag, 100);
+}
+
+// Catch any window errors and show in diag panel
+window.addEventListener('error', function(ev) {
+  var e = document.getElementById('dbg-error');
+  if(e) {
+    e.textContent = ev.message + ' (line ' + ev.lineno + ')';
+    e.style.color = 'var(--red)';
+  }
+}, false);
 
 </script>
 </body>
