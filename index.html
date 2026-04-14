@@ -1767,23 +1767,25 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 </div></div>
 <div class="page" id="page-telegram"><div class="page-content">
 
-  <div class="alert info">
-    <span class="alert-icon">&#x1F4E8;</span>
-    <span><strong>Phase 1G &#x2014; Telegram Bot.</strong> Paste your Bot Token and Chat ID below, then press <strong>Save Config</strong>.</span>
+  <div class="alert success">
+    <span class="alert-icon">📡</span>
+    <span><strong>Phase 1G — Telegram Bot.</strong> Live alerts: trade signals, regime changes, VIX spikes, drawdown warnings, daily summary.</span>
   </div>
 
+  <!-- Bot Status -->
   <div class="card">
     <div class="card-header"><span class="card-title">Bot Status</span><span class="badge" id="tg-status-badge" style="background:var(--bg3);color:var(--muted)">Not configured</span></div>
     <div style="padding:0 14px">
       <div class="cost-row"><span class="cost-lbl">Connection</span><div class="s-row"><div class="s-dot" id="tg-dot" style="background:var(--dim)"></div><span id="tg-status" style="font-size:11px;color:var(--muted)">Not connected</span></div></div>
-      <div class="cost-row"><span class="cost-lbl">Last message sent</span><span class="cost-val" id="tg-last">&#x2014;</span></div>
-      <div class="cost-row"><span class="cost-lbl">Messages sent</span><span class="cost-val" id="tg-count">0</span></div>
-      <div class="cost-row"><span class="cost-lbl">Saved token (last 4 chars)</span><span class="cost-val" id="tg-saved-preview" style="font-family:'DM Mono',monospace;color:var(--muted)">None</span></div>
+      <div class="cost-row"><span class="cost-lbl">Last alert sent</span><span class="cost-val" id="tg-last">&#x2014;</span></div>
+      <div class="cost-row"><span class="cost-lbl">Total alerts today</span><span class="cost-val" id="tg-count">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Saved token (last 4)</span><span class="cost-val" id="tg-saved-preview" style="font-family:'DM Mono',monospace;color:var(--muted)">None</span></div>
     </div>
   </div>
 
+  <!-- Config -->
   <div class="card">
-    <div class="card-header"><span class="card-title">&#x1F510; Bot Configuration</span><span class="badge badge-g">Stored in browser localStorage</span></div>
+    <div class="card-header"><span class="card-title">&#x1F510; Bot Configuration</span><span class="badge badge-g">Stored locally</span></div>
     <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
       <div>
         <label class="te-label">Bot Token (from @BotFather)</label>
@@ -1791,44 +1793,78 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           placeholder="1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
           style="font-size:12px;letter-spacing:.3px">
-        <div style="font-size:10px;color:var(--muted);margin-top:5px">Paste your full bot token. It will be masked after saving. Tap field to re-enter.</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:5px">Paste your full token from @BotFather. Field masks after saving. Tap to re-enter.</div>
       </div>
       <div>
         <label class="te-label">Chat ID (your Telegram user ID)</label>
-        <input class="te-input" id="tg-chatid"
-          autocomplete="off" inputmode="numeric"
-          placeholder="e.g. 785860467">
-        <div style="font-size:10px;color:var(--muted);margin-top:5px">Message @userinfobot on Telegram to get your numeric Chat ID.</div>
+        <input class="te-input" id="tg-chatid" autocomplete="off" inputmode="numeric" placeholder="e.g. 785860467">
+        <div style="font-size:10px;color:var(--muted);margin-top:5px">Send /start to your bot, then message @userinfobot to get your Chat ID.</div>
       </div>
       <div style="display:flex;gap:10px">
         <button onclick="saveTgConfig()" style="flex:2;background:var(--blue);color:#fff;border:none;padding:15px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F4BE; Save Config</button>
-        <button onclick="testTgMessage()" style="flex:1;background:var(--bg3);color:var(--text);border:2px solid var(--border2);padding:15px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F9EA; Send Test</button>
+        <button onclick="testTgMessage()" style="flex:1;background:var(--bg3);color:var(--text);border:2px solid var(--border2);padding:15px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F9EA; Test</button>
       </div>
       <div id="tg-feedback" style="display:none;padding:13px;border-radius:9px;font-size:13px;font-weight:600;text-align:center;border:1px solid transparent"></div>
       <button onclick="clearTgConfig()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:underline;padding:0">Clear saved config</button>
     </div>
   </div>
 
+  <!-- Alert Types -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Alert Types</span></div>
+    <div class="card-header"><span class="card-title">&#x1F514; Alert Types</span><span class="badge badge-g">All active</span></div>
     <div style="padding:0 14px">
-      <div class="cost-row"><span class="cost-lbl">&#x2316; Trade signal (EXECUTE/BLOCK)</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x1F4CA; Regime change</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x26A1; VIX spike (&gt;20)</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x26D4; Kill switch engaged</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x1F4CB; Daily 3:30 PM summary</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
-      <div class="cost-row"><span class="cost-lbl">&#x23F3; Auto sq-off reminder (3:00 PM)</span><span class="cost-val" style="color:var(--green)">&#x2714; Active</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x2316; Trade signal (EXECUTE/BLOCK)</span><span class="cost-val" style="color:var(--green)">&#x2714; Instant</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F4CA; Regime change (Trend/Range/Vol)</span><span class="cost-val" style="color:var(--green)">&#x2714; Auto</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x26A1; VIX spike (&gt;20 / &gt;25 / &gt;30)</span><span class="cost-val" style="color:var(--green)">&#x2714; Auto</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x26D4; Kill switch engaged/released</span><span class="cost-val" style="color:var(--green)">&#x2714; Instant</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F4C9; Drawdown (&ge;3% / 5% / 8%)</span><span class="cost-val" style="color:var(--green)">&#x2714; Auto</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F514; Market open (9:15 AM IST)</span><span class="cost-val" style="color:var(--green)">&#x2714; Daily</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x23F3; Sq-off reminder (3:00 PM IST)</span><span class="cost-val" style="color:var(--green)">&#x2714; Daily</span></div>
+      <div class="cost-row"><span class="cost-lbl">&#x1F4CB; Daily summary (3:30 PM IST)</span><span class="cost-val" style="color:var(--green)">&#x2714; Daily</span></div>
     </div>
   </div>
 
+  <!-- Manual Send Buttons -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">&#x1F4E4; Send Now</span><span class="badge badge-b">Manual alerts</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="tgSendMarketUpdate()" style="background:var(--bbg);color:var(--blue);border:1px solid var(--bborder);padding:12px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F4CA; Send Market Update (Nifty, BankNifty, VIX, Regime)</button>
+      <button onclick="tgSendPortfolioUpdate()" style="background:var(--gbg);color:var(--green);border:1px solid var(--gborder);padding:12px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F4BC; Send Portfolio Update (P&amp;L, Equity, Drawdown)</button>
+      <button onclick="sendDailySummary();TG_STATE.dailySentDate=null;" style="background:var(--bg3);color:var(--text);border:1px solid var(--border2);padding:12px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:44px">&#x1F4CB; Send Daily Summary Now</button>
+    </div>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">&#x1F4DC; Alert Activity Log</span><span class="badge badge-a">This session</span></div>
+    <div id="tg-activity-log" style="padding:0 14px">
+      <div style="padding:16px;text-align:center;color:var(--muted);font-size:11px">No alerts sent yet this session</div>
+    </div>
+  </div>
+
+  <!-- Sample message -->
   <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px">
-    <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Sample Alert Format</div>
+    <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Sample Trade Alert</div>
     <div style="font-family:'DM Mono',monospace;font-size:11px;line-height:1.9;color:var(--text)">
-      &#x1F7E2; <strong>PRISM ANALYTICS &#x2014; EXECUTE</strong><br>
-      &#x25B2; LONG &#x2014; HDFCBANK (MIS)<br>
-      Entry: &#x20B9;1,642 | SL: &#x20B9;1,626 | Tgt: &#x20B9;1,674<br>
-      Qty: 6 | AI: 72% | R:R: 1:2.0 | BE: 0.43%<br>
-      Regime: Trending | VIX: 14.2 | &#x23F0; 10:45 AM IST
+      &#x1F7E2; <strong>PRISM — EXECUTE &#x25B2; LONG</strong><br>
+      HDFCBANK: MIS Intraday<br>
+      &#x2015;&#x2015;&#x2015;&#x2015;&#x2015;&#x2015;&#x2015;&#x2015;<br>
+      Entry: &#x20B9;1,842 | SL: &#x20B9;1,820 | Tgt: &#x20B9;1,886<br>
+      Qty: 22 shares | R:R 1:2.00<br>
+      AI Prob: 72% | BE: +0.194%<br>
+      Regime: Trending | VIX 14.2<br>
+      &#x23F0; 10:45 AM IST
+    </div>
+  </div>
+
+  <!-- Setup guide -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">&#x1F4D6; Setup Guide</span></div>
+    <div style="padding:12px 14px;font-size:12px;line-height:1.9;color:var(--muted)">
+      <strong style="color:var(--text)">Step 1:</strong> Open Telegram → search <strong>@BotFather</strong> → /newbot → get token<br>
+      <strong style="color:var(--text)">Step 2:</strong> Search <strong>@userinfobot</strong> → /start → copy your numeric ID<br>
+      <strong style="color:var(--text)">Step 3:</strong> Paste both above → Save Config → Test<br>
+      <strong style="color:var(--text)">Step 4:</strong> Alerts fire automatically — no action needed
     </div>
   </div>
 
@@ -6625,6 +6661,414 @@ function updateRiskPageFull() {
   // Update risk display with real DD data
   setTimeout(updateRiskPageFull, 600);
 })();
+
+
+
+/* ══════════════════════════════════════════════════════════════
+   TELEGRAM FULL INTEGRATION — All 7 Alert Types
+   • Trade EXECUTE/BLOCK
+   • Regime change
+   • VIX spike (>20)
+   • Kill switch
+   • Drawdown warning
+   • Daily 3:30 PM summary
+   • Market open (9:15 AM)
+══════════════════════════════════════════════════════════════ */
+
+/* ── Alert state tracker (prevents duplicate alerts) ── */
+var TG_STATE = {
+  lastRegime:    null,
+  lastVixLevel:  null,   // 'low'|'medium'|'high'|'extreme'
+  vixAlertSent:  false,
+  dailySentDate: null,
+  openAlertSent: false,
+  lastDDAlert:   0,      // drawdownPct when last alert sent
+};
+try {
+  var _tgs = localStorage.getItem('prism-tg-state');
+  if (_tgs) TG_STATE = Object.assign({}, TG_STATE, JSON.parse(_tgs));
+} catch(_) {}
+
+function saveTGState() {
+  try { localStorage.setItem('prism-tg-state', JSON.stringify(TG_STATE)); } catch(_) {}
+}
+
+function getISTTime() {
+  var now = new Date();
+  try {
+    var ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    return { h: ist.getHours(), m: ist.getMinutes(), s: ist.getSeconds(),
+             day: ist.getDay(), date: ist.toDateString(),
+             timeStr: ist.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) + ' IST' };
+  } catch(_) {
+    return { h: now.getUTCHours()+5, m: now.getUTCMinutes()+30, s: now.getUTCSeconds(),
+             day: now.getDay(), date: now.toDateString(), timeStr: '--:-- IST' };
+  }
+}
+
+function isMarketHours(t) {
+  t = t || getISTTime();
+  if (t.day === 0 || t.day === 6) return false;
+  var mins = t.h * 60 + t.m;
+  return mins >= 9*60+15 && mins <= 15*60+30;
+}
+
+/* ── Format helpers ── */
+function tgBold(s) { return '*' + s + '*'; }
+function tgLine(label, val) { return label + ': ' + val; }
+
+/* ── ALERT 1: Trade Signal (called from logTrade) ── */
+function sendTradeAlert(sym, dir, type, entry, sl, tgt, qty, prob, regime, vix) {
+  var t = getISTTime();
+  var icon = dir === 'LONG' ? '🟢' : '🔴';
+  var arrow = dir === 'LONG' ? '\u25B2' : '\u25BC';
+  var rr = Math.abs(tgt - entry) / Math.abs(entry - sl);
+  var be = ((Math.abs(entry * 0.002)) / entry * 100).toFixed(3);
+  var msg = icon + ' ' + tgBold('PRISM — EXECUTE ' + arrow + ' ' + dir) + '\n'
+    + tgLine(sym, type === 'INTRADAY' ? 'MIS Intraday' : 'CNC/F\u0026O') + '\n'
+    + '\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n'
+    + tgLine('Entry', '\u20B9' + entry)
+    + ' | SL: \u20B9' + sl + ' | Tgt: \u20B9' + tgt + '\n'
+    + tgLine('Qty', qty + ' shares | R:R 1:' + rr.toFixed(2)) + '\n'
+    + tgLine('AI Prob', prob + '% | BE: +' + be + '%') + '\n'
+    + tgLine('Regime', regime + ' | VIX ' + (vix||0).toFixed(1)) + '\n'
+    + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  updateTgActivityLog('EXECUTE ' + arrow + ' ' + sym, t.timeStr, true);
+}
+
+/* ── ALERT 2: Regime Change ── */
+function checkAndAlertRegimeChange() {
+  if (!isMarketHours()) return;
+  var vix = LIVE.vix || 14;
+  var regime = classifyRegime(vix, LIVE.niftyChgPct || 0).label;
+  if (regime === TG_STATE.lastRegime || regime === 'Detecting') return;
+  var prev = TG_STATE.lastRegime || 'Unknown';
+  TG_STATE.lastRegime = regime;
+  saveTGState();
+  var t = getISTTime();
+  var icon = regime === 'Trending' ? '📈' : regime === 'Volatile' ? '\u26A1' : '📊';
+  var action = regime === 'Trending' ? 'Buy calls / trend-follow' :
+               regime === 'Volatile' ? 'Reduce size. Hedge with puts.' :
+               'Iron Condor / Short Straddle';
+  var msg = icon + ' ' + tgBold('REGIME CHANGE') + '\n'
+    + tgLine('From', prev) + ' \u2192 ' + tgBold(regime) + '\n'
+    + tgLine('VIX', vix.toFixed(1)) + ' | Nifty: ' + (LIVE.niftyChgPct||0).toFixed(2) + '%\n'
+    + tgLine('Action', action) + '\n'
+    + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  updateTgActivityLog('Regime: ' + prev + '\u2192' + regime, t.timeStr, false);
+}
+
+/* ── ALERT 3: VIX Spike ── */
+function checkAndAlertVIX() {
+  if (!isMarketHours()) return;
+  var vix = LIVE.vix;
+  if (!vix) return;
+  var level = vix > 30 ? 'extreme' : vix > 25 ? 'high' : vix > 20 ? 'medium' : 'low';
+  if (level === TG_STATE.lastVixLevel) return;
+  if (level === 'low') { TG_STATE.lastVixLevel = 'low'; saveTGState(); return; }
+  TG_STATE.lastVixLevel = level;
+  saveTGState();
+  var t = getISTTime();
+  var icon = level === 'extreme' ? '🚨' : '\u26A1';
+  var action = vix > 30 ? 'STOP all trading immediately.' :
+               vix > 25 ? 'Trading halted by AMC rule. Wait for VIX < 25.' :
+               'Reduce position sizes by 25-50%.';
+  var msg = icon + ' ' + tgBold('VIX SPIKE — ' + level.toUpperCase()) + '\n'
+    + tgLine('VIX', vix.toFixed(2) + ' (' + level + ' volatility)') + '\n'
+    + tgLine('Action', action) + '\n'
+    + tgLine('Nifty', (LIVE.niftyChgPct||0).toFixed(2) + '%') + '\n'
+    + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  updateTgActivityLog('VIX ' + vix.toFixed(1) + ' spike', t.timeStr, false);
+}
+
+/* ── ALERT 4: Kill Switch ── */
+function alertKillSwitch(engaged) {
+  var t = getISTTime();
+  var msg = engaged
+    ? '🛑 ' + tgBold('KILL SWITCH ENGAGED') + '\n'
+        + 'All trading STOPPED. No new orders allowed.\n'
+        + 'Existing positions must be closed manually.\n'
+        + '\u23F0 ' + t.timeStr
+    : '\u2705 ' + tgBold('KILL SWITCH RELEASED') + '\n'
+        + 'Trading resumed. Risk limits re-applied.\n'
+        + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  updateTgActivityLog(engaged ? 'Kill switch ON' : 'Kill switch OFF', t.timeStr, !engaged);
+}
+
+/* ── ALERT 5: Drawdown Warning ── */
+function checkAndAlertDrawdown() {
+  var dd = DDState ? DDState.drawdownPct : 0;
+  if (dd < 3) { TG_STATE.lastDDAlert = 0; saveTGState(); return; }
+  // Only alert at each tier crossing
+  var tier = dd >= 8 ? 8 : dd >= 5 ? 5 : 3;
+  if (TG_STATE.lastDDAlert >= tier) return;
+  TG_STATE.lastDDAlert = tier;
+  saveTGState();
+  var t = getISTTime();
+  var icon = tier >= 8 ? '🚨' : tier >= 5 ? '🔴' : '\u26A0';
+  var action = tier >= 8 ? 'TRADING HALTED. Resume only after new equity high.'
+             : tier >= 5 ? 'Position size reduced 75%. Review strategy.'
+             : 'Position size reduced 50%. Tighten risk.';
+  var msg = icon + ' ' + tgBold('DRAWDOWN ALERT — \u2265' + tier + '%') + '\n'
+    + tgLine('Current DD', dd.toFixed(2) + '%') + '\n'
+    + tgLine('Equity', '\u20B9' + (DDState.currentEquity||0).toLocaleString('en-IN')) + '\n'
+    + tgLine('Peak', '\u20B9' + (DDState.peakEquity||0).toLocaleString('en-IN')) + '\n'
+    + tgLine('Action', action) + '\n'
+    + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  updateTgActivityLog('Drawdown ' + dd.toFixed(1) + '%', t.timeStr, false);
+}
+
+/* ── ALERT 6: Daily 3:30 PM Summary ── */
+function sendDailySummary() {
+  var t = getISTTime();
+  var todayStr = t.date;
+  if (TG_STATE.dailySentDate === todayStr) return;
+  TG_STATE.dailySentDate = todayStr;
+  saveTGState();
+
+  var trades = (AI.trades || []).filter(function(tr) {
+    return tr.ts && new Date(tr.ts).toDateString() === todayStr;
+  });
+  var wins = trades.filter(function(tr) { return (tr.pnl || 0) > 0; });
+  var totalPnl = trades.reduce(function(a, tr) { return a + (tr.pnl || 0); }, 0);
+  var wr = trades.length ? Math.round(wins.length / trades.length * 100) : 0;
+  var vix = LIVE.vix || 0;
+  var niftyChg = LIVE.niftyChgPct || 0;
+  var ddPct = DDState ? DDState.drawdownPct : 0;
+
+  var icon = totalPnl >= 0 ? '📈' : '📉';
+  var msg = '📋 ' + tgBold('PRISM — DAILY SUMMARY') + '\n'
+    + tgLine('Date', todayStr) + '\n'
+    + '\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n'
+    + tgLine('Trades', trades.length + ' (' + wr + '% win rate)') + '\n'
+    + tgLine('Net P\u0026L', (totalPnl >= 0 ? '+' : '') + '\u20B9' + totalPnl.toFixed(0)) + '\n'
+    + tgLine('Equity', '\u20B9' + (DDState.currentEquity||50000).toLocaleString('en-IN')) + '\n'
+    + tgLine('Drawdown', ddPct.toFixed(2) + '%') + '\n'
+    + '\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n'
+    + tgLine('Nifty', (niftyChg >= 0 ? '+' : '') + niftyChg.toFixed(2) + '%') + '\n'
+    + tgLine('VIX Close', vix.toFixed(2)) + '\n'
+    + '\u23F0 Market closed. Good night!';
+  sendTgAlert(msg);
+  updateTgActivityLog('Daily summary sent', t.timeStr, true);
+}
+
+/* ── ALERT 7: Market Open 9:15 AM ── */
+function checkAndAlertMarketOpen() {
+  var t = getISTTime();
+  var todayStr = t.date;
+  if (TG_STATE.openAlertSent && TG_STATE.openAlertDate === todayStr) return;
+  if (t.h === 9 && t.m === 15 && t.day >= 1 && t.day <= 5) {
+    TG_STATE.openAlertSent = true;
+    TG_STATE.openAlertDate = todayStr;
+    saveTGState();
+    var vix = LIVE.vix || 0;
+    var regime = classifyRegime(vix, LIVE.niftyChgPct || 0).label;
+    var strategy = regime === 'Trending' ? 'Trend-follow. Buy ATM calls.' :
+                   regime === 'Volatile' ? 'Caution. Reduce size. No-trade 9:15-9:30.' :
+                   'Iron Condor / wait for direction.';
+    var msg = '🔔 ' + tgBold('MARKET OPEN — 9:15 AM IST') + '\n'
+      + tgLine('Regime', regime) + ' | VIX: ' + vix.toFixed(1) + '\n'
+      + tgLine('Nifty', (LIVE.nifty||0).toLocaleString('en-IN')) + '\n'
+      + tgLine('BankNifty', (LIVE.bnifty||0).toLocaleString('en-IN')) + '\n'
+      + '\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n'
+      + tgLine('Strategy', strategy) + '\n'
+      + '\u26D4 No-trade zone: 9:15\u20139:30 AM\n'
+      + 'Good luck today!';
+    sendTgAlert(msg);
+    updateTgActivityLog('Market open alert', t.timeStr, true);
+  }
+}
+
+/* ── Auto sq-off reminder at 3:00 PM ── */
+function checkSquareOffReminder() {
+  var t = getISTTime();
+  if (t.h === 15 && t.m === 0 && t.s < 5 && t.day >= 1 && t.day <= 5) {
+    if (TG_STATE.sqoffSentDate === t.date) return;
+    TG_STATE.sqoffSentDate = t.date;
+    saveTGState();
+    var msg = '\u23F3 ' + tgBold('AUTO SQ-OFF REMINDER') + '\n'
+      + 'MIS positions will be squared off at 3:15 PM IST.\n'
+      + 'Close any intraday positions now to avoid forced sq-off.\n'
+      + '\u23F0 ' + t.timeStr;
+    sendTgAlert(msg);
+    updateTgActivityLog('Sq-off reminder', t.timeStr, false);
+  }
+}
+
+/* ── Master alert scheduler (runs every 60 seconds via heartbeat) ── */
+var _tgLastCheck = 0;
+function runTelegramScheduler() {
+  var now = Date.now();
+  if (now - _tgLastCheck < 55000) return; // max once per minute
+  _tgLastCheck = now;
+  if (!tgConfig.token || !tgConfig.chatId) return;
+
+  var t = getISTTime();
+  checkAndAlertMarketOpen();
+  checkAndAlertVIX();
+  checkAndAlertRegimeChange();
+  checkAndAlertDrawdown();
+  checkSquareOffReminder();
+
+  // Daily summary: 3:30 PM IST
+  if (t.h === 15 && t.m === 30 && t.day >= 1 && t.day <= 5) {
+    sendDailySummary();
+  }
+}
+
+/* ── Activity log on Telegram page ── */
+var TG_ACTIVITY_LOG = [];
+function updateTgActivityLog(event, time, ok) {
+  TG_ACTIVITY_LOG.unshift({ event: event, time: time, ok: ok });
+  if (TG_ACTIVITY_LOG.length > 20) TG_ACTIVITY_LOG.pop();
+  renderTgActivityLog();
+}
+
+function renderTgActivityLog() {
+  var el = document.getElementById('tg-activity-log');
+  if (!el) return;
+  if (!TG_ACTIVITY_LOG.length) {
+    el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:11px">No alerts sent yet this session</div>';
+    return;
+  }
+  el.innerHTML = TG_ACTIVITY_LOG.map(function(a) {
+    return '<div class="cost-row">'
+      + '<span class="cost-lbl" style="font-size:10px">' + a.time + '</span>'
+      + '<span class="cost-val" style="font-size:11px;color:' + (a.ok ? 'var(--green)' : 'var(--amber)') + '">'
+      + (a.ok ? '\u2714' : '\u26A0') + ' ' + a.event + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+/* ── Patch toggleKillSwitch to send alert ── */
+var _ksBase = toggleKillSwitch;
+function toggleKillSwitch() {
+  _ksBase();
+  alertKillSwitch(killSwitchActive);
+}
+
+/* ── Patch updateEquityFromTrade to send DD alert ── */
+var _ueftBase = updateEquityFromTrade;
+function updateEquityFromTrade(pnl) {
+  _ueftBase(pnl);
+  setTimeout(checkAndAlertDrawdown, 500);
+}
+
+/* ── Patch fetchAll to run scheduler and check regime ── */
+var _fetchAllBase = fetchAll;
+async function fetchAll() {
+  await _fetchAllBase();
+  runTelegramScheduler();
+  checkAndAlertVIX();
+  checkAndAlertRegimeChange();
+}
+
+/* ── Patch sendTradeAlert into logTrade ── */
+var _logTradeBase = logTrade;
+function logTrade() {
+  var sym   = (document.getElementById('te-sym')?.value||'').trim().toUpperCase() || 'UNKNOWN';
+  var entry = +document.getElementById('te-entry')?.value || 0;
+  var sl    = +document.getElementById('te-sl')?.value    || 0;
+  var tgt   = +document.getElementById('te-tgt')?.value   || 0;
+  var btn   = document.getElementById('exec-btn');
+  if (btn && btn.disabled) { alert('\u274C Decision is BLOCK. Cannot execute.'); return; }
+  if (!entry || !sl || !tgt) { alert('Fill all trade fields first.'); return; }
+
+  var todayTrades = (AI.trades||[]).filter(function(t){
+    return t.ts && new Date(t.ts).toDateString() === new Date().toDateString();
+  });
+  var maxT = (typeof CFG !== 'undefined' && CFG.maxTrades) ? CFG.maxTrades : 1;
+  if (todayTrades.length >= maxT) {
+    alert('\u274C Max ' + maxT + ' trade(s)/day reached.'); return;
+  }
+
+  var _isShort2 = TE.dir === 'SHORT';
+  var _cap2 = (typeof CFG !== 'undefined' && CFG.capital) ? CFG.capital : 50000;
+  var qty = _isShort2
+    ? Math.max(1, Math.floor(_cap2 * 0.01 * 0.75 / Math.abs(entry - sl)))
+    : Math.max(1, Math.floor(_cap2 * 0.01           / Math.abs(entry - sl)));
+
+  AI.trades = AI.trades || [];
+  AI.count  = (AI.count || 0) + 1;
+  var trade = { sym:sym, dir:TE.dir, type:TE.type, entry:entry, sl:sl, tgt:tgt, qty:qty, pnl:0, ts:Date.now() };
+  AI.trades.push(trade);
+  saveAI(AI);
+
+  if (typeof orders !== 'undefined') {
+    orders.unshift({ sym:sym, dir:TE.dir, type:TE.type, entry:entry, sl:sl, tgt:tgt, qty:qty, status:'OPEN', ts:Date.now() });
+    if (typeof saveOrders === 'function') saveOrders();
+  }
+
+  var vix = LIVE.vix || 0;
+  var regime = typeof classifyRegime === 'function' ? classifyRegime(vix, LIVE.niftyChgPct||0).label : 'N/A';
+  var prob = typeof getWinProbability === 'function' ? getWinProbability(vix, LIVE.niftyChgPct||0, regime) : 65;
+  sendTradeAlert(sym, TE.dir, TE.type, entry, sl, tgt, qty, prob, regime, vix);
+
+  var setTx = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  setTx('ai-trade-count', AI.count);
+  setTx('ai2-trades', AI.count);
+  setTx('oms-trades', AI.count);
+
+  showToast('\u2714 Trade logged! Telegram alert sent.', true);
+  var now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
+  updateTgActivityLog('EXECUTE ' + TE.dir + ' ' + sym, now + ' IST', true);
+}
+
+/* ── Manual send buttons ── */
+function tgSendMarketUpdate() {
+  if (!tgConfig.token || !tgConfig.chatId) {
+    showToast('\u274C Save Telegram config first', false); return;
+  }
+  var t = getISTTime();
+  var vix = LIVE.vix || 0;
+  var regime = classifyRegime(vix, LIVE.niftyChgPct||0).label;
+  var msg = '📊 ' + tgBold('PRISM — MARKET UPDATE') + '\n'
+    + tgLine('Nifty', (LIVE.nifty||0).toLocaleString('en-IN') + ' (' + (LIVE.niftyChgPct>=0?'+':'') + (LIVE.niftyChgPct||0).toFixed(2) + '%)') + '\n'
+    + tgLine('BankNifty', (LIVE.bnifty||0).toLocaleString('en-IN') + ' (' + (LIVE.bniftyChgPct>=0?'+':'') + (LIVE.bniftyChgPct||0).toFixed(2) + '%)') + '\n'
+    + tgLine('VIX', vix.toFixed(2)) + ' | Regime: ' + regime + '\n'
+    + tgLine('Gold', '\u20B9' + (LIVE.goldINR||0).toLocaleString('en-IN') + '/10g') + '\n'
+    + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  showToast('\u2714 Market update sent!', true);
+  updateTgActivityLog('Manual market update', t.timeStr, true);
+}
+
+function tgSendPortfolioUpdate() {
+  if (!tgConfig.token || !tgConfig.chatId) {
+    showToast('\u274C Save Telegram config first', false); return;
+  }
+  var t = getISTTime();
+  var trades = AI.trades || [];
+  var totalPnl = trades.reduce(function(a,tr){ return a + (tr.pnl||0); }, 0);
+  var wins = trades.filter(function(tr){ return (tr.pnl||0) > 0; }).length;
+  var wr = trades.length ? Math.round(wins/trades.length*100) : 0;
+  var msg = '💼 ' + tgBold('PRISM — PORTFOLIO UPDATE') + '\n'
+    + tgLine('Total trades', trades.length + ' (' + wr + '% win)') + '\n'
+    + tgLine('Net P\u0026L', (totalPnl>=0?'+':'') + '\u20B9' + totalPnl.toFixed(0)) + '\n'
+    + tgLine('Equity', '\u20B9' + (DDState.currentEquity||50000).toLocaleString('en-IN')) + '\n'
+    + tgLine('Drawdown', (DDState.drawdownPct||0).toFixed(2) + '%') + '\n'
+    + '\u23F0 ' + t.timeStr;
+  sendTgAlert(msg);
+  showToast('\u2714 Portfolio update sent!', true);
+  updateTgActivityLog('Manual portfolio update', t.timeStr, true);
+}
+
+/* ── Initialize scheduler on load ── */
+setTimeout(function() {
+  if (tgConfig.token && tgConfig.chatId) {
+    runTelegramScheduler();
+  }
+}, 3000);
+
+/* ── Hook scheduler to heartbeat (every 60s) ── */
+setInterval(function() {
+  runTelegramScheduler();
+}, 60000);
 
 
 </script>
