@@ -4618,6 +4618,7 @@ function runBacktest(){
 ═══════════════════════════════════════════════════════ */
 var TG_KEY    = 'prism-tg';
 var tgConfig  = {token:'', chatId:'', count:0, lastSent:''};
+var TG_ACTIVITY_LOG = [];  /* activity log - declared early */
 
 /* Load any previously saved config at startup */
 try {
@@ -6914,8 +6915,8 @@ function runTelegramScheduler() {
 }
 
 /* ── Activity log on Telegram page ── */
-var TG_ACTIVITY_LOG = [];
 function updateTgActivityLog(event, time, ok) {
+  if(!Array.isArray(TG_ACTIVITY_LOG)) TG_ACTIVITY_LOG = [];
   TG_ACTIVITY_LOG.unshift({ event: event, time: time, ok: ok });
   if (TG_ACTIVITY_LOG.length > 20) TG_ACTIVITY_LOG.pop();
   renderTgActivityLog();
@@ -6924,7 +6925,7 @@ function updateTgActivityLog(event, time, ok) {
 function renderTgActivityLog() {
   var el = document.getElementById('tg-activity-log');
   if (!el) return;
-  if (!TG_ACTIVITY_LOG.length) {
+  if (!Array.isArray(TG_ACTIVITY_LOG) || !TG_ACTIVITY_LOG.length) {
     el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:11px">No alerts sent yet this session</div>';
     return;
   }
