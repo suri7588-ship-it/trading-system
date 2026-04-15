@@ -3476,7 +3476,6 @@ function nav(id,el,src){
     if(id==='learning')  { if(typeof updateLearningDashboard==='function') updateLearningDashboard(); }
     if(id==='options')   { if(typeof buildOptionsChain==='function') buildOptionsChain(); }
     if(id==='smartmoney'){ if(typeof updateSmartMoney==='function') updateSmartMoney(); }
-    if(id==='news')      { if(typeof fetchNews==='function') fetchNews(); }
     if(id==='fiidii')    { if(typeof buildFIIDII==='function') buildFIIDII(); }
     if(id==='sectorrsi') { if(typeof buildSectorRSI==='function') buildSectorRSI(); setTimeout(function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); },2000); }
     if(id==='global')    { if(typeof fetchGlobalMarkets==='function') fetchGlobalMarkets(); }
@@ -3486,12 +3485,12 @@ function nav(id,el,src){
     if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
 
     /* Post-nav page enhancements */
-    if(id==='news')      { setTimeout(function(){ if(typeof ensureNewsLoaded==='function') ensureNewsLoaded(); }, 300); }
     if(id==='sectorrsi') { setTimeout(function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); }, 500); }
     if(id==='risk')      { setTimeout(function(){ if(typeof refreshRiskDisplay==='function') refreshRiskDisplay(); }, 200); }
     if(id==='governance'){ setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); }, 200); }
     if(id==='prices')    { setTimeout(function(){ if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines(); }, 500); }
     if(id==='charts')    { loadChartJS(); }
+    if(id==='news')      { if(typeof fetchNews==='function') setTimeout(fetchNews, 50); }
   } catch(navErr) {
     console.error('nav() error for page '+id+':', navErr);
   }
@@ -5372,12 +5371,12 @@ function filterNews(cat, el){
 }
 
 function sentimentScore(articles){
-  if(!articles||!articles.length) return {pos:0,neg:0,neu:0,score:0,pct:50};
-  var pos = articles.filter(a=>a.sentiment==='positive').length;
-  const neg = articles.filter(a=>a.sentiment==='negative').length;
-  const neu = articles.filter(a=>a.sentiment==='neutral').length;
-  const score = articles.length ? (pos-neg)/articles.length : 0; // -1 to +1
-  return {pos, neg, neu, score, pct: Math.round((score+1)/2*100)};
+  if(!articles || !articles.length) return {pos:0,neg:0,neu:0,score:0,pct:50};
+  var pos   = articles.filter(function(a){ return a.sentiment==='positive'; }).length;
+  var neg   = articles.filter(function(a){ return a.sentiment==='negative'; }).length;
+  var neu   = articles.filter(function(a){ return a.sentiment==='neutral';  }).length;
+  var score = articles.length ? (pos-neg)/articles.length : 0;
+  return {pos:pos, neg:neg, neu:neu, score:score, pct: Math.round((score+1)/2*100)};
 }
 
 function renderNews(){
@@ -5421,25 +5420,23 @@ function renderNews(){
 function updateSentimentPanel(articles){
   if(!articles || !articles.length){ articles = NEWS_DB || []; }
   var s = sentimentScore(articles);
-  const setTx=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
-  const fill = document.getElementById('sent-fill');
+  function setTx(id,v,col){ var e=document.getElementById(id); if(e){ e.textContent=v; if(col) e.style.color=col; } }
+  var fill = document.getElementById('sent-fill');
   if(fill) fill.style.width = s.pct + '%';
-  const badge = document.getElementById('sent-badge-overall');
-  const label = s.score > 0.2 ? 'Bullish' : s.score < -0.2 ? 'Bearish' : 'Neutral';
-  const bcls = s.score > 0.2 ? 'badge-g' : s.score < -0.2 ? 'badge-r' : 'badge-a';
-  if(badge){badge.textContent=label+' ('+s.pct+'%)';badge.className='badge '+bcls;}
+  var badge = document.getElementById('sent-badge-overall');
+  var label = s.score > 0.2 ? 'Bullish' : s.score < -0.2 ? 'Bearish' : 'Neutral';
+  var bcls  = s.score > 0.2 ? 'badge-g' : s.score < -0.2 ? 'badge-r' : 'badge-a';
+  if(badge){ badge.textContent = label + ' (' + s.pct + '%)'; badge.className = 'badge ' + bcls; }
   setTx('sent-pos-count', s.pos);
   setTx('sent-neu-count', s.neu);
   setTx('sent-neg-count', s.neg);
-  const note = s.score > 0.3 ? '\u1F9E0 AI: Positive sentiment \u2192 +6% win probability boost applied to News weight'
-             : s.score < -0.3 ? '\u1F9E0 AI: Negative sentiment \u2192 caution flag, reduce position sizes'
-             : '\u1F9E0 AI: Mixed sentiment \u2014 News weight unchanged';
+  var note = s.score > 0.3  ? '🧠 AI: Positive sentiment → +6% win probability boost applied to News weight'
+           : s.score < -0.3 ? '🧠 AI: Negative sentiment → caution flag, reduce position sizes'
+           : '🧠 AI: Mixed sentiment — News weight unchanged';
   setTx('sent-ai-note', note);
-
-  // Update AI weights based on news sentiment
-  if(s.score > 0.3 && AI.weights){
+  if(s.score > 0.3 && typeof AI !== 'undefined' && AI.weights){
     AI.weights.news = Math.min(40, (AI.weights.news||30) + 2);
-    saveAI(AI);
+    if(typeof saveAI === 'function') saveAI(AI);
   }
 }
 
@@ -6455,7 +6452,7 @@ function updateModelDashboard() {
   const rlState = stateKey(rlVix, classifyRegime(rlVix, LIVE.niftyChgPct || 0).label, 0);
   const rlAct   = P3.rl.trained ? rlBestAction(P3.rl.qTable || {}, rlState) : 'NO_TRADE';
   const signals = [
-    { name: '\u1F9E0 ML Model (LR)', val: lrProb.toFixed(1) + '%', ok: lrProb >= 60, icon: '\u1F9E0' },
+    { name: '🧠 ML Model (LR)', val: lrProb.toFixed(1) + '%', ok: lrProb >= 60, icon: '🧠' },
     { name: '🤖 RL Agent',    val: rlAct,                   ok: rlAct === 'TRADE', icon: '🤖' },
     { name: '📊 Regime',      val: classifyRegime(rlVix, LIVE.niftyChgPct || 0).label, ok: rlVix < 25, icon: '📊' },
     { name: '\u26A1 VIX Guard',      val: rlVix.toFixed(1), ok: rlVix < 20, icon: '\u26A1' },
