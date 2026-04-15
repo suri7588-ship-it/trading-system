@@ -313,7 +313,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
 /* ══ PHASE 1E: CHARTS ══ */
 .chart-wrap{position:relative;width:100%;}
-.chart-wrap canvas{width:100%!important;display:block;}
+.chart-wrap 
 
 /* ══ LONG/SHORT ENGINE ══ */
 .trade-engine{background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(59,130,246,0.04));border:1px solid var(--border2);border-radius:14px;padding:15px;}
@@ -376,7 +376,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .chart-hdr{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
 .chart-title{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
 .chart-wrap{position:relative;width:100%;padding:14px;}
-.chart-wrap canvas{width:100%!important;display:block;}
+.chart-wrap 
 /* ═══ PHASE 1E: LONG/SHORT TRADE ENGINE ═══ */
 .trade-direction-tabs{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border2);margin-bottom:14px;}
 .dir-tab{flex:1;padding:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;border:none;font-family:'Outfit',sans-serif;transition:all .2s;letter-spacing:.3px;}
@@ -426,7 +426,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:0;}
 .chart-hdr{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
 .chart-title-txt{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
-.chart-wrap canvas{display:block;}
+.chart-wrap 
 .chart-stat-row{display:flex;gap:14px;padding:10px 15px 4px;flex-wrap:wrap;}
 .chart-stat{display:flex;flex-direction:column;gap:2px;}
 .chart-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
@@ -613,6 +613,10 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 #prism-toast.toast-ok{border-color:var(--green);background:rgba(16,185,129,.15);}
 #prism-toast.toast-err{border-color:var(--red);background:rgba(244,63,94,.15);}
 
+canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
+
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;}
+.chart-canvas-wrap{position:relative;height:190px;padding:4px 14px 14px;}
 </style>
 </head>
 <body>
@@ -4060,6 +4064,41 @@ function genExpSeries(){
 }
 
 /* ── Chart instances ── */
+
+/* ── Chart.js default options (mobile-optimised) ── */
+function getChartDefaults(){
+  var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  var gridCol = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  var textCol = isDark ? '#94a3b8' : '#64748b';
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 400 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: isDark ? '#1e293b' : '#fff',
+        titleColor: isDark ? '#e2e8f0' : '#1e293b',
+        bodyColor:  isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 8
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: gridCol, drawBorder: false },
+        ticks: { color: textCol, maxTicksLimit: 6, font: { size: 10 } }
+      },
+      y: {
+        grid: { color: gridCol, drawBorder: false },
+        ticks: { color: textCol, maxTicksLimit: 5, font: { size: 10 } }
+      }
+    }
+  };
+}
 var CHARTS={};
 let eqPeriod=30;
 
