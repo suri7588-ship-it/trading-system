@@ -3456,7 +3456,6 @@ function nav(id,el,src){
       if(bn) bn.classList.add('active');
     }
     /* Page init hooks */
-    if(id==='charts')    { setTimeout(function(){if(!window.Chart){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';s.onload=buildCharts;document.head.appendChild(s);}else buildCharts();},60); }
     if(id==='orders')    { if(typeof renderOrders==='function') renderOrders(); }
     if(id==='journal')   { if(typeof renderJournal==='function') renderJournal(); }
     if(id==='risk')      { if(typeof updateRiskPage==='function') updateRiskPage(); }
@@ -3477,7 +3476,6 @@ function nav(id,el,src){
     if(id==='modeldash') { if(typeof updateModelDashboard==='function') updateModelDashboard(); }
     if(id==='risk')      { if(typeof updateRiskPageFull==='function') updateRiskPageFull(); }
     if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
-    if(id==='charts')    { setTimeout(function(){ if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); },80); }
 
     /* Post-nav page enhancements */
     if(id==='news')      { setTimeout(function(){ if(typeof ensureNewsLoaded==='function') ensureNewsLoaded(); }, 300); }
@@ -3485,7 +3483,7 @@ function nav(id,el,src){
     if(id==='risk')      { setTimeout(function(){ if(typeof refreshRiskDisplay==='function') refreshRiskDisplay(); }, 200); }
     if(id==='governance'){ setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); }, 200); }
     if(id==='prices')    { setTimeout(function(){ if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines(); }, 500); }
-    if(id==='charts')    { setTimeout(function(){ if(window.Chart) buildCharts(); else if(typeof buildChartsWithRetry==='function') buildChartsWithRetry(1); }, 300); }
+    if(id==='charts')    { loadChartJS(); }
   } catch(navErr) {
     console.error('nav() error for page '+id+':', navErr);
   }
@@ -3797,6 +3795,8 @@ async function fetchWatchlist(){
   }
   if(srcEl) srcEl.textContent=ok>0?'Yahoo \u2713 ('+ok+'/'+WATCHLIST.length+')':'CORS error';
   renderWatchlist(); renderMovers(); renderWatchlistTiles(); renderSectorHeatmap();
+  if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines();
+  if(typeof buildSectorRSI==='function') buildSectorRSI();
 }
 
 function renderWatchlist(){
@@ -4119,7 +4119,13 @@ function buildGoldChart(){
 function buildVixChart(){
   destroyChart('vix');
   const c=document.getElementById('c-vix'); if(!c||!window.Chart) return;
-  const vixNow=LIVE.vix||14;
+  /* Try to get VIX from live data, market bar text, or use last known */
+  var vixNow = LIVE.vix;
+  if(!vixNow || vixNow===0){
+    var vixEl = document.getElementById('mb-vix') || document.querySelector('[id*="vix"]');
+    if(vixEl) vixNow = parseFloat(vixEl.textContent) || 0;
+  }
+  vixNow = vixNow || 14;
   const {labels,data}=genVixSeries(vixNow);
   const hi=Math.max(...data), lo=Math.min(...data);
   const set=(id,v,col)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(col)e.style.color=col;}};
@@ -6619,25 +6625,56 @@ function syncGovernanceFromSignal() {
 }
 
 /* ── FIX 6: Robust chart loading with retry ── */
-function buildChartsWithRetry(attempt) {
-  attempt = attempt || 1;
-  if (window.Chart) { buildCharts(); return; }
-  if (attempt > 5) {
-    var b = document.getElementById('chart-load-status');
-    if (b) { b.textContent = 'Chart.js failed to load. Check internet connection.'; b.style.color='var(--red)'; }
+/* ── Chart.js loader — single clean implementation ── */
+var _chartJSLoading = false;
+var _chartJSLoaded  = false;
+
+function loadChartJS(){
+  if(_chartJSLoaded && window.Chart){ buildCharts(); return; }
+  if(_chartJSLoading){ 
+    /* Already loading — wait and retry */
+    setTimeout(function(){ if(window.Chart){ _chartJSLoaded=true; buildCharts(); } else loadChartJS(); }, 800);
     return;
   }
-  // Retry loading Chart.js
-  var existing = document.querySelector('script[src*="chart.umd"]');
-  if (!existing) {
+  _chartJSLoading = true;
+  /* Remove any stale script tags to force fresh load */
+  var old = document.querySelectorAll('script[src*="chart.umd"]');
+  old.forEach(function(s){ s.parentNode && s.parentNode.removeChild(s); });
+  
+  var CDNS = [
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
+    'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js'
+  ];
+  
+  function tryLoad(idx){
+    if(idx >= CDNS.length){
+      _chartJSLoading = false;
+      /* All CDNs failed - show message */
+      var b = document.getElementById('chart-load-status');
+      if(b){ b.textContent = 'Charts need internet. Check connection and tap Charts again.'; b.style.color='var(--amber)'; b.style.display='block'; }
+      return;
+    }
     var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-    s.onload = function() { buildCharts(); };
-    s.onerror = function() { setTimeout(function(){ buildChartsWithRetry(attempt+1); }, 1000*attempt); };
+    s.src = CDNS[idx];
+    s.onload = function(){
+      _chartJSLoading = false;
+      _chartJSLoaded  = true;
+      var b = document.getElementById('chart-load-status');
+      if(b) b.style.display = 'none';
+      buildCharts();
+    };
+    s.onerror = function(){
+      s.parentNode && s.parentNode.removeChild(s);
+      setTimeout(function(){ tryLoad(idx+1); }, 500);
+    };
     document.head.appendChild(s);
-  } else {
-    setTimeout(function(){ buildChartsWithRetry(attempt+1); }, 800*attempt);
   }
+  tryLoad(0);
+}
+
+function buildChartsWithRetry(attempt){
+  loadChartJS();
 }
 
 /* ── Update drawdown display on risk page ── */
@@ -7214,18 +7251,7 @@ function runGovernance(){
   } else if(qEl) { qEl.innerHTML=''; }
 }
 
-/* ── FIX: Charts — load Chart.js eagerly at startup ── */
-(function loadChartJSEarly(){
-  if(window.Chart) return;
-  var s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-  s.onload=function(){
-    /* Auto-build charts if charts page is currently active */
-    var cp=document.getElementById('page-charts');
-    if(cp&&cp.classList.contains('active')) buildCharts();
-  };
-  document.head.appendChild(s);
-})();
+
 
 /* ── FIX: Advances/Declines display ── */
 function updateAdvancesDeclines(){
@@ -7246,31 +7272,8 @@ function updateAdvancesDeclines(){
 }
 
 /* ── FIX: buildSectorRSI always runs even without live data ── */
-var _buildSectorRSI_orig = buildSectorRSI;
-function buildSectorRSI(){
-  /* Make wlData available even if empty */
-  if(typeof wlData==='undefined'||!wlData) { window.wlData=[]; }
-  _buildSectorRSI_orig();
-  /* If breadth is still loading, set simulated values */
-  var adv=document.getElementById('breadth-adv-txt');
-  var dec=document.getElementById('breadth-dec-txt');
-  var adr=document.getElementById('adr-val');
-  if(adv&&adv.textContent==='Loading...'){
-    var a=Math.floor(18+Math.random()*15), d=Math.floor(8+Math.random()*10), u=50-a-d;
-    if(adv) adv.textContent=a; if(dec) dec.textContent=d;
-    if(adr) adr.textContent=(a/Math.max(d,1)).toFixed(2);
-    var bsig=document.getElementById('breadth-signal');
-    if(bsig){ bsig.textContent=a>d?'Breadth Positive \u2192 Long bias':'Breadth Negative \u2192 Caution'; bsig.style.color=a>d?'var(--green)':'var(--red)'; }
-  }
-}
 
 /* ── FIX: Hook fetchWatchlist to update advances/declines ── */
-var _fetchWatchlist_orig = fetchWatchlist;
-async function fetchWatchlist(){
-  await _fetchWatchlist_orig();
-  updateAdvancesDeclines();
-  if(typeof buildSectorRSI==='function') buildSectorRSI();
-}
 
 /* ── FIX: News - ensure renderNews always populates ── */
 function ensureNewsLoaded(){
@@ -7301,6 +7304,7 @@ setTimeout(function(){
   refreshRiskDisplay();
   ensureNewsLoaded();
   setTimeout(buildSectorRSI, 1000);
+  setTimeout(loadChartJS, 1500); /* pre-load Chart.js */
   setTimeout(fetchGlobalMarkets, 1200);
 }, 2000);
 
