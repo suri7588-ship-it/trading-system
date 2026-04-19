@@ -1932,6 +1932,26 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
     </div>
   </div>
 
+
+  <!-- Daily Excel Download -->
+  <div class="section-card" style="margin-top:14px">
+    <div class="section-title" style="margin-bottom:10px">
+      📊 Daily Excel Summary
+      <span class="badge badge-b" style="margin-left:8px">Auto 3:30 PM daily</span>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+      Auto-downloads every day at <strong>3:30 PM IST</strong> including weekends and NSE holidays.
+      Holiday days show <strong>NIL</strong> with the holiday name. Contains 4 sheets:
+      Daily Summary, Trade Log, Governance Log, and Equity Curve.
+    </div>
+    <button onclick="downloadDailyExcel()" class="btn-primary" style="width:100%">
+      📥 Download Today's Excel Report Now
+    </button>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px">
+      File name format: Prism_Daily_DD-Mon-YYYY_[PROFIT/LOSS/HOLIDAY]_Rs[amount].xlsx
+    </div>
+  </div>
+
 <div class="page" id="page-vault"><div class="page-content">
 
   <div class="alert info">
@@ -3542,6 +3562,17 @@ sa.addEventListener('touchend',e=>{
 });
 
 /* ── CORS-RESILIENT YAHOO FINANCE FETCH ── */
+
+/* fetchWithTimeout — standalone browser-compatible timeout wrapper */
+function fetchWithTimeout(url, opts, ms){
+  return new Promise(function(resolve, reject){
+    var t = setTimeout(function(){ reject(new Error('timeout')); }, ms||8000);
+    fetch(url, opts||{}).then(
+      function(r){ clearTimeout(t); resolve(r); },
+      function(e){ clearTimeout(t); reject(e); }
+    );
+  });
+}
 async function yFetch(sym){
   var enc   = encodeURIComponent(sym);
   var base  = 'https://query1.finance.yahoo.com/v8/finance/chart/'+enc+'?interval=1d&range=2d';
@@ -7629,6 +7660,287 @@ function wipeAllData(){
   }, 2000);
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+   DAILY EXCEL SUMMARY — Auto-downloads every day at 3:30 PM IST
+   Includes weekends and NSE holidays as NIL rows with reasons.
+   Uses SheetJS (xlsx) via CDN — no server needed.
+   SEBI Records Rules 2003: 5-year trade record retention.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── NSE Holiday Calendar 2026 ── */
+var NSE_HOLIDAYS_2026 = {
+  '01 Jan 2026': 'New Year\'s Day',
+  '26 Jan 2026': 'Republic Day',
+  '19 Feb 2026': 'Chhatrapati Shivaji Maharaj Jayanti',
+  '25 Feb 2026': 'Mahashivratri',
+  '03 Mar 2026': 'Id-Ul-Fitr (Ramzan Eid)',
+  '14 Apr 2026': 'Dr. Baba Saheb Ambedkar Jayanti / Good Friday',
+  '01 May 2026': 'Maharashtra Day',
+  '14 May 2026': 'Buddha Purnima',
+  '15 Aug 2026': 'Independence Day',
+  '17 Aug 2026': 'Parsi New Year (Shahenshahi)',
+  '02 Oct 2026': 'Gandhi Jayanti',
+  '08 Oct 2026': 'Dussehra (Vijayadashami)',
+  '12 Oct 2026': 'Dussehra / Milad-Un-Nabi',
+  '27 Oct 2026': 'Diwali — Laxmi Pujan (Muhurat Trading)',
+  '28 Oct 2026': 'Diwali — Balipratipada',
+  '04 Nov 2026': 'Guru Nanak Jayanti',
+  '25 Dec 2026': 'Christmas',
+};
+
+/* Check if a date is an NSE holiday */
+function getNSEHolidayReason(dateObj){
+  var d   = dateObj || new Date();
+  var key = d.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric'});
+  return NSE_HOLIDAYS_2026[key] || null;
+}
+
+/* Check if today is a non-trading day */
+function getNonTradingReason(){
+  var t = getISTTime();
+  if(t.day===0) return { isHoliday:true, reason:'Sunday — NSE Closed' };
+  if(t.day===6) return { isHoliday:true, reason:'Saturday — NSE Closed' };
+  var today = new Date();
+  var hReason = getNSEHolidayReason(today);
+  if(hReason) return { isHoliday:true, reason:'NSE Holiday: '+hReason };
+  return { isHoliday:false, reason:null };
+}
+
+/* ── Load SheetJS (xlsx) ── */
+var _xlsxLoaded = false;
+function loadSheetJS(cb){
+  if(window.XLSX){ _xlsxLoaded=true; cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload  = function(){ _xlsxLoaded=true; cb(); };
+  s.onerror = function(){
+    /* Fallback CDN */
+    var s2 = document.createElement('script');
+    s2.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s2.onload = function(){ _xlsxLoaded=true; cb(); };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+}
+
+/* ── Build Excel workbook data ── */
+function buildDailyExcelData(){
+  var today    = new Date();
+  var dateStr  = today.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric'});
+  var dayName  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][today.getDay()];
+  var nonTrade = getNonTradingReason();
+
+  var vix      = (LIVE && LIVE.vix)        ? LIVE.vix.toFixed(2)         : '--';
+  var nifty    = (LIVE && LIVE.nifty)      ? LIVE.nifty.toLocaleString('en-IN') : '--';
+  var niftyChg = (LIVE && LIVE.niftyChgPct)? ((LIVE.niftyChgPct>=0?'+':'')+LIVE.niftyChgPct.toFixed(2)+'%') : '--';
+  var bnifty   = (LIVE && LIVE.bnifty)     ? LIVE.bnifty.toLocaleString('en-IN') : '--';
+  var goldVal  = (LIVE && LIVE.goldINR)    ? ('Rs.'+Math.round(LIVE.goldINR).toLocaleString('en-IN')) : '--';
+  var equity   = DDState ? DDState.currentEquity.toLocaleString('en-IN') : '--';
+  var ddPct    = DDState ? DDState.drawdownPct.toFixed(2)+'%' : '--';
+
+  /* ── SHEET 1: Daily Summary ── */
+  var summarySheet = [];
+  summarySheet.push(['PRISM ANALYTICS — DAILY TRADING SUMMARY']);
+  summarySheet.push(['Date:', dateStr, 'Day:', dayName]);
+  summarySheet.push(['Generated:', new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'}),'','']);
+  summarySheet.push([]);
+
+  if(nonTrade.isHoliday){
+    summarySheet.push(['STATUS', 'NIL — NON-TRADING DAY']);
+    summarySheet.push(['Reason', nonTrade.reason]);
+    summarySheet.push([]);
+    summarySheet.push(['Market', 'CLOSED']);
+    summarySheet.push(['Trades Executed', 0]);
+    summarySheet.push(['Net P&L', 'Rs. 0.00']);
+    summarySheet.push(['Capital Change', 'No change']);
+    summarySheet.push([]);
+    summarySheet.push(['NOTE', 'NSE/BSE markets are closed on this day.']);
+    summarySheet.push(['', 'No trading activity. Capital fully preserved.']);
+  } else {
+    var todayTrades = (AI.trades||[]).filter(function(t){
+      return t.ts && new Date(t.ts).toDateString()===today.toDateString();
+    });
+    var wins   = todayTrades.filter(function(t){ return (t.pnl||0)>0; });
+    var losses = todayTrades.filter(function(t){ return (t.pnl||0)<=0; });
+    var netPnl = todayTrades.reduce(function(a,t){ return a+(t.pnl||0); },0);
+    var wr     = todayTrades.length ? Math.round(wins.length/todayTrades.length*100) : 0;
+    var regime = (LIVE && typeof classifyRegime==='function')
+      ? classifyRegime(LIVE.vix||0, LIVE.niftyChgPct||0).label : '--';
+
+    summarySheet.push(['STATUS', todayTrades.length===0 ? 'NIL — NO TRADES' : (netPnl>=0 ? 'PROFIT' : 'LOSS')]);
+    summarySheet.push([]);
+    summarySheet.push(['--- MARKET ---','']);
+    summarySheet.push(['Nifty 50',    nifty,    'Change', niftyChg]);
+    summarySheet.push(['BankNifty',   bnifty,   'VIX',   vix]);
+    summarySheet.push(['Gold MCX',    goldVal,  'Regime',regime]);
+    summarySheet.push([]);
+    summarySheet.push(['--- PORTFOLIO ---','']);
+    summarySheet.push(['Current Equity',  'Rs.'+equity]);
+    summarySheet.push(['Drawdown',         ddPct]);
+    summarySheet.push([]);
+    summarySheet.push(['--- P&L ---','']);
+    summarySheet.push(['Trades Today',     todayTrades.length]);
+    summarySheet.push(['Wins',             wins.length]);
+    summarySheet.push(['Losses',           losses.length]);
+    summarySheet.push(['Win Rate',         wr+'%']);
+    summarySheet.push(['Gross P&L',        todayTrades.reduce(function(a,t){ return a+(t.gross||t.pnl||0); },0).toFixed(2)]);
+    summarySheet.push(['Net P&L',          netPnl.toFixed(2)]);
+    summarySheet.push([]);
+    if(todayTrades.length===0){
+      summarySheet.push(['NOTE','No trades executed today. Capital preserved.']);
+      summarySheet.push(['Governance','6-layer governance enforced. No qualifying setup found.']);
+    }
+  }
+
+  /* ── SHEET 2: Trade Log ── */
+  var tradeHeaders = ['#','Date','Time','Symbol','Direction','Type','Strategy',
+                      'Entry (Rs.)','SL (Rs.)','Target (Rs.)','Exit (Rs.)','Qty',
+                      'Gross P&L (Rs.)','Costs (Rs.)','Net P&L (Rs.)',
+                      'Result','AO Order ID','Regime','Win Prob (%)','Drawdown (%)'];
+  var tradeRows = [tradeHeaders];
+
+  var allTrades = AI.trades || [];
+  if(allTrades.length===0){
+    tradeRows.push([1, dateStr, '--', nonTrade.isHoliday?'HOLIDAY':'NO TRADE',
+                    '--','--','--','--','--','--','--',0,0,0,0,
+                    nonTrade.isHoliday?nonTrade.reason:'No qualifying setup',
+                    '--','--','--','--']);
+  } else {
+    allTrades.slice(-50).forEach(function(t,i){
+      var d = new Date(t.ts||Date.now());
+      tradeRows.push([
+        i+1,
+        d.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}),
+        d.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}),
+        t.sym||'--', t.dir||'--', t.type||'--', t.strat||'--',
+        t.entry||0, t.sl||0, t.tgt||0, t.exit||t.entry||0,
+        t.qty||0,
+        (t.gross||t.pnl||0).toFixed(2),
+        (t.costs||0).toFixed(2),
+        (t.pnl||0).toFixed(2),
+        t.result||'--',
+        t.aoOrderId||'PAPER',
+        '--', '--', '--',
+      ]);
+    });
+  }
+
+  /* ── SHEET 3: Governance Log ── */
+  var govHeaders = ['Date','Symbol','Direction','Strategy','Type','L1 Win%',
+                    'L2 Risk','L3 Cost','L4 Regime','L5 Behav','L6 Kill','Decision'];
+  var govRows    = [govHeaders];
+  govRows.push([dateStr, nonTrade.isHoliday?'HOLIDAY':'--',
+                '--','--','--','--','--','--','--','--','--',
+                nonTrade.isHoliday?('CLOSED: '+nonTrade.reason):'No trades evaluated']);
+
+  /* ── SHEET 4: Running P&L Equity Curve ── */
+  var eqHeaders = ['Date','Trade#','Symbol','Direction','Net P&L (Rs.)','Cumulative P&L (Rs.)','Equity (Rs.)'];
+  var eqRows    = [eqHeaders];
+  var cumPnl    = 0;
+  (AI.trades||[]).slice(-100).forEach(function(t,i){
+    cumPnl += (t.pnl||0);
+    var d = new Date(t.ts||Date.now());
+    eqRows.push([
+      d.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}),
+      i+1, t.sym||'--', t.dir||'--',
+      (t.pnl||0).toFixed(2),
+      cumPnl.toFixed(2),
+      DDState ? DDState.currentEquity.toFixed(2) : '--',
+    ]);
+  });
+  if(eqRows.length===1) eqRows.push([dateStr,0,'--','--',0,0,DDState?DDState.currentEquity.toFixed(2):'--']);
+
+  return {
+    dateStr:      dateStr,
+    summarySheet: summarySheet,
+    tradeRows:    tradeRows,
+    govRows:      govRows,
+    eqRows:       eqRows,
+    isHoliday:    nonTrade.isHoliday,
+    holidayReason:nonTrade.reason,
+    netPnl:       (AI.trades||[]).filter(function(t){
+                    return t.ts&&new Date(t.ts).toDateString()===new Date().toDateString();
+                  }).reduce(function(a,t){ return a+(t.pnl||0); },0),
+  };
+}
+
+/* ── Download Excel ── */
+function downloadDailyExcel(cb){
+  loadSheetJS(function(){
+    if(!window.XLSX){ showToast('Excel library failed to load. Check internet.', false); if(cb) cb(false); return; }
+    try {
+      var data = buildDailyExcelData();
+      var wb   = XLSX.utils.book_new();
+
+      /* Sheet 1: Daily Summary */
+      var ws1 = XLSX.utils.aoa_to_sheet(data.summarySheet);
+      /* Style column widths */
+      ws1['!cols'] = [{wch:20},{wch:30},{wch:15},{wch:30}];
+      /* Merge title row */
+      ws1['!merges'] = [{s:{r:0,c:0},e:{r:0,c:3}}];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Daily Summary');
+
+      /* Sheet 2: Trade Log */
+      var ws2 = XLSX.utils.aoa_to_sheet(data.tradeRows);
+      ws2['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:12},{wch:10},{wch:12},
+                      {wch:15},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},
+                      {wch:12},{wch:10},{wch:12},{wch:12},{wch:16},{wch:12},{wch:10},{wch:10}];
+      XLSX.utils.book_append_sheet(wb, ws2, 'Trade Log');
+
+      /* Sheet 3: Governance Log */
+      var ws3 = XLSX.utils.aoa_to_sheet(data.govRows);
+      ws3['!cols'] = [{wch:12},{wch:12},{wch:10},{wch:15},{wch:10},
+                      {wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:25}];
+      XLSX.utils.book_append_sheet(wb, ws3, 'Governance Log');
+
+      /* Sheet 4: Equity Curve */
+      var ws4 = XLSX.utils.aoa_to_sheet(data.eqRows);
+      ws4['!cols'] = [{wch:12},{wch:8},{wch:12},{wch:10},{wch:14},{wch:16},{wch:14}];
+      XLSX.utils.book_append_sheet(wb, ws4, 'Equity Curve');
+
+      /* Download */
+      var fname = 'Prism_Daily_'+data.dateStr.replace(/ /g,'_')+
+                  (data.isHoliday?'_HOLIDAY':'_'+
+                  (data.netPnl>=0?'PROFIT_':'LOSS_')+
+                  'Rs'+Math.abs(Math.round(data.netPnl)))+'.xlsx';
+      XLSX.writeFile(wb, fname);
+      showToast('\u2705 Excel downloaded: '+fname, true);
+      if(cb) cb(true, fname);
+    } catch(e){
+      console.error('Excel error:', e);
+      showToast('\u274C Excel generation failed: '+e.message, false);
+      if(cb) cb(false);
+    }
+  });
+}
+
+/* ── Track daily Excel download ── */
+var _excelSentDate = (function(){
+  try { return localStorage.getItem('prism-excel-date')||''; } catch(_){ return ''; }
+})();
+
+/* ── Auto-trigger at 3:30 PM IST every day (including holidays) ── */
+function checkAndDownloadDailyExcel(){
+  var t     = getISTTime();
+  var today = new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',
+              day:'2-digit',month:'short',year:'numeric'});
+  /* Fire at 3:30 PM (h=15, m=30) — ANY day of week */
+  if(t.h===15 && t.m===30 && _excelSentDate !== today){
+    _excelSentDate = today;
+    try { localStorage.setItem('prism-excel-date', today); } catch(_){}
+    downloadDailyExcel(function(ok, fname){
+      if(ok){
+        var nonTrade = getNonTradingReason();
+        var tgMsg = '\u2705 *DAILY EXCEL DOWNLOADED*\n'+today
+          +(nonTrade.isHoliday ? '\nStatus: NIL ('+nonTrade.reason+')' : '')
+          +'\nFile: '+fname;
+        sendTgAlert(tgMsg);
+      }
+    });
+  }
+}
+
 /* ── Run everything on page load ── */
 setTimeout(function(){
   updateAdvancesDeclines();
@@ -8664,6 +8976,7 @@ var _origRunTGSched_ao = runTelegramScheduler;
 function runTelegramScheduler(){
   _origRunTGSched_ao();
   runAOSquareOffCheck();
+  checkAndDownloadDailyExcel();
   /* Refresh positions every 5 min when connected */
   var t = getISTTime();
   if(AO.connected && t.m%5===0){
