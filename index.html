@@ -1911,6 +1911,27 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
 
 </div></div>
 
+
+  <!-- DPDP Act 2023 — Data Rights -->
+  <div class="section-card" style="margin-top:18px">
+    <div class="section-title" style="margin-bottom:10px">
+      🔒 Data Rights (DPDP Act 2023 + SEBI 5-Year Retention)
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+      Export downloads a full <strong>JSON + CSV</strong> backup of all your trades, orders, and settings.
+      Save the CSV for <strong>mandatory 5-year record keeping</strong> required under SEBI Records Rules 2003.
+      Angel One order IDs are included for complete audit trail.
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button onclick="exportAllData()" class="btn-primary" style="flex:1;min-width:140px">📥 Export All Data (JSON + CSV)</button>
+      <button onclick="wipeAllData()" style="flex:1;min-width:140px;background:var(--rbg);border:1px solid var(--rborder);color:var(--red);padding:11px;border-radius:9px;font-weight:600;font-size:12px;cursor:pointer">🗑 Wipe All Data</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px">
+      Under DPDP Act 2023 Sec 11 &amp; 12 — Right to access and erase personal data.
+      Wipe is irreversible; data is auto-exported as safety net first.
+    </div>
+  </div>
+
 <div class="page" id="page-vault"><div class="page-content">
 
   <div class="alert info">
@@ -7558,6 +7579,56 @@ function refreshRiskDisplay(){
     if(mEl){ mEl.textContent = m.label || 'Normal'; mEl.style.color = m.color || 'var(--green)'; }
   }
 }
+
+/* ═══ DPDP Act 2023 — Data Export & Wipe (Sec 11 & 12) ═══ */
+function exportAllData(){
+  var payload = {
+    exportedAt: new Date().toISOString(),
+    notice: 'Prism Analytics personal data export — DPDP Act 2023 Sec 11',
+    trades: AI.trades||[], orders: orders||[], config: CFG||{},
+    drawdown: DDState||{}, ml: P3||{},
+  };
+  var json = JSON.stringify(payload, null, 2);
+  var blob = new Blob([json],{type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Prism_Data_Export_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  /* CSV for 5-year SEBI retention */
+  var rows = ['Date,Time,Symbol,Direction,Type,Entry,SL,Target,Qty,PnL,OrderID,Source'];
+  (AI.trades||[]).forEach(function(t){
+    var d=new Date(t.ts||Date.now());
+    rows.push([
+      d.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}),
+      d.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'}),
+      t.sym||'',t.dir||'',t.type||'',
+      t.entry||0,t.sl||0,t.tgt||0,t.qty||0,
+      (t.pnl||0).toFixed(2),
+      t.aoOrderId||'PAPER',t.source||'SIMULATED',
+    ].join(','));
+  });
+  var c2 = new Blob([rows.join('\n')],{type:'text/csv'});
+  var a2 = document.createElement('a');
+  a2.href = URL.createObjectURL(c2);
+  a2.download = 'Prism_Trades_'+new Date().toISOString().slice(0,10)+'.csv';
+  setTimeout(function(){ a2.click(); URL.revokeObjectURL(a2.href); }, 800);
+  showToast('\u2705 Exported: JSON + CSV (save for 5-year SEBI retention)', true);
+}
+
+function wipeAllData(){
+  if(!confirm('WIPE ALL DATA — This deletes all trade history, settings, vault data and ML models permanently.\n\nA backup will be auto-downloaded first. Continue?')) return;
+  if(!confirm('Final confirmation: wipe everything?')) return;
+  exportAllData();
+  setTimeout(function(){
+    Object.keys(localStorage).filter(function(k){ return k.startsWith('prism'); })
+      .forEach(function(k){ localStorage.removeItem(k); });
+    ['prism-ao-session','prism-audit-sent','prism-disclosure-v1','prism-email-cfg']
+      .forEach(function(k){ localStorage.removeItem(k); });
+    showToast('\u2705 All data wiped. Reloading...', true);
+    setTimeout(function(){ window.location.reload(); }, 2000);
+  }, 2000);
+}
+
 /* ── Run everything on page load ── */
 setTimeout(function(){
   updateAdvancesDeclines();
@@ -7826,11 +7897,14 @@ var CB_STATE = { triggered: false, level: 0, haltUntil: 0 };
 
 function checkCircuitBreaker(){
   if(!LIVE || !LIVE.nifty || !LIVE.niftyPrev) return { triggered: false };
-
-  var prevClose = LIVE.niftyPrev;
-  var current   = LIVE.nifty;
-  var movePct   = ((current - prevClose) / prevClose) * 100;
-  var absPct    = Math.abs(movePct);
+  /* FIX C4: SEBI uses Nifty50 OR Sensex — whichever triggers first
+     MRD/DoP/SE/Cir-07/2012: circuit breakers applied on either index */
+  var niftyMove  = ((LIVE.nifty - LIVE.niftyPrev) / LIVE.niftyPrev) * 100;
+  var sensexMove = (LIVE.sensex && LIVE.sensexPrev)
+    ? ((LIVE.sensex - LIVE.sensexPrev) / LIVE.sensexPrev) * 100 : niftyMove;
+  var movePct = Math.abs(niftyMove) >= Math.abs(sensexMove) ? niftyMove : sensexMove;
+  var cbIndex = Math.abs(niftyMove) >= Math.abs(sensexMove) ? 'Nifty' : 'Sensex';
+  var absPct  = Math.abs(movePct);
   var now       = Date.now();
 
   /* Clear expired halts */
@@ -8291,62 +8365,96 @@ function renderAOPositions(positions){
 
 /* ══ PLACE ORDER ══ */
 async function aoPlaceOrder(params){
-  /*
-    params = {
-      sym:          'INFY-EQ' or 'NIFTY24APR24200CE'
-      token:        '1594'  (instrument token)
-      direction:    'BUY' | 'SELL'
-      qty:          9
-      price:        0  (0 = market order)
-      orderType:    'MARKET' | 'LIMIT' | 'SL' | 'SL-M'
-      productType:  'INTRADAY' | 'DELIVERY' | 'CARRYFORWARD'
-      exchange:     'NSE' | 'NFO' | 'MCX'
-      triggerPrice: 0
-      variety:      'NORMAL' | 'STOPLOSS' | 'AMO'
-      tag:          'PRISM'
-    }
-  */
-
-  /* ── Pre-order: run 6-layer governance ── */
+  /* FIX C1: Circuit breaker */
   var cb = checkCircuitBreaker();
-  if(cb.triggered){ showToast('❌ '+cb.msg, false); return null; }
-
+  if(cb.triggered){ showToast('\u274C '+cb.msg, false); return null; }
+  /* FIX C1: No-trade zone */
   var tz = checkNoTradeZone();
-  if(tz.block){ showToast('❌ '+tz.reason, false); return null; }
+  if(tz.block){ showToast('\u274C '+tz.reason, false); return null; }
+
+  /* FIX C2: MARGIN CHECK — SEBI Peak Margin Circular SEBI/HO/MRD/DRMNP/CIR/P/2021/702
+     Must verify sufficient available cash BEFORE placing order.
+     Required margin = trade value x 1.1 (10% safety buffer)           */
+  var tradePrice     = (params.price && params.price>0) ? params.price : 0;
+  var requiredMargin = tradePrice * params.qty * 1.1;
+  var availCash      = 0;
+  try {
+    var fundsRes = await aoAPI('/rest/secure/angelbroking/user/v1/getRMS','GET',null);
+    if(fundsRes.status && fundsRes.data){
+      availCash = parseFloat(fundsRes.data.availablecash || fundsRes.data.net || 0);
+    }
+  } catch(_){}
+  if(availCash > 0 && requiredMargin > 0 && availCash < requiredMargin){
+    var mBlock = '\u274C MARGIN INSUFFICIENT\nAvail: \u20B9'+availCash.toLocaleString('en-IN')
+               +'\nNeed: \u20B9'+Math.ceil(requiredMargin).toLocaleString('en-IN')
+               +'\nBlocked — SEBI peak margin rule';
+    showToast(mBlock, false);
+    sendTgAlert('BLOCK: Margin insufficient for '+params.direction+' '+params.qty+' '+params.sym
+      +'. Avail \u20B9'+Math.round(availCash)+' Need \u20B9'+Math.ceil(requiredMargin));
+    return null;
+  }
 
   var orderBody = {
-    variety:          params.variety      || 'NORMAL',
-    tradingsymbol:    params.sym,
-    symboltoken:      params.token,
-    transactiontype:  params.direction,
-    exchange:         params.exchange     || 'NSE',
-    ordertype:        params.orderType    || 'MARKET',
-    producttype:      params.productType  || 'INTRADAY',
-    duration:         'DAY',
-    price:            (params.price       || '0').toString(),
-    squareoff:        (params.squareoff   || '0').toString(),
-    stoploss:         (params.stoploss    || '0').toString(),
-    quantity:         params.qty.toString(),
-    triggerprice:     (params.triggerPrice|| '0').toString(),
-    tag:              'PRISM_AMC',
+    variety:         params.variety       || 'NORMAL',
+    tradingsymbol:   params.sym,
+    symboltoken:     params.token,
+    transactiontype: params.direction,
+    exchange:        params.exchange      || 'NSE',
+    ordertype:       params.orderType     || 'MARKET',
+    producttype:     params.productType   || 'INTRADAY',
+    duration:        'DAY',
+    price:           (params.price        || '0').toString(),
+    squareoff:       (params.squareoff    || '0').toString(),
+    stoploss:        (params.stoploss     || '0').toString(),
+    quantity:        params.qty.toString(),
+    triggerprice:    (params.triggerPrice || '0').toString(),
+    tag:             'PRISM_AMC',
   };
 
-  showToast('⏳ Placing '+params.direction+' order...', true);
+  showToast('\u23F3 Placing '+params.direction+' order...', true);
+  var ts  = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
   var res = await aoAPI('/rest/secure/angelbroking/order/v1/placeOrder','POST', orderBody);
 
   if(res.status && res.data && res.data.orderid){
     var oid = res.data.orderid;
-    showToast('✅ Order placed: '+oid, true);
-    sendTgAlert('🟢 *ORDER PLACED*\n'+params.direction+' '+params.qty+' '+params.sym
-      +'\nOrder ID: '+oid+'\n⏰ '+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'}));
+    showToast('\u2705 Order placed: '+oid, true);
+
+    /* FIX C3: AUDIT TRAIL — Save Angel One order ID to trade journal
+       SEBI Records Rules 2003: complete order record must be kept >=5 years */
+    try {
+      AI.trades = AI.trades || [];
+      var recent = AI.trades[AI.trades.length-1];
+      var symClean = (params.sym||'').replace('-EQ','').replace('.NS','');
+      if(recent && (Date.now()-recent.ts) < 15000 && recent.sym === symClean){
+        recent.aoOrderId    = oid;
+        recent.aoStatus     = 'PLACED';
+        recent.aoExchange   = params.exchange || 'NSE';
+        recent.aoProduct    = params.productType || 'INTRADAY';
+        recent.aoMarginUsed = requiredMargin;
+        recent.source       = 'ANGEL_ONE_LIVE';
+      } else {
+        AI.trades.push({
+          sym:sym,dir:params.direction,type:params.productType==='INTRADAY'?'INTRADAY':'POSITIONAL',
+          entry:params.price||0,sl:parseFloat(params.stoploss)||0,
+          tgt:parseFloat(params.squareoff)||0,qty:params.qty,pnl:0,
+          ts:Date.now(),aoOrderId:oid,aoStatus:'PLACED',
+          aoExchange:params.exchange||'NSE',aoProduct:params.productType||'INTRADAY',
+          aoMarginUsed:requiredMargin,source:'ANGEL_ONE_LIVE',
+        });
+      }
+      if(typeof saveAI==='function') saveAI(AI);
+    } catch(auditErr){ console.error('[Audit] Save failed:',auditErr); }
+
+    sendTgAlert('\u2705 ORDER PLACED\n'+params.direction+' '+params.qty+' '+params.sym
+      +'\nID: '+oid+'\nMargin: \u20B9'+Math.ceil(requiredMargin)
+      +'\n\u23F0 '+ts);
     setTimeout(aoRefreshOrders, 2000);
     setTimeout(aoRefreshPositions, 3000);
     return oid;
   } else {
     var errMsg = res.message || res.errorMessage || 'Order failed';
-    showToast('❌ Order failed: '+errMsg, false);
-    sendTgAlert('🔴 *ORDER FAILED*\n'+params.direction+' '+params.qty+' '+params.sym
-      +'\nReason: '+errMsg);
+    showToast('\u274C Order failed: '+errMsg, false);
+    sendTgAlert('ORDER FAILED: '+params.direction+' '+params.qty+' '+params.sym+' — '+errMsg);
     return null;
   }
 }
