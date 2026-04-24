@@ -79,7 +79,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 @keyframes sp{to{transform:rotate(360deg)}}
 
 /* ── LAYOUT ── */
-.app-shell{flex:1;display:flex;overflow:hidden;}
+.app-shell{flex:1;display:flex;overflow:hidden;min-height:0;}
 .sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:none;flex-direction:column;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#3b5280 #1a2338;}
 .sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:#3b5280;border-radius:4px;}
 @media(min-width:768px){.sidebar{display:flex;width:230px;}}
@@ -100,89 +100,124 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .ph-badge{display:inline-block;margin-top:10px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:var(--gbg);color:var(--green);}
 
 /* ── SCROLL + PAGES ── */
-.scroll-area{flex:1;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scrollbar-gutter:stable;}
+/* Base scroll-area — overflow-x:auto gives horizontal scrollbar when needed */
+.scroll-area{
+  flex:1;
+  overflow-y:scroll;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
+  scrollbar-gutter:stable both-edges;
+}
 
-/* ── SCROLLBAR — high contrast, always visible ── */
-.scroll-area::-webkit-scrollbar{width:10px;background:#1a2338;}
-.scroll-area::-webkit-scrollbar-track{background:#1a2338;border-left:1px solid rgba(255,255,255,0.08);}
-.scroll-area::-webkit-scrollbar-thumb{background:#3b5280;border-radius:6px;border:2px solid #1a2338;min-height:40px;}
-.scroll-area::-webkit-scrollbar-thumb:hover{background:#4f6fa0;}
-.scroll-area::-webkit-scrollbar-thumb:active{background:#6b8fc0;}
+/* ── VERTICAL SCROLLBAR — high contrast, always visible ── */
+.scroll-area::-webkit-scrollbar        { width:10px; background:#1a2338; }
+.scroll-area::-webkit-scrollbar-track  { background:#1a2338; border-left:1px solid rgba(255,255,255,0.08); }
+.scroll-area::-webkit-scrollbar-thumb  { background:#3b5280; border-radius:6px; border:2px solid #1a2338; min-height:40px; }
+.scroll-area::-webkit-scrollbar-thumb:hover  { background:#4f6fa0; }
+.scroll-area::-webkit-scrollbar-thumb:active { background:#6b8fc0; }
 /* Firefox */
-.scroll-area{scrollbar-width:auto;scrollbar-color:#3b5280 #1a2338;}
+.scroll-area { scrollbar-width:auto; scrollbar-color:#3b5280 #1a2338; }
+
+/* ── HORIZONTAL SCROLLBAR (appears only when content wider than viewport) ── */
+.scroll-area::-webkit-scrollbar-corner { background:#1a2338; }
 
 /* ── LIGHT THEME scrollbar ── */
-[data-theme="light"] .scroll-area::-webkit-scrollbar{background:#e2e8f0;}
-[data-theme="light"] .scroll-area::-webkit-scrollbar-track{background:#e2e8f0;border-left:1px solid rgba(0,0,0,0.08);}
-[data-theme="light"] .scroll-area::-webkit-scrollbar-thumb{background:#94a3b8;border:2px solid #e2e8f0;}
-[data-theme="light"] .scroll-area::-webkit-scrollbar-thumb:hover{background:#64748b;}
-[data-theme="light"] .scroll-area{scrollbar-color:#94a3b8 #e2e8f0;}
+[data-theme="light"] .scroll-area::-webkit-scrollbar       { background:#e2e8f0; }
+[data-theme="light"] .scroll-area::-webkit-scrollbar-track { background:#e2e8f0; border-left:1px solid rgba(0,0,0,0.08); }
+[data-theme="light"] .scroll-area::-webkit-scrollbar-thumb { background:#94a3b8; border:2px solid #e2e8f0; }
+[data-theme="light"] .scroll-area::-webkit-scrollbar-thumb:hover { background:#64748b; }
+[data-theme="light"] .scroll-area { scrollbar-color:#94a3b8 #e2e8f0; }
 
-/* ── DESKTOP LAYOUT — 2-column card grid ── */
+/* ── PAGE-CONTENT: base rule FIRST, then responsive overrides ──
+   IMPORTANT: base must come before @media so media queries win in cascade */
+.page-content{
+  padding:12px;
+  padding-bottom:76px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;        /* prevent flex child from overflowing parent */
+}
+
+/* Desktop: 2-column grid */
 @media(min-width:768px){
   .page-content{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(2,minmax(0,1fr)); /* minmax(0,1fr) prevents grid blowout */
     grid-auto-rows:min-content;
     gap:16px;
     padding:20px;
     padding-bottom:20px;
     max-width:1400px;
     margin:0 auto;
-    box-sizing:border-box;
-    width:100%;
     align-items:start;
   }
-  /* Full-width cards — charts, tables, alerts, large panels */
-  .page-content > .card-full,
+  /* Full-width items */
   .page-content > .alert,
   .page-content > .phase-banner,
   .page-content > .tiles-4,
   .page-content > .chart-card,
-  .page-content > [id*="chart"],
-  .page-content > [id*="table"],
-  .page-content > [id*="canvas"],
-  .page-content > [style*="grid-column"],
-  .page-content > div[style*="width:100"],
-  .page-content > div[style*="margin-bottom"][style*="14px"] + div[style*="margin-bottom"][style*="14px"] {
-    grid-column: 1 / -1;
-  }
-  /* Tiles always full width */
-  .tiles-4{ grid-column: 1 / -1; }
-  /* Regime bar full width */
-  .regime-card{ grid-column: 1 / -1; }
+  .page-content > .card-full { grid-column:1/-1; }
+  .tiles-4  { grid-column:1/-1; }
 }
+
+/* Large desktop: 3-column grid */
 @media(min-width:1280px){
   .page-content{
-    grid-template-columns:1fr 1fr 1fr;
+    grid-template-columns:repeat(3,minmax(0,1fr));
     max-width:1600px;
     padding:24px;
     gap:18px;
   }
-  .tiles-4{ grid-column: 1 / -1; }
+  .tiles-4 { grid-column:1/-1; }
 }
+
+/* Ultra-wide */
 @media(min-width:1600px){
   .page-content{ max-width:1800px; }
 }
 
-/* ── MOBILE layout — single column ── */
+/* Mobile: explicit single column */
 @media(max-width:767px){
   .page-content{
-    display:flex;flex-direction:column;
-    padding:12px;padding-bottom:76px;
+    display:flex !important;
+    flex-direction:column;
+    padding:12px;
+    padding-bottom:76px;
     gap:12px;
-    box-sizing:border-box;width:100%;
   }
 }
-.page{display:none;}.page.active{display:block;}
-/* page-content base — overridden by responsive rules above */
-.page-content{padding:13px;padding-bottom:76px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box;width:100%;}
-/* desktop override already set in responsive block above */
+
+/* ── Cards must not overflow their grid cell ── */
+.page-content > .card,
+.page-content > div {
+  min-width:0;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+/* Tables and option chains: horizontal scroll inside card */
+.options-table-wrap,
+.chain-wrap,
+table {
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  max-width:100%;
+  display:block;
+}
+table::-webkit-scrollbar { height:6px; }
+table::-webkit-scrollbar-thumb { background:#3b5280; border-radius:3px; }
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{height:60px;flex-shrink:0;z-index:300;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0px);}
 @media(min-width:768px){.bottom-nav{display:none;}}
 @media(min-width:768px){.topbar{padding:0 20px;}.market-bar{padding:0 4px;}}
+
+/* ── PAGE VISIBILITY ── */
+.page{display:none;}.page.active{display:block;}
 .bnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 4px;cursor:pointer;color:var(--muted);transition:color .15s;background:none;border:none;font-family:'Outfit',sans-serif;min-height:44px;}
 .bnav-btn.active{color:var(--blue);}
 .bnav-icon{font-size:20px;line-height:1;}
@@ -11617,12 +11652,12 @@ var OWNER_EMAIL = 'suri7588sh1@gmail.com';  /* hardcoded — only email for repo
    These are safe to hardcode in a private GitHub repo.
    Service is locked to OWNER_EMAIL — no one else can receive emails. */
 var EJS = {
-  publicKey:  'YOUR_PUBLIC_KEY',      /* EmailJS Account → API Keys */
-  serviceId:  'YOUR_SERVICE_ID',      /* EmailJS → Email Services → your Gmail service ID */
-  templateId: 'prism_template',       /* EmailJS → Email Templates → template ID */
+  publicKey:  'Qd_kEkb7HUiYi6j_M',      /* EmailJS Account → API Keys */
+  serviceId:  'service_eole8dd',      /* EmailJS → Email Services → your Gmail service ID */
+  templateId: 'template_c9wj7rm',       /* EmailJS → Email Templates → template ID */
 };
 /* ── Auto-detect if credentials are filled in ── */
-var EJS_READY = (EJS.publicKey !== 'YOUR_PUBLIC_KEY' && EJS.serviceId !== 'YOUR_SERVICE_ID');
+var EJS_READY = true;  /* credentials hardcoded */
 
 /* Load EmailJS SDK once */
 var _ejsLoaded = false;
@@ -11662,7 +11697,7 @@ async function sendEmail(subject, bodyText, htmlBody){
   /* Fallback: mailto opens Gmail compose in NEW TAB — zero config needed */
   try{
     var mailtoUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
-      + '&to=' + encodeURIComponent(OWNER_EMAIL)
+      + '&to=suri7588sh1%40gmail.com'
       + '&su=' + encodeURIComponent(subject)
       + '&body=' + encodeURIComponent(bodyText);
     window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
@@ -11690,7 +11725,7 @@ var EJS_STORE_KEY = 'prism-ejs-config';
 (function initEJSFromStorage(){
   try{
     var stored = JSON.parse(localStorage.getItem(EJS_STORE_KEY)||'{}');
-    if(stored.publicKey && stored.publicKey !== 'YOUR_PUBLIC_KEY'){
+    if(stored.publicKey && stored.publicKey !== 'Qd_kEkb7HUiYi6j_M'){
       EJS.publicKey  = stored.publicKey;
       EJS.serviceId  = stored.serviceId  || EJS.serviceId;
       EJS.templateId = stored.templateId || EJS.templateId;
@@ -11705,12 +11740,12 @@ function loadEJSInputs(){
   try{ stored = JSON.parse(localStorage.getItem(EJS_STORE_KEY)||'{}'); }catch(_){}
   var pub  = stored.publicKey  || (EJS_READY ? EJS.publicKey  : '');
   var svc  = stored.serviceId  || (EJS_READY ? EJS.serviceId  : '');
-  var tmpl = stored.templateId || EJS.templateId || 'prism_template';
+  var tmpl = stored.templateId || EJS.templateId || 'template_c9wj7rm';
   var inp = function(id,v){ var e=document.getElementById(id); if(e) e.value=v; };
   inp('ejs-pubkey', pub); inp('ejs-service', svc); inp('ejs-template', tmpl);
   /* Update badge */
   var badge = document.getElementById('ejs-status-badge');
-  var ready = pub && pub !== 'YOUR_PUBLIC_KEY' && svc && svc !== 'YOUR_SERVICE_ID';
+  var ready = pub && pub !== 'Qd_kEkb7HUiYi6j_M' && svc && svc !== 'service_eole8dd';
   if(badge){
     badge.textContent = ready ? '✅ Configured' : '⚠ Not Set';
     badge.style.background = ready ? 'var(--gbg)' : 'var(--rbg)';
@@ -11725,7 +11760,7 @@ function loadEJSInputs(){
 function saveEJSConfig(){
   var pub  = (document.getElementById('ejs-pubkey')||{}).value.trim()||'';
   var svc  = (document.getElementById('ejs-service')||{}).value.trim()||'';
-  var tmpl = (document.getElementById('ejs-template')||{}).value.trim()||'prism_template';
+  var tmpl = (document.getElementById('ejs-template')||{}).value.trim()||'template_c9wj7rm';
   var fb   = document.getElementById('ejs-feedback');
 
   if(!pub || !svc){
@@ -11789,9 +11824,9 @@ async function testEJSEmail(){
 function bakeEJSIntoApp(){
   var pub  = (document.getElementById('ejs-pubkey')||{}).value||'';
   var svc  = (document.getElementById('ejs-service')||{}).value||'';
-  var tmpl = (document.getElementById('ejs-template')||{}).value||'prism_template';
+  var tmpl = (document.getElementById('ejs-template')||{}).value||'template_c9wj7rm';
   var fb   = document.getElementById('ejs-feedback');
-  if(!pub || pub==='YOUR_PUBLIC_KEY' || !svc || svc==='YOUR_SERVICE_ID'){
+  if(!pub || pub==='Qd_kEkb7HUiYi6j_M' || !svc || svc==='service_eole8dd'){
     if(fb){fb.textContent='❌ Fill in your credentials first, then bake.';fb.style.color='var(--red)';} return;
   }
   /* Fetch the current page source and replace placeholders */
@@ -11799,9 +11834,9 @@ function bakeEJSIntoApp(){
     .then(function(r){ return r.text(); })
     .then(function(html){
       var baked = html
-        .replace("'YOUR_PUBLIC_KEY'", "'"+pub+"'")
-        .replace("'YOUR_SERVICE_ID'", "'"+svc+"'")
-        .replace("'prism_template'",  "'"+tmpl+"'");
+        .replace("'Qd_kEkb7HUiYi6j_M'", "'"+pub+"'")
+        .replace("'service_eole8dd'", "'"+svc+"'")
+        .replace("'template_c9wj7rm'",  "'"+tmpl+"'");
       var blob = new Blob([baked], {type:'text/html'});
       var url  = URL.createObjectURL(blob);
       var a    = document.createElement('a');
@@ -11816,8 +11851,8 @@ function bakeEJSIntoApp(){
       /* Fallback: direct string injection into current document source */
       var src = document.documentElement.outerHTML;
       var baked = src
-        .replace("'YOUR_PUBLIC_KEY'", "'"+pub+"'")
-        .replace("'YOUR_SERVICE_ID'", "'"+svc+"'");
+        .replace("'Qd_kEkb7HUiYi6j_M'", "'"+pub+"'")
+        .replace("'service_eole8dd'", "'"+svc+"'");
       var blob = new Blob([baked], {type:'text/html'});
       var url  = URL.createObjectURL(blob);
       var a    = document.createElement('a'); a.href=url; a.download='index.html'; a.click();
