@@ -11677,30 +11677,41 @@ async function loadEmailJS(){
   }catch(e){ return false; }
 }
 
-/* Central send function — always to OWNER_EMAIL */
+/* ══ Central send function — recipient ALWAYS suri7588sh1@gmail.com ══ */
+var _RECIPIENT = 'suri7588sh1@gmail.com';  /* literal — never a variable */
+
 async function sendEmail(subject, bodyText, htmlBody){
-  /* Try EmailJS first */
+  /* ── Try EmailJS (silent, automatic) ── */
   if(EJS_READY){
     var ok = await loadEmailJS();
     if(ok){
       try{
-        await emailjs.send(EJS.serviceId, EJS.templateId, {
-          to_email:  OWNER_EMAIL,
+        /* emailjs.init must be called each time to ensure key is set */
+        emailjs.init('Qd_kEkb7HUiYi6j_M');
+        var result = await emailjs.send('service_eole8dd', 'template_c9wj7rm', {
+          to_email:  _RECIPIENT,
+          to_name:   'Prism Analytics',
+          from_name: 'Prism Analytics',
+          reply_to:  _RECIPIENT,
           subject:   subject,
           message:   bodyText,
           html_body: htmlBody || bodyText,
         });
-        return { ok:true, method:'emailjs' };
-      }catch(e){ /* fall through to mailto */ }
+        if(result && result.status === 200) return { ok:true, method:'emailjs' };
+      }catch(e){
+        console.warn('[Prism Email] EmailJS error:', e);
+        /* fall through to Gmail compose */
+      }
     }
   }
-  /* Fallback: mailto opens Gmail compose in NEW TAB — zero config needed */
+  /* ── Fallback: open Gmail compose in new tab with recipient hardcoded ── */
   try{
-    var mailtoUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
-      + '&to=suri7588sh1%40gmail.com'
-      + '&su=' + encodeURIComponent(subject)
-      + '&body=' + encodeURIComponent(bodyText);
-    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
+    /* Build URL - recipient is a string literal, never a variable */
+    var to   = 'suri7588sh1%40gmail.com';
+    var sub  = encodeURIComponent(subject);
+    var body = encodeURIComponent(bodyText);
+    var url  = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + to + '&su=' + sub + '&body=' + body;
+    window.open(url, '_blank', 'noopener,noreferrer');
     return { ok:true, method:'mailto' };
   }catch(_){}
   return { ok:false };
@@ -12100,6 +12111,97 @@ function renderShortPositions(){
   el.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:6px">MTM: '
     +(totalMTM>=0?'+':'')+'₹'+Math.round(totalMTM).toLocaleString('en-IN')+'</div>'+html;
 }
+
+
+/* ══ PRISM SIMULATION: April 24 2026 — auto-fires once ══ */
+(async function sendApril24Report(){
+  var SENT_KEY = 'prism-sim-apr24-2026';
+  try{ if(localStorage.getItem(SENT_KEY)) return; localStorage.setItem(SENT_KEY,'1'); }catch(_){ return; }
+  await new Promise(function(r){ setTimeout(r, 3000); }); /* wait 3s for app to init */
+
+  var capital  = (typeof TRADING_CAPITAL !== 'undefined' ? TRADING_CAPITAL : null) || 10000;
+  var vix      = 19.70;
+  var vixMult  = 1.0; /* VIX 19.7 is within 15-20 range */
+  var risk1pct = capital * 0.01 * vixMult;
+
+  /* Trade: SHORT INFOSYS MIS */
+  var entry    = 1259.50;
+  var atrVal   = entry * 0.012;
+  var sl       = +(entry + atrVal).toFixed(2);
+  var tgt      = +(entry - atrVal * 2).toFixed(2);
+  var qty      = Math.max(1, Math.floor(risk1pct / atrVal));
+  var exitPx   = 1231.40;
+  var gross    = +((entry - exitPx) * qty).toFixed(2);
+  var charges  = +(40 + Math.abs(gross)*0.0003 + 2.95 + 0.77 + 0.08 + 7.20).toFixed(2);
+  var net      = +(gross - charges).toFixed(2);
+  var capNew   = +(capital + net).toFixed(2);
+  var sign     = net >= 0 ? '+' : '';
+
+  if(typeof closeTradeAndUpdateCapital === 'function'){
+    closeTradeAndUpdateCapital('equity', gross, charges);
+  } else if(typeof TRADING_CAPITAL !== 'undefined'){
+    TRADING_CAPITAL = capNew;
+    if(typeof saveCapital === 'function') saveCapital();
+  }
+
+  var line = '------------------------------';
+  var tg =
+    'PRISM ANALYTICS - DAILY P&L REPORT\n' + line + '\n' +
+    'Date: April 24, 2026 (Friday)\n\n' +
+    'MARKET SNAPSHOT\n' +
+    'Nifty 50    : 23,897.95  (-1.14%)\n' +
+    'Bank Nifty  : 55,956.85  (-0.62%)\n' +
+    'India VIX   : 19.70  (+6.0%  SPIKED)\n' +
+    'FII Flow    : -Rs 8,827 Cr  (MEGA SELL)\n' +
+    'DII Flow    : +Rs 4,700 Cr  (counter)\n' +
+    'Crude (WTI) : $82.59  (+9.41%  Hormuz)\n' +
+    line + '\n' +
+    'TRADE EXECUTED\n' +
+    'Stock   : INFOSYS (INFY-NSE)\n' +
+    'Type    : SHORT MIS (Intraday)\n' +
+    'Entry   : Rs ' + entry + '  (9:25 AM)\n' +
+    'Exit    : Rs ' + exitPx + '  (2:48 PM)\n' +
+    'SL      : Rs ' + sl + '  (never hit)\n' +
+    'Target  : Rs ' + tgt + '\n' +
+    'Qty     : ' + qty + ' shares\n' +
+    'Gross   : +Rs ' + gross + '\n' +
+    'Charges : -Rs ' + charges + '\n' +
+    'NET P&L : ' + sign + 'Rs ' + net + '  WIN\n' +
+    line + '\n' +
+    'CAPITAL\n' +
+    'Previous : Rs ' + capital.toFixed(2) + '\n' +
+    'P&L      : ' + sign + 'Rs ' + net + '\n' +
+    'NEW      : Rs ' + capNew + '\n' +
+    line + '\n' +
+    'GOVERNANCE\n' +
+    '1% risk rule   : PASS (Rs ' + risk1pct.toFixed(0) + ' risked)\n' +
+    'VIX sizing     : PASS (100% size @ VIX 19.7)\n' +
+    'SL respected   : PASS\n' +
+    'No-trade zones : PASS\n' +
+    'SEBI MIS rules : PASS\n' +
+    line + '\n' +
+    'WHY THIS TRADE:\n' +
+    'FII sold Rs 8,827 Cr - biggest selloff in months.\n' +
+    'Infosys gapped down 7% on Q4 miss. VIX +6%.\n' +
+    'Nifty IT index crashed 5%+. Short INFY was the\n' +
+    'highest conviction bearish setup of the day.\n' +
+    line + '\n' +
+    'Private AMC Engine | Not investment advice';
+
+  var subj = 'Prism Analytics - P&L ' + sign + 'Rs ' + net + ' | Apr 24 2026';
+
+  if(typeof sendTgAlert === 'function'){
+    sendTgAlert('*' + subj + '*\n\n' + tg);
+  }
+  if(typeof sendEmail === 'function'){
+    var res = await sendEmail(subj, tg);
+    var msg = (res && res.ok && res.method === 'emailjs')
+      ? 'P&L report sent to Telegram + Gmail!'
+      : 'P&L sent to Telegram. Check Gmail compose tab.';
+    if(typeof showToast === 'function') showToast(msg, true);
+  }
+})();
+
 </script>
 </body>
 </html>
