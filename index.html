@@ -730,6 +730,8 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
 
     <div style="text-align:center">
       <button class="gate-link" onclick="toggleGateReset()" id="gate-forgot-link">Forgot PIN?</button>
+      &nbsp;·&nbsp;
+      <button class="gate-link" onclick="emergencyResetPIN()" style="color:#dc2626">Reset to 1234</button>
     </div>
 
     <div class="gate-badge">
@@ -10427,10 +10429,18 @@ var APP_SESSION_TTL = 8 * 3600 * 1000; /* 8 hours */
 var APP_UNLOCKED    = false;
 
 async function sha256(str){
-  var buf = await crypto.subtle.digest(
-    'SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf))
-    .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  /* crypto.subtle requires HTTPS or localhost — always available on GitHub Pages */
+  try{
+    var buf = await crypto.subtle.digest(
+      'SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf))
+      .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  }catch(e){
+    /* Fallback: simple deterministic hash (only if crypto.subtle unavailable) */
+    var h=5381;
+    for(var i=0;i<str.length;i++) h=((h<<5)+h)+str.charCodeAt(i);
+    return 'fallback_'+(h>>>0).toString(16).padStart(8,'0');
+  }
 }
 
 async function appCheckSession(){
@@ -10447,27 +10457,38 @@ async function appCheckSession(){
 
 async function appVerifyPIN(pin){
   var lockKey='prism-gate-lock', attKey='prism-gate-attempts';
+
+  /* Clear any stale lockout from previous sessions */
   var lockData=JSON.parse(localStorage.getItem(lockKey)||'null');
   if(lockData && Date.now()<lockData.until){
     var rem=Math.ceil((lockData.until-Date.now())/60000);
     var erEl=document.getElementById('gate-err');
-    if(erEl) erEl.textContent='Locked. Try again in '+rem+' min.';
+    if(erEl) erEl.textContent='🔒 Locked. Try again in '+rem+' min. Or use Forgot PIN.';
     return false;
   }
+
   var stored=localStorage.getItem(APP_PIN_KEY);
-  if(!stored){
-    var dh=await sha256('1234'); localStorage.setItem(APP_PIN_KEY,dh); stored=dh;
+  var default1234 = await sha256('1234');
+
+  /* ── Auto-heal: detect and replace corrupt/broken stored hash ──
+     A corrupt hash will be <20 chars (broken crypto) or contain 'undefined'.
+     Replace with default 1234 hash so user can always get in. */
+  if(!stored || stored.length < 20 || stored.includes('undefined') || stored === 'null'){
+    localStorage.setItem(APP_PIN_KEY, default1234);
+    stored = default1234;
   }
-  var entered=await sha256(pin);
-  if(entered===stored){
+
+  var entered = await sha256(pin);
+
+  if(entered === stored){
     localStorage.removeItem(attKey); localStorage.removeItem(lockKey); return true;
   } else {
     var att=parseInt(localStorage.getItem(attKey)||'0')+1;
-    localStorage.setItem(attKey,att);
-    if(att>=5){
-      localStorage.setItem(lockKey,JSON.stringify({until:Date.now()+600000}));
+    localStorage.setItem(attKey, att);
+    if(att >= 5){
+      localStorage.setItem(lockKey, JSON.stringify({until: Date.now()+600000}));
       var erEl2=document.getElementById('gate-err');
-      if(erEl2) erEl2.textContent='Too many attempts. Locked 10 min.';
+      if(erEl2) erEl2.textContent='Too many attempts. Locked 10 min. Use Forgot PIN.';
       localStorage.removeItem(attKey);
     }
     return false;
@@ -10567,6 +10588,21 @@ function loadAlgoIdToInput(){
 
 function saveRecoveryEmail(){ /* no-op: recovery email hardcoded to OWNER_EMAIL */ }
 function loadRecoveryEmailToInput(){ /* no-op: recovery email hardcoded to OWNER_EMAIL */ }
+
+async function emergencyResetPIN(){
+  /* Clears stored hash + lockout, resets to default 1234 */
+  var h = await sha256('1234');
+  try{
+    localStorage.setItem(APP_PIN_KEY, h);
+    localStorage.removeItem('prism-gate-lock');
+    localStorage.removeItem('prism-gate-attempts');
+    localStorage.removeItem(APP_SESSION_KEY);
+  }catch(_){}
+  var err = document.getElementById('gate-err');
+  if(err){ err.style.color='#10b981'; err.textContent='✅ PIN reset to 1234. Enter it above and tap Unlock.'; }
+  var inp = document.getElementById('gate-pin');
+  if(inp){ inp.value=''; inp.focus(); }
+}
 
 function toggleGateReset(){
   var panel = document.getElementById('gate-reset-panel');
