@@ -10,7 +10,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="version" content="20260414165109">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=0.5,maximum-scale=5.0,user-scalable=yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="themeColorMeta" content="#0a0e1a">
@@ -82,6 +82,7 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .app-shell{flex:1;display:flex;overflow:hidden;}
 .sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:none;flex-direction:column;overflow-y:auto;}
 @media(min-width:768px){.sidebar{display:flex;}}
+
 .nav-section{padding:12px 14px 3px;font-size:9px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);}
 .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:12.5px;color:var(--muted);border-left:3px solid transparent;transition:all .15s;user-select:none;}
 .nav-item:hover{background:var(--bbg);color:var(--text);}
@@ -98,11 +99,66 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 
 /* ── SCROLL + PAGES ── */
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
-.scroll-area::-webkit-scrollbar{width:4px;}
-.scroll-area::-webkit-scrollbar-thumb{background:var(--dim);border-radius:4px;}
+
+/* ── VISIBLE SCROLLBARS — desktop & mobile ── */
+.scroll-area::-webkit-scrollbar{width:8px;background:var(--bg2);}
+.scroll-area::-webkit-scrollbar-track{background:var(--bg2);border-radius:4px;}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;border:2px solid var(--bg2);}
+.scroll-area::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+/* Firefox */
+.scroll-area{scrollbar-width:thin;scrollbar-color:var(--border2) var(--bg2);}
+
+/* ── DESKTOP RESPONSIVE LAYOUT ── */
+@media(min-width:768px){
+  /* Content max-width: never stretch past 1200px */
+  .page-content{max-width:1200px;margin:0 auto;width:100%;}
+  /* Sidebar wider on big screens */
+  .sidebar{width:240px;}
+  /* Cards side by side on desktop */
+  .page .card + .card{margin-top:0;}
+  /* Desktop: bottom nav hidden, sidebar shows */
+  .bottom-nav{display:none;}
+  .sidebar{display:flex;}
+}
+@media(min-width:1024px){
+  /* Two-column card grid for wide screens */
+  .page-content{padding:24px;padding-bottom:24px;gap:18px;}
+  /* Tiles display 4 across */
+  .tiles-4{grid-template-columns:repeat(4,1fr);}
+}
+@media(min-width:1400px){
+  .sidebar{width:260px;}
+  .page-content{max-width:1400px;}
+}
+
+/* ── MOBILE: prevent horizontal overflow ── */
+@media(max-width:767px){
+  .page-content{padding:12px;padding-bottom:72px;gap:12px;}
+  /* Allow horizontal scroll inside tables/chains only */
+  .options-table-wrap,.chain-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .options-table-wrap::-webkit-scrollbar{height:4px;}
+  .options-table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+  /* Stack grid columns on very small screens */
+  .tiles-4{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+}
+@media(max-width:380px){
+  .tiles-4{grid-template-columns:repeat(2,1fr);}
+  body{font-size:13px;}
+}
+
+/* ── SIDEBAR SCROLLBAR ── */
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ── TOPBAR: scale gracefully on desktop ── */
+@media(min-width:768px){
+  .topbar{padding:0 24px;}
+  .market-bar{padding:0 24px;}
+}
 .page{display:none;}.page.active{display:block;}
-.page-content{padding:13px;padding-bottom:76px;display:flex;flex-direction:column;gap:13px;}
-@media(min-width:768px){.page-content{padding:18px;padding-bottom:18px;}}
+.page-content{padding:13px;padding-bottom:76px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box;width:100%;}
+@media(min-width:768px){.page-content{padding:20px;padding-bottom:20px;max-width:1200px;margin:0 auto;}}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{height:60px;flex-shrink:0;z-index:300;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -11541,8 +11597,8 @@ var OWNER_EMAIL = 'suri7588sh1@gmail.com';  /* hardcoded — only email for repo
    These are safe to hardcode in a private GitHub repo.
    Service is locked to OWNER_EMAIL — no one else can receive emails. */
 var EJS = {
-  publicKey:  'Qd_kEkb7HUiYi6j_M',      /* EmailJS Account → API Keys */
-  serviceId:  'service_eole8dd',      /* EmailJS → Email Services → your Gmail service ID */
+  publicKey:  'YOUR_PUBLIC_KEY',      /* EmailJS Account → API Keys */
+  serviceId:  'YOUR_SERVICE_ID',      /* EmailJS → Email Services → your Gmail service ID */
   templateId: 'prism_template',       /* EmailJS → Email Templates → template ID */
 };
 /* ── Auto-detect if credentials are filled in ── */
@@ -11583,11 +11639,13 @@ async function sendEmail(subject, bodyText, htmlBody){
       }catch(e){ /* fall through to mailto */ }
     }
   }
-  /* Fallback: mailto opens Gmail compose — zero config needed */
+  /* Fallback: mailto opens Gmail compose in NEW TAB — zero config needed */
   try{
-    var a=document.createElement('a');
-    a.href='mailto:'+OWNER_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyText);
-    a.click();
+    var mailtoUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
+      + '&to=' + encodeURIComponent(OWNER_EMAIL)
+      + '&su=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(bodyText);
+    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
     return { ok:true, method:'mailto' };
   }catch(_){}
   return { ok:false };
@@ -11607,6 +11665,19 @@ function saveEmailCfg(){
 
 /* ══ EmailJS UI functions (Telegram & Email settings page) ══ */
 var EJS_STORE_KEY = 'prism-ejs-config';
+
+/* Run on every page load to restore saved credentials */
+(function initEJSFromStorage(){
+  try{
+    var stored = JSON.parse(localStorage.getItem(EJS_STORE_KEY)||'{}');
+    if(stored.publicKey && stored.publicKey !== 'YOUR_PUBLIC_KEY'){
+      EJS.publicKey  = stored.publicKey;
+      EJS.serviceId  = stored.serviceId  || EJS.serviceId;
+      EJS.templateId = stored.templateId || EJS.templateId;
+      EJS_READY = true;
+    }
+  }catch(_){}
+})();
 
 function loadEJSInputs(){
   /* Load from localStorage or from hardcoded EJS if already baked */
@@ -11632,20 +11703,51 @@ function loadEJSInputs(){
 }
 
 function saveEJSConfig(){
-  var pub  = (document.getElementById('ejs-pubkey')||{}).value||'';
-  var svc  = (document.getElementById('ejs-service')||{}).value||'';
-  var tmpl = (document.getElementById('ejs-template')||{}).value||'prism_template';
+  var pub  = (document.getElementById('ejs-pubkey')||{}).value.trim()||'';
+  var svc  = (document.getElementById('ejs-service')||{}).value.trim()||'';
+  var tmpl = (document.getElementById('ejs-template')||{}).value.trim()||'prism_template';
   var fb   = document.getElementById('ejs-feedback');
-  if(!pub || !svc){ if(fb){fb.textContent='❌ Enter both Public Key and Service ID.';fb.style.color='var(--red)';} return; }
+
+  if(!pub || !svc){
+    if(fb){ fb.textContent='❌ Enter both Public Key and Service ID.'; fb.style.color='var(--red)'; fb.style.background='var(--rbg)'; fb.style.border='1px solid var(--rborder)'; fb.style.padding='10px'; fb.style.borderRadius='8px'; }
+    return;
+  }
+
   /* Save to localStorage */
-  try{ localStorage.setItem(EJS_STORE_KEY, JSON.stringify({publicKey:pub,serviceId:svc,templateId:tmpl})); }catch(_){}
+  var cfg = {publicKey:pub, serviceId:svc, templateId:tmpl};
+  try{ localStorage.setItem(EJS_STORE_KEY, JSON.stringify(cfg)); }catch(e){
+    if(fb){ fb.textContent='❌ localStorage blocked. Enable cookies/storage for this site.'; fb.style.color='var(--red)'; }
+    return;
+  }
+
+  /* Verify it actually saved */
+  var verify = '';
+  try{ verify = JSON.parse(localStorage.getItem(EJS_STORE_KEY)||'{}').publicKey||''; }catch(_){}
+  if(verify !== pub){
+    if(fb){ fb.textContent='❌ Save failed — storage may be full or blocked.'; fb.style.color='var(--red)'; }
+    return;
+  }
+
   /* Update live EJS object */
   EJS.publicKey=pub; EJS.serviceId=svc; EJS.templateId=tmpl; EJS_READY=true; _ejsLoaded=false;
-  emailCfg = Object.assign(emailCfg,{serviceId:svc,templateId:tmpl,publicKey:pub});
+  emailCfg = Object.assign(emailCfg, {serviceId:svc, templateId:tmpl, publicKey:pub});
   saveEmailCfg();
-  if(fb){fb.textContent='✅ EmailJS config saved! Test it below.';fb.style.color='var(--green)';}
+
+  /* Show persistent success banner */
+  if(fb){
+    fb.innerHTML = '✅ <strong>EmailJS keys saved successfully!</strong><br>'
+      + '<span style="font-weight:400;font-size:11px">Public Key: …'+pub.slice(-6)
+      + ' &nbsp;|&nbsp; Service: '+svc
+      + ' &nbsp;|&nbsp; Template: '+tmpl+'</span>';
+    fb.style.color='var(--green)';
+    fb.style.background='var(--gbg)';
+    fb.style.border='1px solid var(--gborder)';
+    fb.style.padding='10px';
+    fb.style.borderRadius='8px';
+    fb.style.lineHeight='1.6';
+  }
   loadEJSInputs(); /* refresh badge */
-  showToast('✅ EmailJS configured — reports will auto-send to your Gmail.',true);
+  showToast('✅ EmailJS keys saved! Tap 🧪 Test to verify.',true);
 }
 
 async function testEJSEmail(){
