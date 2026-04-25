@@ -4234,8 +4234,16 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
   <button class="bnav-btn" id="bn-prices" onclick="nav('prices',this,'bn')"><span class="bnav-icon">&#x1F4C8;</span><span class="bnav-label">Prices</span></button>
   <button class="bnav-btn" id="bn-charts" onclick="nav('charts',this,'bn')"><span class="bnav-icon">&#x1F4CA;</span><span class="bnav-label">Charts</span></button>
   <button class="bnav-btn" id="bn-trade-engine" onclick="nav('trade-engine',this,'bn')"><span class="bnav-icon">&#x26A1;</span><span class="bnav-label">Trade</span></button>
-  <button class="bnav-btn" id="bn-settings" onclick="nav('settings',this,'bn')"><span class="bnav-icon">&#x2630;</span><span class="bnav-label">More</span></button>
+  <button class="bnav-btn" id="bn-settings" onclick="if(window.innerWidth<768){openMobileMenu();}else{nav('settings',this,'bn');}"><span class="bnav-icon">&#x2630;</span><span class="bnav-label">Menu</span></button>
 </nav>
+
+<!-- MOBILE FULL-MENU DRAWER -->
+<div id="mobile-drawer" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6)" onclick="closeMobileMenu()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:60px;left:0;right:0;max-height:75vh;overflow-y:auto;background:var(--bg2);border-top:2px solid var(--border);border-radius:18px 18px 0 0;padding:16px 0 8px">
+    <div style="text-align:center;padding:0 16px 12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">All Pages</div>
+    <div id="mobile-menu-list"></div>
+  </div>
+</div>
 <script>
 function updateGateDots(){
   var len = (document.getElementById('gate-pin').value||'').length;
@@ -12515,115 +12523,132 @@ function renderShortPositions(){
 /* April 24 simulation removed — use Send P&L Now button in Telegram page */
 
 
-/* ═══════════════════════════════════════════════════════
-   BULLETPROOF NAV — runs last, overrides everything
-   Uses direct DOM style manipulation, no CSS dependency
-═══════════════════════════════════════════════════════ */
+
+/* ══ FINAL NAV FIX — no recursion, works on all browsers ══ */
 (function(){
-  var ALL_P = typeof ALL_PAGES !== 'undefined' ? ALL_PAGES : [
-    'dashboard','prices','mcx','governance','signals','trade-engine','orders',
-    'portfolio','ai-engine','screener','backtest','journal','risk','telegram',
-    'vault','settings','learning','options','smartmoney','news','fiidii',
-    'sectorrsi','global','ml','histbt','walkfwd','rl','modeldash','charts',
-    'angelone','forex','short'
-  ];
+  var PAGES = ['dashboard','prices','mcx','governance','signals','trade-engine',
+    'orders','portfolio','ai-engine','screener','backtest','journal','risk',
+    'telegram','vault','settings','learning','options','smartmoney','news',
+    'fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash',
+    'charts','angelone','forex','short'];
 
-  /* Core show-page function */
-  function goPage(id){
-    if(!id) return;
-    /* Hide all */
-    ALL_P.forEach(function(p){
-      var el=document.getElementById('page-'+p);
-      if(el) el.style.cssText='display:none';
-    });
-    /* Show target */
-    var t=document.getElementById('page-'+id);
-    if(t) t.style.cssText='display:block';
-    /* Scroll to top */
-    var sa=document.getElementById('scroll-area');
-    if(sa) sa.scrollTop=0;
-    /* Highlight nav */
-    document.querySelectorAll('.nav-item,.bnav-btn').forEach(function(n){
-      n.classList.remove('active');
-    });
-    var match_attr="'"+id+"'";
-    document.querySelectorAll('.nav-item[onclick*="'+id+'"]').forEach(function(n){
-      n.classList.add('active');
-    });
-    var bn=document.getElementById('bn-'+id);
-    if(bn) bn.classList.add('active');
-    /* Call page init if nav() is available */
-    if(typeof nav==='function') try{ nav(id,null,'_override'); }catch(_){}
-    return false;
-  }
-  window._goPage = goPage;
+  /* Store original nav for page-init hooks only */
+  var _orig = (typeof nav === 'function') ? nav : null;
+  var _busy = false; /* prevent re-entrancy */
 
-  /* Wire ALL nav items and buttons with both click + touch */
-  function wireAll(){
-    /* Sidebar nav items */
-    document.querySelectorAll('.nav-item').forEach(function(el){
-      var oc=el.getAttribute('onclick')||'';
-      var m=oc.match(/nav\('([^']+)'/);
-      if(!m) return;
-      var pageId=m[1];
-      /* Replace onclick entirely */
-      el.setAttribute('onclick','_goPage("'+pageId+'");return false;');
-      /* Backup click listener */
-      el.addEventListener('click',function(e){
-        e.stopPropagation();
-        goPage(pageId);
+  function goTo(id){
+    if(_busy || !id) return;
+    _busy = true;
+    try{
+      /* 1. Hide all pages */
+      PAGES.forEach(function(p){
+        var el = document.getElementById('page-'+p);
+        if(el){ el.style.display='none'; el.classList.remove('active'); }
       });
-    });
-
-    /* Bottom nav buttons */
-    document.querySelectorAll('.bnav-btn').forEach(function(el){
-      var oc=el.getAttribute('onclick')||'';
-      var m=oc.match(/nav\('([^']+)'/);
-      if(!m) return;
-      var pageId=m[1];
-      el.setAttribute('onclick','_goPage("'+pageId+'");return false;');
-      el.addEventListener('click',function(e){
-        e.stopPropagation();
-        goPage(pageId);
+      /* 2. Show target page */
+      var target = document.getElementById('page-'+id);
+      if(target){ target.style.display='block'; target.classList.add('active'); }
+      /* 3. Scroll to top */
+      var sa = document.getElementById('scroll-area');
+      if(sa) sa.scrollTop = 0;
+      /* 4. Highlight sidebar nav */
+      document.querySelectorAll('.nav-item').forEach(function(n){
+        n.classList.remove('active');
+        var oc = n.getAttribute('onclick')||'';
+        if(oc.indexOf("'"+id+"'") > -1 || oc.indexOf('"'+id+'"') > -1)
+          n.classList.add('active');
       });
-    });
-
-    /* Show dashboard by default if nothing else is shown */
-    var anyVisible=ALL_P.some(function(p){
-      var el=document.getElementById('page-'+p);
-      return el && el.style.display==='block';
-    });
-    if(!anyVisible) goPage('dashboard');
-  }
-
-  /* Wire immediately */
-  wireAll();
-
-  /* Also wire after login (case: gate was covering DOM) */
-  var _origNav = typeof nav==='function' ? nav : null;
-  window.nav = function(id,el,src){
-    goPage(id);
-    if(_origNav && src !== '_override'){
-      try{ _origNav(id,el,src); }catch(_){}
+      /* 5. Highlight bottom nav */
+      document.querySelectorAll('.bnav-btn').forEach(function(b){
+        b.classList.remove('active');
+      });
+      var bn = document.getElementById('bn-'+id);
+      if(bn) bn.classList.add('active');
+      /* 6. Call original nav for page-init hooks (not window.nav — no recursion) */
+      if(_orig) try{ _orig(id, null, '_nav'); }catch(_){}
+    }finally{
+      _busy = false;
     }
-  };
+  }
 
-  /* Re-wire after any DOM changes (MutationObserver) */
-  if(typeof MutationObserver !== 'undefined'){
-    var obs=new MutationObserver(function(muts){
-      for(var i=0;i<muts.length;i++){
-        if(muts[i].type==='attributes' && muts[i].attributeName==='style'){
-          var t=muts[i].target;
-          if(t && t.id==='app-root' && t.style.display==='block'){
-            setTimeout(wireAll, 100);
-            break;
-          }
+  /* Override window.nav so ALL existing onclick handlers use goTo */
+  window.nav = function(id, el, src){
+    if(src !== '_nav') goTo(id);
+  };
+  window._goTo = goTo;
+
+  /* Mobile full-menu drawer — populated from sidebar nav items */
+  function buildMobileMenu(){
+    var list = document.getElementById('mobile-menu-list');
+    if(!list) return;
+    var items = document.querySelectorAll('.nav-item[data-page], .nav-item[onclick]');
+    var html = '';
+    var lastSection = '';
+    document.querySelectorAll('.nav-section, .nav-item, .nav-divider').forEach(function(el){
+      if(el.classList.contains('nav-section')){
+        html += '<div style="padding:10px 20px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700">'+el.textContent+'</div>';
+      } else if(el.classList.contains('nav-divider')){
+        html += '<div style="height:1px;background:var(--border);margin:6px 16px"></div>';
+      } else if(el.classList.contains('nav-item')){
+        var pg = el.getAttribute('data-page') || (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"].*/,'$1');
+        if(pg && pg.length < 30){
+          var icon = el.querySelector('.nav-icon') ? el.querySelector('.nav-icon').textContent : '▸';
+          var label = el.textContent.trim();
+          html += '<div onclick="closeMobileMenu();goTo(\''+pg+'\')" style="display:flex;align-items:center;gap:12px;padding:13px 20px;font-size:14px;cursor:pointer;color:var(--text);-webkit-tap-highlight-color:transparent;touch-action:manipulation" onmouseenter="this.style.background=\'var(--bbg)\'" onmouseleave="this.style.background=\'\'">'+label+'</div>';
         }
       }
     });
-    var ar=document.getElementById('app-root');
-    if(ar) obs.observe(ar,{attributes:true});
+    list.innerHTML = html;
   }
+
+  function openMobileMenu(){
+    buildMobileMenu();
+    var d = document.getElementById('mobile-drawer');
+    if(d) d.style.display='block';
+  }
+  function closeMobileMenu(){
+    var d = document.getElementById('mobile-drawer');
+    if(d) d.style.display='none';
+  }
+  window.openMobileMenu = openMobileMenu;
+  window.closeMobileMenu = closeMobileMenu;
+
+  /* Wire click listeners directly to every nav element */
+  function wire(){
+    document.querySelectorAll('.nav-item').forEach(function(el){
+      el.onclick = null; /* remove old handler */
+      var oc = el.getAttribute('data-page') ||
+               (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"].*/,'$1');
+      if(oc && oc.length < 30){
+        el.setAttribute('data-page', oc);
+        el.onclick = function(){ goTo(oc); return false; };
+      }
+    });
+    document.querySelectorAll('.bnav-btn').forEach(function(el){
+      var oc = el.getAttribute('data-page') ||
+               (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"].*/,'$1');
+      if(oc && oc.length < 30){
+        el.setAttribute('data-page', oc);
+        el.onclick = function(){ goTo(oc); return false; };
+      }
+    });
+  }
+
+  /* Wire now and again after login */
+  wire();
+  var _watchLogin = setInterval(function(){
+    var ar = document.getElementById('app-root');
+    if(ar && ar.style.display === 'block'){
+      wire();
+      /* Show dashboard if no page is visible */
+      var anyOn = PAGES.some(function(p){
+        var el=document.getElementById('page-'+p);
+        return el && el.style.display==='block';
+      });
+      if(!anyOn) goTo('dashboard');
+      clearInterval(_watchLogin);
+    }
+  }, 200);
 })();
 
 </script>
