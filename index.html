@@ -4766,67 +4766,64 @@ setInterval(()=>{
 
 /* ── NAVIGATION ── */
 function nav(id, el, src){
-  try{
-    var pages = typeof ALL_PAGES !== 'undefined' ? ALL_PAGES : [];
+  /* ── Single source of truth for page navigation ── */
+  if(!id) return;
+  var pageList = typeof ALL_PAGES!=='undefined' ? ALL_PAGES : [
+    'dashboard','prices','mcx','governance','signals','trade-engine','orders',
+    'portfolio','ai-engine','screener','backtest','journal','risk','telegram',
+    'vault','settings','learning','options','smartmoney','news','fiidii',
+    'sectorrsi','global','ml','histbt','walkfwd','rl','modeldash','charts',
+    'angelone','forex','short'
+  ];
 
-    /* Hide ALL pages via direct style — never fails on any mobile browser */
-    pages.forEach(function(p){
-      var pg = document.getElementById('page-'+p);
-      if(pg){ pg.style.display='none'; pg.classList.remove('active'); }
-    });
+  /* Hide every page */
+  pageList.forEach(function(p){
+    var pg = document.getElementById('page-'+p);
+    if(pg) pg.style.display = 'none';
+  });
 
-    /* Show target page */
-    var t = document.getElementById('page-'+id);
-    if(t){ t.style.display='block'; t.classList.add('active'); }
+  /* Show target */
+  var target = document.getElementById('page-'+id);
+  if(target) target.style.display = 'block';
 
-    /* Scroll to top */
-    var sa = document.getElementById('scroll-area');
-    if(sa) sa.scrollTop = 0;
+  /* Reset scroll */
+  var sa = document.getElementById('scroll-area');
+  if(sa) sa.scrollTop = 0;
 
-    /* Update sidebar nav highlights */
-    document.querySelectorAll('.nav-item').forEach(function(n){
-      n.classList.remove('active');
-    });
-    document.querySelectorAll('.bnav-btn').forEach(function(b){
-      b.classList.remove('active');
-    });
-    if(el) el.classList.add('active');
-    if(src==='bn'){
-      document.querySelectorAll('.nav-item').forEach(function(n){
-        if((n.getAttribute('onclick')||'').includes("'"+id+"'")) n.classList.add('active');
-      });
-    } else {
-      var bn = document.getElementById('bn-'+id);
-      if(bn) bn.classList.add('active');
-    }
+  /* Sync nav highlights */
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    var oc = n.getAttribute('onclick')||'';
+    n.classList.toggle('active', oc.indexOf("'"+id+"'")>-1 || oc.indexOf('"'+id+'"')>-1);
+  });
+  document.querySelectorAll('.bnav-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(el && el.classList) el.classList.add('active');
+  var bn = document.getElementById('bn-'+id);
+  if(bn) bn.classList.add('active');
 
-    /* Page-specific init hooks */
-    if(id==='orders')    { if(typeof renderOrders==='function') renderOrders(); }
-    if(id==='journal')   { if(typeof renderJournal==='function') renderJournal(); }
-    if(id==='risk')      { if(typeof updateRiskPage==='function') updateRiskPage(); if(typeof updateRiskPageFull==='function') setTimeout(updateRiskPageFull,200); }
-    if(id==='portfolio') { if(typeof updatePortfolio==='function') updatePortfolio(); if(typeof updateFundDashboard==='function') setTimeout(updateFundDashboard,100); }
-    if(id==='ai-engine') { if(typeof updateAIEnginePage==='function') updateAIEnginePage(); }
-    if(id==='screener')  { if(typeof runScreener==='function' && wlData && wlData.length) runScreener(); }
-    if(id==='backtest')  { setTimeout(function(){ if(typeof runBacktest==='function') runBacktest(); },80); }
-    if(id==='telegram')  { if(typeof initTelegramPage==='function') initTelegramPage(); if(typeof loadEJSInputs==='function') setTimeout(loadEJSInputs,100); }
-    if(id==='settings')  { if(typeof loadSettings==='function') loadSettings(); }
-    if(id==='learning')  { if(typeof updateLearningDashboard==='function') updateLearningDashboard(); }
-    if(id==='options')   { if(typeof buildOptionsChain==='function') buildOptionsChain(); }
-    if(id==='smartmoney'){ if(typeof updateSmartMoney==='function') updateSmartMoney(); }
-    if(id==='fiidii')    { if(typeof buildFIIDII==='function') buildFIIDII(); }
-    if(id==='sectorrsi') { if(typeof buildSectorRSI==='function') buildSectorRSI(); }
-    if(id==='global')    { if(typeof fetchGlobalMarkets==='function') fetchGlobalMarkets(); }
-    if(id==='ml')        { if(typeof updateMLLivePrediction==='function') try{updateMLLivePrediction();}catch(_){} }
-    if(id==='modeldash') { if(typeof updateModelDashboard==='function') updateModelDashboard(); }
-    if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); },200); }
-    if(id==='charts')    { if(typeof loadChartJS==='function') loadChartJS(); }
-    if(id==='news')      { if(typeof fetchNews==='function') setTimeout(fetchNews,50); }
-    if(id==='prices')    { setTimeout(function(){ if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines(); },500); }
-    if(id==='vault')     { if(typeof showVaultUnlocked==='function' && typeof vaultUnlocked!=='undefined' && vaultUnlocked) setTimeout(function(){ if(typeof loadEJSInputs==='function') loadEJSInputs(); },100); }
-
-  }catch(navErr){
-    console.error('nav() error:',navErr);
-  }
+  /* Page-specific init hooks */
+  var hooks = {
+    orders:    function(){ if(typeof renderOrders==='function') renderOrders(); },
+    journal:   function(){ if(typeof renderJournal==='function') renderJournal(); },
+    portfolio: function(){ if(typeof updatePortfolio==='function') updatePortfolio(); if(typeof updateFundDashboard==='function') setTimeout(updateFundDashboard,100); },
+    risk:      function(){ if(typeof updateRiskPage==='function') updateRiskPage(); if(typeof updateRiskPageFull==='function') setTimeout(updateRiskPageFull,200); },
+    telegram:  function(){ if(typeof initTelegramPage==='function') initTelegramPage(); if(typeof loadEJSInputs==='function') setTimeout(loadEJSInputs,100); },
+    settings:  function(){ if(typeof loadSettings==='function') loadSettings(); },
+    'ai-engine': function(){ if(typeof updateAIEnginePage==='function') updateAIEnginePage(); },
+    screener:  function(){ if(typeof runScreener==='function' && typeof wlData!=='undefined' && wlData.length) runScreener(); },
+    backtest:  function(){ setTimeout(function(){ if(typeof runBacktest==='function') runBacktest(); },80); },
+    options:   function(){ if(typeof buildOptionsChain==='function') buildOptionsChain(); },
+    smartmoney:function(){ if(typeof updateSmartMoney==='function') updateSmartMoney(); },
+    fiidii:    function(){ if(typeof buildFIIDII==='function') buildFIIDII(); },
+    sectorrsi: function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); },
+    global:    function(){ if(typeof fetchGlobalMarkets==='function') fetchGlobalMarkets(); },
+    news:      function(){ if(typeof fetchNews==='function') setTimeout(fetchNews,50); },
+    charts:    function(){ if(typeof loadChartJS==='function') loadChartJS(); },
+    learning:  function(){ if(typeof updateLearningDashboard==='function') updateLearningDashboard(); },
+    governance:function(){ setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); },200); },
+    ml:        function(){ if(typeof updateMLLivePrediction==='function') try{updateMLLivePrediction();}catch(_){} },
+    modeldash: function(){ if(typeof updateModelDashboard==='function') updateModelDashboard(); }
+  };
+  if(hooks[id]) try{ hooks[id](); }catch(_){}
 }
 
 /* ── SWIPE ── */
@@ -12524,131 +12521,77 @@ function renderShortPositions(){
 
 
 
-/* ══ FINAL NAV FIX — no recursion, works on all browsers ══ */
-(function(){
-  var PAGES = ['dashboard','prices','mcx','governance','signals','trade-engine',
-    'orders','portfolio','ai-engine','screener','backtest','journal','risk',
-    'telegram','vault','settings','learning','options','smartmoney','news',
-    'fiidii','sectorrsi','global','ml','histbt','walkfwd','rl','modeldash',
-    'charts','angelone','forex','short'];
-
-  /* Store original nav for page-init hooks only */
-  var _orig = (typeof nav === 'function') ? nav : null;
-  var _busy = false; /* prevent re-entrancy */
-
-  function goTo(id){
-    if(_busy || !id) return;
-    _busy = true;
-    try{
-      /* 1. Hide all pages */
-      PAGES.forEach(function(p){
-        var el = document.getElementById('page-'+p);
-        if(el){ el.style.display='none'; el.classList.remove('active'); }
-      });
-      /* 2. Show target page */
-      var target = document.getElementById('page-'+id);
-      if(target){ target.style.display='block'; target.classList.add('active'); }
-      /* 3. Scroll to top */
-      var sa = document.getElementById('scroll-area');
-      if(sa) sa.scrollTop = 0;
-      /* 4. Highlight sidebar nav */
-      document.querySelectorAll('.nav-item').forEach(function(n){
-        n.classList.remove('active');
-        var oc = n.getAttribute('onclick')||'';
-        if(oc.indexOf("'"+id+"'") > -1 || oc.indexOf('"'+id+'"') > -1)
-          n.classList.add('active');
-      });
-      /* 5. Highlight bottom nav */
-      document.querySelectorAll('.bnav-btn').forEach(function(b){
-        b.classList.remove('active');
-      });
-      var bn = document.getElementById('bn-'+id);
-      if(bn) bn.classList.add('active');
-      /* 6. Call original nav for page-init hooks (not window.nav — no recursion) */
-      if(_orig) try{ _orig(id, null, '_nav'); }catch(_){}
-    }finally{
-      _busy = false;
+/* ── MOBILE FULL-MENU DRAWER ── */
+function buildMobileMenu(){
+  var list = document.getElementById('mobile-menu-list');
+  if(!list) return;
+  list.innerHTML = '';
+  document.querySelectorAll('.nav-section, .nav-item, .nav-divider').forEach(function(el){
+    if(el.classList.contains('nav-section')){
+      var sec = document.createElement('div');
+      sec.style.cssText = 'padding:10px 20px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700';
+      sec.textContent = el.textContent;
+      list.appendChild(sec);
+    } else if(el.classList.contains('nav-divider')){
+      var div = document.createElement('div');
+      div.style.cssText = 'height:1px;background:var(--border);margin:6px 16px';
+      list.appendChild(div);
+    } else if(el.classList.contains('nav-item')){
+      var pid = el.getAttribute('data-navid') || (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"]/,'$1');
+      if(!pid || pid.length >= 30) return;
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:14px;cursor:pointer;color:var(--text);touch-action:manipulation;-webkit-tap-highlight-color:transparent';
+      row.textContent = el.textContent.trim();
+      (function(p){ row.addEventListener('click', function(){ closeMobileMenu(); nav(p, null, 'mobile'); }); })(pid);
+      list.appendChild(row);
     }
-  }
+  });
+}
 
-  /* Override window.nav so ALL existing onclick handlers use goTo */
-  window.nav = function(id, el, src){
-    if(src !== '_nav') goTo(id);
-  };
-  window._goTo = goTo;
+function openMobileMenu(){ buildMobileMenu(); var d=document.getElementById('mobile-drawer'); if(d) d.style.display='block'; }
+function closeMobileMenu(){ var d=document.getElementById('mobile-drawer'); if(d) d.style.display='none'; }
 
-  /* Mobile full-menu drawer — populated from sidebar nav items */
-  function buildMobileMenu(){
-    var list = document.getElementById('mobile-menu-list');
-    if(!list) return;
-    var items = document.querySelectorAll('.nav-item[data-page], .nav-item[onclick]');
-    var html = '';
-    var lastSection = '';
-    document.querySelectorAll('.nav-section, .nav-item, .nav-divider').forEach(function(el){
-      if(el.classList.contains('nav-section')){
-        html += '<div style="padding:10px 20px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700">'+el.textContent+'</div>';
-      } else if(el.classList.contains('nav-divider')){
-        html += '<div style="height:1px;background:var(--border);margin:6px 16px"></div>';
-      } else if(el.classList.contains('nav-item')){
-        var pg = el.getAttribute('data-page') || (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"].*/,'$1');
-        if(pg && pg.length < 30){
-          var icon = el.querySelector('.nav-icon') ? el.querySelector('.nav-icon').textContent : '▸';
-          var label = el.textContent.trim();
-          html += '<div onclick="closeMobileMenu();goTo(\''+pg+'\')" style="display:flex;align-items:center;gap:12px;padding:13px 20px;font-size:14px;cursor:pointer;color:var(--text);-webkit-tap-highlight-color:transparent;touch-action:manipulation" onmouseenter="this.style.background=\'var(--bbg)\'" onmouseleave="this.style.background=\'\'">'+label+'</div>';
-        }
-      }
-    });
-    list.innerHTML = html;
-  }
-
-  function openMobileMenu(){
-    buildMobileMenu();
-    var d = document.getElementById('mobile-drawer');
-    if(d) d.style.display='block';
-  }
-  function closeMobileMenu(){
-    var d = document.getElementById('mobile-drawer');
-    if(d) d.style.display='none';
-  }
-  window.openMobileMenu = openMobileMenu;
-  window.closeMobileMenu = closeMobileMenu;
-
-  /* Wire click listeners directly to every nav element */
-  function wire(){
+/* ══ NAV WIRING — runs once, wires every nav element ══ */
+(function wireNavOnce(){
+  function doWire(){
+    /* Sidebar items */
     document.querySelectorAll('.nav-item').forEach(function(el){
-      el.onclick = null; /* remove old handler */
-      var oc = el.getAttribute('data-page') ||
-               (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"].*/,'$1');
-      if(oc && oc.length < 30){
-        el.setAttribute('data-page', oc);
-        el.onclick = function(){ goTo(oc); return false; };
-      }
+      var oc = el.getAttribute('onclick')||'';
+      var m  = oc.match(/nav\(['"]([^'"]+)['"]/);
+      if(!m) return;
+      var pid = m[1];
+      el.setAttribute('data-navid', pid);
+      el.onclick = function(e){ nav(pid, el, 'sidebar'); return false; };
     });
+    /* Bottom nav */
     document.querySelectorAll('.bnav-btn').forEach(function(el){
-      var oc = el.getAttribute('data-page') ||
-               (el.getAttribute('onclick')||'').replace(/.*nav\(['"]([^'"]+)['"].*/,'$1');
-      if(oc && oc.length < 30){
-        el.setAttribute('data-page', oc);
-        el.onclick = function(){ goTo(oc); return false; };
+      var oc = el.getAttribute('onclick')||'';
+      var m  = oc.match(/nav\(['"]([^'"]+)['"]/);
+      if(!m) return;
+      var pid = m[1];
+      if(pid==='settings' && typeof openMobileMenu==='function' && window.innerWidth<768){
+        el.onclick = function(){ openMobileMenu(); return false; };
+        return;
       }
+      el.setAttribute('data-navid', pid);
+      el.onclick = function(e){ nav(pid, el, 'bn'); return false; };
     });
   }
 
-  /* Wire now and again after login */
-  wire();
-  var _watchLogin = setInterval(function(){
+  /* Wire immediately (elements exist even if hidden) */
+  doWire();
+
+  /* Re-wire after login (100ms polling until app-root visible) */
+  var t = setInterval(function(){
     var ar = document.getElementById('app-root');
-    if(ar && ar.style.display === 'block'){
-      wire();
-      /* Show dashboard if no page is visible */
-      var anyOn = PAGES.some(function(p){
-        var el=document.getElementById('page-'+p);
-        return el && el.style.display==='block';
-      });
-      if(!anyOn) goTo('dashboard');
-      clearInterval(_watchLogin);
+    if(ar && ar.style.display !== '' && ar.style.display !== 'none'){
+      doWire();
+      /* Show dashboard if nothing visible */
+      var anyVis = document.querySelector('.page[style*="display: block"], .page[style*="display:block"]');
+      if(!anyVis){ nav('dashboard', null, 'init'); }
+      clearInterval(t);
     }
-  }, 200);
+  }, 150);
 })();
 
 </script>
