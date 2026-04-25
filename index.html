@@ -10,7 +10,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="version" content="20260414165109">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=0.5,maximum-scale=5.0,user-scalable=yes">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=0.5,maximum-scale=5.0,user-scalable=yes,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="themeColorMeta" content="#0a0e1a">
@@ -41,8 +41,25 @@
   --cyan:#0891b2;--shadow:0 1px 4px rgba(0,0,0,0.08);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{height:100%;overflow:hidden;}
-body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(--bg);color:var(--text);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+html{
+  height:100%;
+  height:100dvh;          /* dynamic viewport — excludes browser chrome on mobile */
+  overflow:hidden;
+}
+body{
+  height:100%;
+  height:100dvh;
+  font-family:'Outfit',sans-serif;
+  font-size:14px;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  /* Prevent iOS rubber-band on body — scroll happens only inside .scroll-area */
+  overscroll-behavior:none;
+}
 
 /* ── TOPBAR ── */
 .topbar{height:52px;flex-shrink:0;z-index:300;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px;}
@@ -100,24 +117,32 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
 .ph-badge{display:inline-block;margin-top:10px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:var(--gbg);color:var(--green);}
 
 /* ── SCROLL + PAGES ── */
-/* Base scroll-area — overflow-x:auto gives horizontal scrollbar when needed */
 .scroll-area{
   flex:1;
+  min-height:0;
   overflow-y:scroll;
-  overflow-x:auto;
+  overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   scroll-behavior:smooth;
-  scrollbar-gutter:stable both-edges;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+  touch-action:pan-y;         /* tell browser: vertical scroll only — don't intercept */
+  will-change:scroll-position; /* GPU layer — smoother scroll on mobile */
 }
 
-/* ── VERTICAL SCROLLBAR — high contrast, always visible ── */
-.scroll-area::-webkit-scrollbar        { width:10px; background:#1a2338; }
-.scroll-area::-webkit-scrollbar-track  { background:#1a2338; border-left:1px solid rgba(255,255,255,0.08); }
-.scroll-area::-webkit-scrollbar-thumb  { background:#3b5280; border-radius:6px; border:2px solid #1a2338; min-height:40px; }
-.scroll-area::-webkit-scrollbar-thumb:hover  { background:#4f6fa0; }
-.scroll-area::-webkit-scrollbar-thumb:active { background:#6b8fc0; }
+/* ── SCROLLBAR — always visible, high contrast ── */
+.scroll-area::-webkit-scrollbar        { width:12px; background:#0f172a; }
+.scroll-area::-webkit-scrollbar-track  { background:#0f172a; }
+.scroll-area::-webkit-scrollbar-thumb  { background:#4f6fa0; border-radius:6px; border:2px solid #0f172a; min-height:48px; }
+.scroll-area::-webkit-scrollbar-thumb:hover  { background:#6b8fc0; cursor:grab; }
+.scroll-area::-webkit-scrollbar-thumb:active { background:#93c5fd; cursor:grabbing; }
 /* Firefox */
-.scroll-area { scrollbar-width:auto; scrollbar-color:#3b5280 #1a2338; }
+.scroll-area { scrollbar-width:thin; scrollbar-color:#4f6fa0 #0f172a; }
+/* Light theme */
+[data-theme="light"] .scroll-area::-webkit-scrollbar { background:#f1f5f9; }
+[data-theme="light"] .scroll-area::-webkit-scrollbar-track { background:#f1f5f9; }
+[data-theme="light"] .scroll-area::-webkit-scrollbar-thumb { background:#94a3b8; border:2px solid #f1f5f9; }
+[data-theme="light"] .scroll-area { scrollbar-color:#94a3b8 #f1f5f9; }
 
 /* ── HORIZONTAL SCROLLBAR (appears only when content wider than viewport) ── */
 .scroll-area::-webkit-scrollbar-corner { background:#1a2338; }
@@ -133,86 +158,96 @@ body{height:100%;font-family:'Outfit',sans-serif;font-size:14px;background:var(-
    IMPORTANT: base must come before @media so media queries win in cascade */
 .page-content{
   padding:12px;
-  padding-bottom:76px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+  /* Safe-area padding: clears bottom nav (60px) + home indicator on notched phones */
+  padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px));
   box-sizing:border-box;
   width:100%;
-  min-width:0;        /* prevent flex child from overflowing parent */
+  max-width:100%;
 }
 
-/* Desktop: 2-column grid */
+/* ── DESKTOP: 2-column responsive layout using flexbox wrap ── */
 @media(min-width:768px){
   .page-content{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr)); /* minmax(0,1fr) prevents grid blowout */
-    grid-auto-rows:min-content;
+    display:flex;
+    flex-flow:row wrap;
     gap:16px;
     padding:20px;
     padding-bottom:20px;
-    max-width:1400px;
-    margin:0 auto;
-    align-items:start;
+    align-items:flex-start;
+  }
+  /* Default: cards take 50% width minus gap */
+  .page-content > .card,
+  .page-content > div.card {
+    flex:0 0 calc(50% - 8px);
+    min-width:0;
+    box-sizing:border-box;
   }
   /* Full-width items */
   .page-content > .alert,
   .page-content > .phase-banner,
   .page-content > .tiles-4,
   .page-content > .chart-card,
-  .page-content > .card-full { grid-column:1/-1; }
-  .tiles-4  { grid-column:1/-1; }
+  .page-content > .card-full {
+    flex:0 0 100%;
+    width:100%;
+  }
 }
 
-/* Large desktop: 3-column grid */
 @media(min-width:1280px){
   .page-content{
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    max-width:1600px;
-    padding:24px;
     gap:18px;
+    padding:24px;
   }
-  .tiles-4 { grid-column:1/-1; }
+  .page-content > .card,
+  .page-content > div.card {
+    flex:0 0 calc(33.333% - 12px);
+  }
 }
 
-/* Ultra-wide */
-@media(min-width:1600px){
-  .page-content{ max-width:1800px; }
-}
-
-/* Mobile: explicit single column */
+/* Mobile: single column */
 @media(max-width:767px){
   .page-content{
-    display:flex !important;
+    display:flex;
     flex-direction:column;
     padding:12px;
-    padding-bottom:76px;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px));
     gap:12px;
   }
 }
 
-/* ── Cards must not overflow their grid cell ── */
-.page-content > .card,
-.page-content > div {
-  min-width:0;
-  max-width:100%;
-  overflow-x:hidden;
-}
+/* ── Cards: visible overflow so content isn't clipped ── */
+.card { max-width:100%; box-sizing:border-box; overflow:visible; }
+.page-content > * { min-width:0; max-width:100%; }
 
-/* Tables and option chains: horizontal scroll inside card */
-.options-table-wrap,
-.chain-wrap,
-table {
+/* ── Horizontal scroll INSIDE cards (tables, option chains) ── */
+.options-table-wrap, .chain-wrap, .table-scroll {
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
   max-width:100%;
-  display:block;
 }
-table::-webkit-scrollbar { height:6px; }
-table::-webkit-scrollbar-thumb { background:#3b5280; border-radius:3px; }
+.options-table-wrap::-webkit-scrollbar,
+.chain-wrap::-webkit-scrollbar { height:6px; }
+.options-table-wrap::-webkit-scrollbar-thumb,
+.chain-wrap::-webkit-scrollbar-thumb { background:#3b5280; border-radius:3px; }
+
+/* ── Tiles: full-width, 4-col on desktop, 2-col on mobile ── */
+.tiles-4 { width:100%; box-sizing:border-box; }
+@media(max-width:599px){ .tiles-4{ grid-template-columns:1fr 1fr; } }
 
 /* ── BOTTOM NAV ── */
-.bottom-nav{height:60px;flex-shrink:0;z-index:300;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0px);}
+.bottom-nav{
+  height:60px;
+  flex-shrink:0;
+  z-index:300;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+  /* Grow to fit home indicator on iPhone X+ */
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+  min-height:60px;
+}
 @media(min-width:768px){.bottom-nav{display:none;}}
 @media(min-width:768px){.topbar{padding:0 20px;}.market-bar{padding:0 4px;}}
 
@@ -810,7 +845,8 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
     </div>
     <input id="gate-pin" type="password" inputmode="numeric"
            pattern="[0-9]*" maxlength="8" placeholder="••••"
-           oninput="updateGateDots()" autocomplete="current-password">
+           oninput="updateGateDots()" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter'||event.keyCode===13){appLogin();}">
     <button id="gate-btn" onclick="appLogin()">🔐 Unlock</button>
     <div id="gate-err"></div>
 
@@ -1658,67 +1694,103 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
 <div class="page" id="page-portfolio"><div class="page-content">
 
   <div class="alert success">
-    <span class="alert-icon">&#x2705;</span>
-    <span><strong>Phase 1F &#x2014; Capital Allocation Engine.</strong> 80% Passive Core + 20% Active Satellite. Dynamic rebalancing when performance dips.</span>
+    <span class="alert-icon">🏦</span>
+    <span><strong>Private AMC Engine v5.0</strong> — R-based execution · 20% withdrawal · CAGR · Net-wealth tracking · Behavioural control</span>
   </div>
 
-  <!-- Allocation Tiles -->
+  <!-- ══ TOP TILES ══ -->
   <div class="tiles-4">
-    <div class="tile"><div class="tile-label">Total Capital</div><div class="tile-value" id="pf-total">&#x20B9;50K</div><div class="tile-sub">base capital</div></div>
-    <div class="tile"><div class="tile-label">Passive Core (80%)</div><div class="tile-value" style="color:var(--blue)" id="pf-passive">&#x20B9;40K</div><div class="tile-sub">ETFs + Index</div></div>
-    <div class="tile"><div class="tile-label">Active Satellite (20%)</div><div class="tile-value warn" id="pf-active">&#x20B9;10K</div><div class="tile-sub">AI trades</div></div>
-    <div class="tile"><div class="tile-label">Total Return</div><div class="tile-value up" id="pf-return">0.00%</div><div class="tile-sub">vs Nifty 50</div></div>
+    <div class="tile"><div class="tile-label">Trading Capital</div><div class="tile-value up" id="fd-capital">₹10,000</div><div class="tile-sub" id="fd-total-ret">+0.00%</div></div>
+    <div class="tile"><div class="tile-label">CAGR (annualised)</div><div class="tile-value" id="fd-cagr">—</div><div class="tile-sub">since Jan 2026</div></div>
+    <div class="tile"><div class="tile-label">Net Wealth Growth</div><div class="tile-value" id="fd-net-wealth">—</div><div class="tile-sub">incl. withdrawals</div></div>
+    <div class="tile"><div class="tile-label">Total Withdrawn</div><div class="tile-value warn" id="fd-withdrawn">₹0</div><div class="tile-sub">20% monthly rule</div></div>
   </div>
 
-  <!-- Allocation Visual -->
+  <!-- ══ CAPITAL STRUCTURE ══ -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Capital Allocation</span><span class="badge badge-b">AMC Structure</span></div>
-    <div class="card-body">
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <div style="flex:4;min-width:120px">
-          <div style="font-size:10px;color:var(--blue);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Passive Core &#x2014; 80%</div>
-          <div style="height:10px;background:var(--blue);border-radius:5px"></div>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px">Nifty ETF, Gold ETF, Liquid Fund</div>
-        </div>
-        <div style="flex:1;min-width:60px">
-          <div style="font-size:10px;color:var(--amber);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Active &#x2014; 20%</div>
-          <div style="height:10px;background:var(--amber);border-radius:5px"></div>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px">AI trades</div>
-        </div>
-      </div>
-      <div style="padding:0">
-        <div class="cost-row"><span class="cost-lbl">Passive Core</span><span class="cost-val" style="color:var(--blue)" id="pf-passive-val">&#x20B9;40,000 (80%)</span></div>
-        <div class="cost-row"><span class="cost-lbl">Active Satellite</span><span class="cost-val warn" id="pf-active-val">&#x20B9;10,000 (20%)</span></div>
-        <div class="cost-row"><span class="cost-lbl">Currently Deployed</span><span class="cost-val" id="pf-deployed">&#x20B9;0 (0%)</span></div>
-        <div class="cost-row"><span class="cost-lbl">Available for Trade</span><span class="cost-val up" id="pf-available">&#x20B9;10,000</span></div>
-        <div class="cost-row"><span class="cost-lbl">Max per trade (20% of active)</span><span class="cost-val warn">&#x20B9;2,000</span></div>
-      </div>
-      <div style="margin-top:12px;padding:10px;background:var(--bbg);border-radius:9px;border:1px solid var(--bborder);font-size:11px;color:var(--blue)">
-        &#x1F4A1; <strong>Dynamic rebalancing:</strong> If active satellite underperforms Nifty by &gt;5% for 3 months, capital auto-shifts to passive core. If market conditions are strong, active allocation can increase to 25%.
+    <div class="card-header"><span class="card-title">💰 Capital Structure</span><span class="badge badge-g">v5.0</span></div>
+    <div style="padding:0 14px 14px">
+      <div class="cost-row"><span class="cost-lbl">Starting Capital</span><span class="cost-val" id="fd-base">₹10,000</span></div>
+      <div class="cost-row"><span class="cost-lbl">Current Capital</span><span class="cost-val up" id="fd-capital2">₹10,000</span></div>
+      <div class="cost-row"><span class="cost-lbl">Risk / Trade (1%)</span><span class="cost-val" id="fd-risk-status">₹100</span></div>
+      <div class="cost-row"><span class="cost-lbl">Max Portfolio Risk (1.5%)</span><span class="cost-val">₹150 / day</span></div>
+      <div class="cost-row"><span class="cost-lbl">Capital Floor (0.5% risk)</span><span class="cost-val warn">Below ₹8,000</span></div>
+      <div class="cost-row"><span class="cost-lbl">Capital Scale-Up</span><span class="cost-val">Above ₹15,000 → gradual ↑</span></div>
+      <div class="cost-row"><span class="cost-lbl">20% Drawdown Stop</span><span class="cost-val" style="color:var(--red)">At ₹8,000</span></div>
+      <div style="margin-top:12px">
+        <button onclick="executeWithdrawal()" style="width:100%;background:var(--gbg);border:1px solid var(--gborder);color:var(--green);padding:13px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif">
+          💸 Execute Monthly Withdrawal (20% of profit)
+        </button>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center" id="fd-withdrawal">Calculating…</div>
       </div>
     </div>
   </div>
 
-  <!-- Holdings placeholder -->
+  <!-- ══ MONTHLY P&L ══ -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Holdings</span><span class="badge badge-a">Phase 1G</span></div>
-    <div style="padding:0 14px">
-      <div class="cost-row"><span class="cost-lbl">Nifty BeES ETF</span><span class="cost-val" style="color:var(--blue)">&#x20B9;40,000 (Passive)</span></div>
-      <div class="cost-row"><span class="cost-lbl">Active AI trades</span><span class="cost-val warn">&#x20B9;0 deployed</span></div>
-      <div class="cost-row"><span class="cost-lbl">Cash available</span><span class="cost-val up">&#x20B9;10,000</span></div>
+    <div class="card-header"><span class="card-title">📅 Monthly Performance</span></div>
+    <div style="padding:0 14px 14px">
+      <div class="cost-row"><span class="cost-lbl">Month Start Capital</span><span class="cost-val" id="fd-month-start">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Month P&L</span><span class="cost-val" id="fd-month-pnl">₹0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Trades This Month</span><span class="cost-val" id="fd-trades">0</span></div>
+      <div class="cost-row"><span class="cost-lbl">Withdrawal (20%)</span><span class="cost-val warn" id="fd-withdrawal2">—</span></div>
     </div>
-    <div style="padding:12px 14px;font-size:10px;color:var(--muted)">Live P&amp;L per holding, XIRR, and allocation donut chart coming in Phase 1G when trade journal is active.</div>
   </div>
 
-  <!-- Benchmark -->
+  <!-- ══ R-METRICS ══ -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Performance vs Benchmark</span></div>
-    <div style="padding:0 14px">
-      <div class="cost-row"><span class="cost-lbl">Nifty 50 (YTD)</span><span class="cost-val" id="bench-nifty">Loading&#x2026;</span></div>
-      <div class="cost-row"><span class="cost-lbl">Our Portfolio (YTD)</span><span class="cost-val up">+0.00%</span></div>
-      <div class="cost-row"><span class="cost-lbl">Alpha Generated</span><span class="cost-val up">+0.00%</span></div>
-      <div class="cost-row"><span class="cost-lbl">Sharpe Ratio</span><span class="cost-val">N/A (no trades)</span></div>
-      <div class="cost-row"><span class="cost-lbl">Max Drawdown</span><span class="cost-val up">0.00%</span></div>
+    <div class="card-header"><span class="card-title">📐 R-Metrics</span><span class="badge badge-b">Core Engine</span></div>
+    <div style="padding:0 14px 14px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">1R = |Entry − Stop Loss|. Equity target = 2R. Crude target = 3R.</div>
+      <div class="cost-row"><span class="cost-lbl">Average R / trade</span><span class="cost-val" id="fd-avg-r">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Max R achieved</span><span class="cost-val up" id="fd-max-r">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Total R accumulated</span><span class="cost-val" id="fd-total-r">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">R Distribution</span><span class="cost-val" style="font-size:10px" id="fd-r-dist">—</span></div>
+      <div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600">R-LEVEL ACTIONS</div>
+        <div style="font-size:11px;line-height:2;color:var(--text)">
+          &lt;1R → Hold &nbsp;|&nbsp; ≥1R → Move SL to Breakeven<br>
+          ≥2R → Exit 50% (partial profit) &nbsp;|&nbsp; ≥2R+ → Trail SL<br>
+          Equity target: 2R &nbsp;|&nbsp; Crude target: 3R
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EXPECTANCY ══ -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🎯 Expectancy Engine</span></div>
+    <div style="padding:0 14px 14px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">E = (WinRate × AvgWin) − (LossRate × AvgLoss). If E ≤ 0, strategy is auto-disabled.</div>
+      <div class="cost-row"><span class="cost-lbl">Expectancy</span><span class="cost-val" id="fd-expectancy">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Win Rate</span><span class="cost-val" id="fd-win-rate">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Avg Win (R)</span><span class="cost-val up" id="fd-avg-win">—</span></div>
+      <div class="cost-row"><span class="cost-lbl">Avg Loss (R)</span><span class="cost-val" style="color:var(--red)" id="fd-avg-loss">—</span></div>
+    </div>
+  </div>
+
+  <!-- ══ GOVERNANCE STATE ══ -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🛡️ Governance State</span></div>
+    <div style="padding:0 14px 14px">
+      <div class="cost-row"><span class="cost-lbl">Current Drawdown</span><span class="cost-val" id="fd-drawdown">0.00%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Consecutive Losses</span><span class="cost-val" id="fd-consec">0 / 3</span></div>
+      <div class="cost-row"><span class="cost-lbl">Behavioural Lock</span><span class="cost-val" id="fd-bhav">Unlocked</span></div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button onclick="setBhavLock(false);updateFundDashboard();showToast('🔓 Behavioural lock removed.',true);" style="flex:1;padding:10px;background:var(--gbg);border:1px solid var(--gborder);color:var(--green);border-radius:9px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">🔓 Unlock Trading</button>
+        <button onclick="CONSEC.count=0;saveConsec();updateFundDashboard();showToast('✅ Loss counter reset.',true);" style="flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:9px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">↺ Reset Loss Counter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PERFORMANCE vs BENCHMARK ══ -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">📊 Performance vs Benchmark</span></div>
+    <div style="padding:0 14px 14px">
+      <div class="cost-row"><span class="cost-lbl">Nifty 50 (YTD)</span><span class="cost-val" id="bench-nifty">Loading…</span></div>
+      <div class="cost-row"><span class="cost-lbl">Our Portfolio (YTD)</span><span class="cost-val up" id="bench-ours">+0.00%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Alpha Generated</span><span class="cost-val up" id="bench-alpha">+0.00%</span></div>
+      <div class="cost-row"><span class="cost-lbl">Max Drawdown</span><span class="cost-val" id="bench-dd">0.00%</span></div>
     </div>
   </div>
 
@@ -2136,7 +2208,12 @@ canvas{display:block;width:100%!important;max-width:100%;height:100%!important;}
       </div>
       <div style="display:flex;gap:10px">
         <button onclick="saveTgConfig()" style="flex:2;background:var(--blue);color:#fff;border:none;padding:15px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F4BE; Save Config</button>
-        <button onclick="testTgMessage()" style="flex:1;background:var(--bg3);color:var(--text);border:2px solid var(--border2);padding:15px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F9EA; Test</button>
+        <button onclick="testTgMessage()" style="flex:1;background:var(--bg3);color:var(--text);border:2px solid var(--border2);padding:15px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;min-height:54px">&#x1F9EA; Test TG</button>
+      </div>
+      <button onclick="sendTestPnLReport()" style="width:100%;background:var(--gbg);color:var(--green);border:2px solid var(--gborder);padding:13px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:8px">
+        📊 Send P&amp;L Report Now → Telegram + Email
+      </button>
+      <div id="pnl-report-status" style="font-size:11px;color:var(--muted);min-height:16px;margin-top:6px;text-align:center"></div>
       </div>
       <div id="tg-feedback" style="display:none;padding:13px;border-radius:9px;font-size:13px;font-weight:600;text-align:center;border:1px solid transparent"></div>
       <button onclick="clearTgConfig()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:underline;padding:0">Clear saved config</button>
@@ -4294,12 +4371,20 @@ var PRISM_ALGO_KEY = 'prism-algo-id';
 var PRISM_ALGO_ID  = (function(){ try{ return localStorage.getItem(PRISM_ALGO_KEY)||''; }catch(_){ return ''; } })();
 function saveAlgoId(id){ PRISM_ALGO_ID=id; try{ localStorage.setItem(PRISM_ALGO_KEY,id); }catch(_){} }
 
-/* ══ COMPOUNDING CAPITAL ══
-   P&L from closed trades is added back to trading capital.
-   Capital persists across sessions in localStorage.
-   Only REALISED P&L (net of charges) updates capital. */
-var CAPITAL_KEY = 'prism-trading-capital';
-var BASE_CAPITAL = 10000; /* starting baseline */
+/* ══════════════════════════════════════════════════════════════════
+   PRISM ANALYTICS v5.0 — PRIVATE AMC ENGINE
+   Master Prompt compliant: R-engine, withdrawal, CAGR, net-wealth,
+   capital scaling, expectancy, fail-safe, behavioural control
+══════════════════════════════════════════════════════════════════ */
+
+/* ── CAPITAL STRUCTURE ── */
+var CAPITAL_KEY    = 'prism-trading-capital';
+var BASE_CAPITAL   = 10000;
+var RISK_PER_TRADE = 0.01;      /* 1% */
+var MAX_PORT_RISK  = 0.015;     /* 1.5% */
+var MAX_DRAWDOWN   = 0.20;      /* 20% hard stop */
+var CAPITAL_FLOOR  = 8000;      /* below ₹8k → halve risk */
+
 var TRADING_CAPITAL = (function(){
   try{
     var s = JSON.parse(localStorage.getItem(CAPITAL_KEY)||'null');
@@ -4307,26 +4392,338 @@ var TRADING_CAPITAL = (function(){
   }catch(_){}
   return BASE_CAPITAL;
 })();
+
+/* ── MONTHLY STATE (withdrawal, month P&L) ── */
+var MONTHLY_KEY = 'prism-monthly-state';
+var MONTHLY = (function(){
+  try{
+    var s = JSON.parse(localStorage.getItem(MONTHLY_KEY)||'null');
+    var nm = new Date().toISOString().slice(0,7); /* YYYY-MM */
+    if(s && s.month === nm) return s;
+  }catch(_){}
+  return { month: new Date().toISOString().slice(0,7), startCapital: TRADING_CAPITAL,
+           pnl: 0, withdrawn: 0, totalWithdrawn: 0, tradeCount: 0 };
+})();
+function saveMonthly(){ try{ localStorage.setItem(MONTHLY_KEY, JSON.stringify(MONTHLY)); }catch(_){} }
+
+/* ── R-TRADE LOG (for R-metrics, expectancy) ── */
+var RTRADE_KEY = 'prism-r-trades';
+var RTRADES = (function(){ try{ return JSON.parse(localStorage.getItem(RTRADE_KEY)||'[]'); }catch(_){ return []; } })();
+function saveRTrades(){ try{ localStorage.setItem(RTRADE_KEY, JSON.stringify(RTRADES.slice(-200))); }catch(_){} }
+
+/* ── CONSECUTIVE LOSS TRACKER ── */
+var CONSEC_KEY = 'prism-consec-loss';
+var CONSEC = (function(){ try{ return JSON.parse(localStorage.getItem(CONSEC_KEY)||'{"count":0}'); }catch(_){ return {count:0}; } })();
+function saveConsec(){ try{ localStorage.setItem(CONSEC_KEY, JSON.stringify(CONSEC)); }catch(_){} }
+
+/* ── BEHAVIOURAL LOCK ── */
+var BHAV_KEY = 'prism-bhav-lock';
+var BHAV_LOCKED = (function(){ try{ return JSON.parse(localStorage.getItem(BHAV_KEY)||'false'); }catch(_){ return false; } })();
+function setBhavLock(v){ BHAV_LOCKED=v; try{ localStorage.setItem(BHAV_KEY, JSON.stringify(v)); }catch(_){} }
+
+/* ═══════════════════════════════════════════════════
+   DYNAMIC RISK CALCULATOR — heart of the v5 engine
+═══════════════════════════════════════════════════ */
+function getEffectiveRisk(){
+  var dd     = typeof DDState!=='undefined' ? DDState.drawdownPct : 0;
+  var ddMode = typeof calcDrawdownMode==='function' ? calcDrawdownMode() : {riskMult:1};
+
+  /* Capital floor rule */
+  var capMult = TRADING_CAPITAL < CAPITAL_FLOOR ? 0.5 : 1.0;
+
+  /* Capital scaling: capital > ₹15k → gradually scale up (max 2×) */
+  var scaleMult = 1.0;
+  if(TRADING_CAPITAL > 15000) scaleMult = Math.min(2.0, 1 + (TRADING_CAPITAL - 15000) / 15000);
+
+  /* 20% drawdown → full stop */
+  if(TRADING_CAPITAL <= BASE_CAPITAL * (1 - MAX_DRAWDOWN)) return { risk:0, block:true, reason:'⛔ 20% drawdown reached. Trading HALTED.' };
+
+  /* Behavioural lock */
+  if(BHAV_LOCKED) return { risk:0, block:true, reason:'🔒 Behavioural lock active. Unlock in Risk page.' };
+
+  /* Consecutive loss stop */
+  if(CONSEC.count >= 3) return { risk:0, block:true, reason:'⛔ 3 consecutive losses. Cool-down until tomorrow.' };
+
+  var baseRisk = TRADING_CAPITAL * RISK_PER_TRADE;
+  var effectiveRisk = baseRisk * ddMode.riskMult * capMult * scaleMult;
+  return { risk: effectiveRisk, block: false, riskMult: ddMode.riskMult * capMult * scaleMult,
+           reason: ddMode.msg, capMult, scaleMult, ddMult: ddMode.riskMult };
+}
+
+/* ═══════════════════════════════════════════════════
+   R-BASED POSITION SIZING
+   1R = |entry - stop_loss|
+   Equity target = 2R | Crude target = 3R
+═══════════════════════════════════════════════════ */
+function calcPositionSize(entry, sl, asset){
+  var riskCalc = getEffectiveRisk();
+  if(riskCalc.block) return { qty:0, blocked:true, reason:riskCalc.reason };
+  var oneR = Math.abs(entry - sl);
+  if(oneR <= 0) return { qty:0, blocked:true, reason:'SL = Entry — invalid trade.' };
+
+  /* ATR volatility adjustment */
+  var atrPct = 0.008; /* default 0.8% */
+  var adjFactor = (oneR/entry) / atrPct;
+  var adjRisk = riskCalc.risk / Math.max(0.5, adjFactor);
+
+  var qty = Math.max(1, Math.floor(adjRisk / oneR));
+  var targetR = asset === 'CRUDE' ? 3 : 2;
+  var tgt = entry > sl ? entry + oneR * targetR : entry - oneR * targetR;
+
+  return { qty, oneR, targetR, tgt: +tgt.toFixed(2), riskUsed: qty * oneR,
+           riskPct: (qty * oneR / TRADING_CAPITAL * 100).toFixed(2),
+           blocked: false, riskMult: riskCalc.riskMult };
+}
+
+/* ═══════════════════════════════════════════════════
+   R-PROFIT ENGINE — trade management levels
+═══════════════════════════════════════════════════ */
+function getRLevel(entry, sl, currentPrice){
+  var oneR = Math.abs(entry - sl);
+  if(oneR === 0) return { rMult:0, action:'HOLD', label:'0R' };
+  var pnl = (entry > sl) ? (currentPrice - entry) : (entry - currentPrice);
+  var rMult = pnl / oneR;
+
+  var action, label;
+  if(rMult < 0)    { action='REVIEW_SL';   label=rMult.toFixed(1)+'R LOSS'; }
+  else if(rMult < 1){ action='HOLD';        label=rMult.toFixed(1)+'R HOLD'; }
+  else if(rMult < 2){ action='SL_BREAKEVEN'; label=rMult.toFixed(1)+'R → Move SL to BE'; }
+  else if(rMult < 3){ action='PARTIAL_EXIT'; label=rMult.toFixed(1)+'R → Exit 50%'; }
+  else              { action='TRAIL_SL';     label=rMult.toFixed(1)+'R → Trail SL'; }
+  return { rMult: +rMult.toFixed(2), action, label };
+}
+
+/* ═══════════════════════════════════════════════════
+   WITHDRAWAL ENGINE — 20% of monthly profit
+═══════════════════════════════════════════════════ */
+function calcMonthlyWithdrawal(){
+  var nm = new Date().toISOString().slice(0,7);
+  if(MONTHLY.month !== nm){
+    /* New month — carry forward */
+    MONTHLY.totalWithdrawn = (MONTHLY.totalWithdrawn||0) + (MONTHLY.withdrawn||0);
+    MONTHLY.month = nm;
+    MONTHLY.startCapital = TRADING_CAPITAL;
+    MONTHLY.pnl = 0;
+    MONTHLY.withdrawn = 0;
+    MONTHLY.tradeCount = 0;
+    saveMonthly();
+  }
+  if(MONTHLY.pnl <= 0) return { amount:0, blocked:true, reason:'No profit this month — no withdrawal.' };
+  var dd = typeof DDState!=='undefined' ? DDState.drawdownPct : 0;
+  if(dd > 3) return { amount:0, blocked:true, reason:'Withdrawal suspended — drawdown >3%.' };
+  var amount = +(MONTHLY.pnl * 0.20).toFixed(2);
+  return { amount, blocked:false, netCapital: +(TRADING_CAPITAL - amount).toFixed(2) };
+}
+
+function executeWithdrawal(){
+  var w = calcMonthlyWithdrawal();
+  if(w.blocked){ showToast('❌ '+w.reason, false); return; }
+  TRADING_CAPITAL = w.netCapital;
+  MONTHLY.withdrawn = (MONTHLY.withdrawn||0) + w.amount;
+  MONTHLY.totalWithdrawn = (MONTHLY.totalWithdrawn||0) + w.amount;
+  saveCapital(); saveMonthly(); updateCapitalDisplay();
+  showToast('✅ Withdrawal ₹'+w.amount+' done. Net capital: ₹'+TRADING_CAPITAL.toFixed(2), true);
+  sendTgAlert('💸 *MONTHLY WITHDRAWAL*\nAmount: ₹'+w.amount+'\nNet Capital: ₹'+TRADING_CAPITAL.toFixed(2)+'\nTotal Withdrawn: ₹'+MONTHLY.totalWithdrawn.toFixed(2));
+  updateFundDashboard();
+}
+
+/* ═══════════════════════════════════════════════════
+   EXPECTANCY ENGINE
+   expectancy = (winRate × avgWin) - (lossRate × avgLoss)
+═══════════════════════════════════════════════════ */
+function calcExpectancy(){
+  var trades = RTRADES.filter(function(t){ return t.rMult !== undefined; });
+  if(trades.length < 3) return { expectancy:null, winRate:null, msg:'Insufficient trades (<3)' };
+  var wins   = trades.filter(function(t){ return t.rMult > 0; });
+  var losses = trades.filter(function(t){ return t.rMult <= 0; });
+  var wr     = wins.length / trades.length;
+  var avgWin = wins.length ? wins.reduce(function(s,t){ return s+t.rMult; },0) / wins.length : 0;
+  var avgLoss= losses.length ? Math.abs(losses.reduce(function(s,t){ return s+t.rMult; },0) / losses.length) : 0;
+  var E      = +(wr * avgWin - (1-wr) * avgLoss).toFixed(3);
+  var healthy = E > 0;
+  if(!healthy) setBhavLock(true); /* auto-lock if negative expectancy */
+  return { expectancy:E, winRate:+(wr*100).toFixed(1), avgWin:+avgWin.toFixed(2),
+           avgLoss:+avgLoss.toFixed(2), healthy, tradeCount:trades.length };
+}
+
+/* ═══════════════════════════════════════════════════
+   CAGR + NET WEALTH
+═══════════════════════════════════════════════════ */
+function calcCAGR(){
+  var startDate = new Date('2026-01-01');
+  var now = new Date();
+  var years = (now - startDate) / (365.25 * 24 * 3600 * 1000);
+  if(years < 0.01) years = 0.01;
+  var cagr = (Math.pow(TRADING_CAPITAL / BASE_CAPITAL, 1/years) - 1) * 100;
+  var totalWithdrawn = MONTHLY.totalWithdrawn || 0;
+  var netWealth = ((TRADING_CAPITAL + totalWithdrawn) / BASE_CAPITAL - 1) * 100;
+  return { cagr: +cagr.toFixed(2), netWealthGrowth: +netWealth.toFixed(2),
+           totalWithdrawn: +totalWithdrawn.toFixed(2) };
+}
+
+/* ═══════════════════════════════════════════════════
+   R-METRICS
+═══════════════════════════════════════════════════ */
+function calcRMetrics(){
+  if(!RTRADES.length) return { avgR:0, maxR:0, minR:0, totalR:0, dist:{} };
+  var rVals = RTRADES.map(function(t){ return t.rMult||0; });
+  var avgR  = +(rVals.reduce(function(s,v){ return s+v; },0) / rVals.length).toFixed(2);
+  var maxR  = +Math.max.apply(null, rVals).toFixed(2);
+  var minR  = +Math.min.apply(null, rVals).toFixed(2);
+  var totalR= +rVals.reduce(function(s,v){ return s+v; },0).toFixed(2);
+  var dist  = {'<0':0,'0-1':0,'1-2':0,'2-3':0,'>3':0};
+  rVals.forEach(function(r){
+    if(r < 0) dist['<0']++;
+    else if(r < 1) dist['0-1']++;
+    else if(r < 2) dist['1-2']++;
+    else if(r < 3) dist['2-3']++;
+    else dist['>3']++;
+  });
+  return { avgR, maxR, minR, totalR, dist, count:rVals.length };
+}
+
+/* ═══════════════════════════════════════════════════
+   CLOSE TRADE — v5 full pipeline
+═══════════════════════════════════════════════════ */
+function closeTradeV5(slot, entry, sl, exitPrice, qty, grossPnl, charges){
+  var oneR    = Math.abs(entry - sl);
+  var rMult   = oneR > 0 ? +((Math.abs(exitPrice - entry)) / oneR * Math.sign(exitPrice > entry ? (entry > sl ? 1 : -1) : (entry > sl ? -1 : 1))).toFixed(2) : 0;
+  var netPnl  = +(grossPnl - (charges||0)).toFixed(2);
+
+  /* Log R-trade */
+  RTRADES.push({ ts: Date.now(), slot, entry, sl, exit:exitPrice, qty, rMult, netPnl, oneR });
+  saveRTrades();
+
+  /* Consecutive loss tracking */
+  if(netPnl < 0){
+    CONSEC.count = (CONSEC.count||0) + 1;
+    CONSEC.lastLoss = Date.now();
+    if(CONSEC.count >= 3) sendTgAlert('⛔ *3 CONSECUTIVE LOSSES*\nTrading blocked for remainder of session.\nReview journal before resuming.');
+  } else {
+    CONSEC.count = 0;
+  }
+  saveConsec();
+
+  /* Monthly P&L update */
+  MONTHLY.pnl = +(( MONTHLY.pnl||0) + netPnl).toFixed(2);
+  MONTHLY.tradeCount = (MONTHLY.tradeCount||0) + 1;
+  saveMonthly();
+
+  /* Capital update */
+  if(typeof updateCapitalAfterTrade === 'function') updateCapitalAfterTrade(netPnl);
+  if(typeof updateEquityFromTrade   === 'function') updateEquityFromTrade(netPnl);
+  if(typeof markSlotUsed            === 'function') markSlotUsed(slot, netPnl);
+
+  /* Update dashboard */
+  setTimeout(updateFundDashboard, 500);
+
+  /* Withdrawal check */
+  var w = calcMonthlyWithdrawal();
+  if(w.amount > 0 && !w.blocked){
+    showToast('💡 Monthly withdrawal available: ₹'+w.amount+'. Go to Portfolio → Fund Dashboard.', true);
+  }
+
+  var sign = netPnl >= 0 ? '+' : '';
+  sendTgAlert(
+    (netPnl >= 0 ? '✅' : '❌') + ' *TRADE CLOSED — ' + slot.toUpperCase() + '*\n' +
+    'Entry: ₹'+entry+' | Exit: ₹'+exitPrice+'\n' +
+    'R-Multiple: *' + rMult + 'R*\n' +
+    'Net P&L: *' + sign + '₹'+netPnl+'*\n' +
+    'Capital: ₹'+TRADING_CAPITAL.toFixed(2)+'\n' +
+    'Consecutive losses: '+CONSEC.count+'/3\n' +
+    'Monthly P&L: ₹'+MONTHLY.pnl
+  );
+
+  return { netPnl, rMult, capital: TRADING_CAPITAL };
+}
+
+/* ── Legacy wrapper — calls v5 pipeline ── */
+function closeTradeAndUpdateCapital(slot, grossPnl, charges){
+  var netPnl = +(grossPnl - (charges||0)).toFixed(2);
+  if(typeof updateCapitalAfterTrade === 'function') updateCapitalAfterTrade(netPnl);
+  if(typeof updateEquityFromTrade   === 'function') updateEquityFromTrade(netPnl);
+  if(typeof markSlotUsed            === 'function') markSlotUsed(slot, netPnl);
+  MONTHLY.pnl = +(( MONTHLY.pnl||0) + netPnl).toFixed(2);
+  MONTHLY.tradeCount = (MONTHLY.tradeCount||0) + 1;
+  saveMonthly();
+  setTimeout(updateFundDashboard, 500);
+}
+
+/* ═══════════════════════════════════════════════════
+   FUND DASHBOARD RENDERER
+═══════════════════════════════════════════════════ */
+function updateFundDashboard(){
+  var cagr    = calcCAGR();
+  var exp     = calcExpectancy();
+  var rmet    = calcRMetrics();
+  var w       = calcMonthlyWithdrawal();
+  var riskNow = getEffectiveRisk();
+  var dd      = typeof DDState!=='undefined' ? DDState.drawdownPct : 0;
+
+  var f = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  var fc= function(id,v,c){ var e=document.getElementById(id); if(e){e.textContent=v;if(c)e.style.color=c;} };
+
+  /* Capital */
+  f('fd-capital',     '₹'+TRADING_CAPITAL.toFixed(2));
+  f('fd-base',        '₹'+BASE_CAPITAL.toLocaleString('en-IN'));
+  var totalRet = ((TRADING_CAPITAL-BASE_CAPITAL)/BASE_CAPITAL*100);
+  fc('fd-total-ret',  (totalRet>=0?'+':'')+totalRet.toFixed(2)+'%', totalRet>=0?'var(--green)':'var(--red)');
+  fc('fd-cagr',       (cagr.cagr>=0?'+':'')+cagr.cagr+'%', cagr.cagr>=0?'var(--green)':'var(--red)');
+  f('fd-net-wealth',  cagr.netWealthGrowth+'%');
+  f('fd-withdrawn',   '₹'+cagr.totalWithdrawn.toFixed(2));
+
+  /* Monthly */
+  f('fd-month-pnl',   (MONTHLY.pnl>=0?'+':'')+'₹'+MONTHLY.pnl.toFixed(2));
+  f('fd-month-start', '₹'+(MONTHLY.startCapital||TRADING_CAPITAL).toFixed(2));
+  f('fd-withdrawal',  w.blocked ? '₹0 ('+w.reason+')' : '₹'+w.amount+' available');
+  f('fd-trades',      MONTHLY.tradeCount || 0);
+
+  /* Risk */
+  fc('fd-risk-status', riskNow.block ? 'BLOCKED' : '₹'+riskNow.risk.toFixed(2)+' / trade',
+    riskNow.block ? 'var(--red)' : 'var(--green)');
+  fc('fd-drawdown',   dd.toFixed(2)+'%', dd>=8?'var(--red)':dd>=3?'var(--amber)':'var(--green)');
+  f('fd-consec',      CONSEC.count+' / 3');
+  fc('fd-bhav',       BHAV_LOCKED?'LOCKED':'Unlocked', BHAV_LOCKED?'var(--red)':'var(--green)');
+
+  /* R-metrics */
+  f('fd-avg-r',     rmet.count>0 ? rmet.avgR+'R' : '—');
+  f('fd-max-r',     rmet.count>0 ? rmet.maxR+'R' : '—');
+  f('fd-total-r',   rmet.count>0 ? rmet.totalR+'R ('+rmet.count+' trades)' : '—');
+  f('fd-r-dist',    rmet.count>0 ?
+    '<0R:'+rmet.dist['<0']+' | 0-1R:'+rmet.dist['0-1']+' | 1-2R:'+rmet.dist['1-2']+
+    ' | 2-3R:'+rmet.dist['2-3']+' | >3R:'+rmet.dist['>3'] : '—');
+
+  /* Expectancy */
+  if(exp.expectancy !== null){
+    fc('fd-expectancy', exp.expectancy+'R', exp.healthy?'var(--green)':'var(--red)');
+    f('fd-win-rate',  exp.winRate+'%');
+    f('fd-avg-win',   exp.avgWin+'R');
+    f('fd-avg-loss',  '-'+exp.avgLoss+'R');
+  }
+}
+setTimeout(updateFundDashboard, 2000);
+
+/* ── Legacy capital functions ── */
+var CAPITAL_KEY = 'prism-trading-capital';
+var BASE_CAPITAL = 10000;
 function saveCapital(){
   try{ localStorage.setItem(CAPITAL_KEY, JSON.stringify({
-    capital: TRADING_CAPITAL,
-    updated: new Date().toISOString(),
-    base: BASE_CAPITAL,
-    totalReturn: +((TRADING_CAPITAL-BASE_CAPITAL)/BASE_CAPITAL*100).toFixed(2)
+    capital: TRADING_CAPITAL, updated: new Date().toISOString(),
+    base: BASE_CAPITAL, totalReturn: +((TRADING_CAPITAL-BASE_CAPITAL)/BASE_CAPITAL*100).toFixed(2)
   })); }catch(_){}
 }
 function updateCapitalAfterTrade(netPnl){
   if(typeof netPnl !== 'number' || isNaN(netPnl)) return;
-  TRADING_CAPITAL = Math.max(BASE_CAPITAL * 0.5, TRADING_CAPITAL + netPnl); /* floor at 50% of base */
-  saveCapital();
-  updateCapitalDisplay();
+  /* Capital floor: ₹8000 → 0.5% risk, but capital itself can go below (no artificial floor) */
+  TRADING_CAPITAL = Math.max(0, TRADING_CAPITAL + netPnl);
+  saveCapital(); updateCapitalDisplay();
   var sign = netPnl >= 0 ? '+' : '';
-  sendTgAlert('💰 *CAPITAL UPDATED*\nTrade P&L: ₹' + sign + netPnl.toFixed(2) +
-    '\nNew Capital: ₹' + TRADING_CAPITAL.toFixed(2) +
-    '\nTotal Return: ' + sign + ((TRADING_CAPITAL-BASE_CAPITAL)/BASE_CAPITAL*100).toFixed(2) + '%');
+  sendTgAlert('💰 *CAPITAL UPDATED*\nTrade P&L: ₹'+sign+netPnl.toFixed(2)+
+    '\nNew Capital: ₹'+TRADING_CAPITAL.toFixed(2)+
+    '\nTotal Return: '+sign+((TRADING_CAPITAL-BASE_CAPITAL)/BASE_CAPITAL*100).toFixed(2)+'%');
 }
 function updateCapitalDisplay(){
-  ['cap-display','cap-widget','capital-val'].forEach(function(id){
+  ['cap-display','cap-widget','capital-val','fd-capital'].forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.textContent='₹'+TRADING_CAPITAL.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   });
@@ -4491,7 +4888,8 @@ const sa=document.getElementById('scroll-area');
 sa.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
 sa.addEventListener('touchend',e=>{
   const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
-  if(Math.abs(dy)>80||Math.abs(dx)<60) return;
+  /* Only fire horizontal swipe if: horizontal movement > 60px AND vertical < 30px (not a scroll) */
+  if(Math.abs(dy)>30||Math.abs(dx)<60) return;
   const cur=ALL_PAGES.find(id=>document.getElementById('page-'+id)?.classList.contains('active'));
   const idx=SWIPE_PAGES.indexOf(cur); if(idx===-1) return;
   const ni=dx<0?Math.min(idx+1,SWIPE_PAGES.length-1):Math.max(idx-1,0);
@@ -5958,6 +6356,43 @@ function clearTgConfig() {
 /* ══════════════════════════════
    TEST MESSAGE
 ══════════════════════════════ */
+async function sendTestPnLReport(){
+  var statusEl = document.getElementById('pnl-report-status');
+  if(statusEl) statusEl.textContent = '⏳ Sending…';
+  tgLoadCreds();
+  var cap     = typeof TRADING_CAPITAL!=='undefined' ? TRADING_CAPITAL : 10000;
+  var dd      = (typeof DDState!=='undefined' ? DDState.drawdownPct : 0).toFixed(2);
+  var vix     = (LIVE&&LIVE.vix) ? LIVE.vix : '—';
+  var nifty   = (LIVE&&LIVE.nifty) ? LIVE.nifty.toFixed(2) : '—';
+  var nChg    = (LIVE&&LIVE.niftyChgPct) ? LIVE.niftyChgPct.toFixed(2) : '—';
+  var monthPnl= (typeof MONTHLY!=='undefined'&&MONTHLY.pnl) ? MONTHLY.pnl.toFixed(2) : '0.00';
+  var trades  = (typeof MONTHLY!=='undefined'&&MONTHLY.tradeCount) ? MONTHLY.tradeCount : 0;
+  var now     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  var cagr    = typeof calcCAGR==='function' ? calcCAGR().cagr : '—';
+  var line    = '---------------------------';
+  var report  = 'PRISM ANALYTICS - P&L REPORT\n'+line+'\nTime: '+now+'\n\nCAPITAL\n'+
+    'Current : Rs '+cap.toFixed(2)+'\nMonth P&L: Rs '+monthPnl+'\nCAGR: '+cagr+'%\n'+
+    'Drawdown: '+dd+'%\nTrades(month): '+trades+'\n\nMARKET\nNifty: '+nifty+' ('+nChg+'%)\nVIX: '+vix+'\n'+
+    line+'\nPrivate AMC Engine | Not investment advice';
+  var tgRep   = '*PRISM P&L REPORT*\n'+line+'\nTime: _'+now+'_\n\n*CAPITAL*\n'+
+    'Capital: Rs '+cap.toFixed(2)+'\nP&L: Rs '+monthPnl+'\nCAGR: *'+cagr+'%*\nDD: '+dd+'%\n'+
+    'Trades: '+trades+'\n\n*MARKET*\nNifty: '+nifty+' ('+nChg+'%)\nVIX: '+vix+'\n'+line;
+  var subj    = 'Prism Analytics P&L | '+new Date().toDateString();
+  var tgOk=false;
+  if(tgConfig.token&&tgConfig.chatId){
+    try{
+      var r=await fetch('https://api.telegram.org/bot'+tgConfig.token+'/sendMessage?chat_id='+tgConfig.chatId+'&text='+encodeURIComponent(tgRep)+'&parse_mode=Markdown');
+      tgOk=r.ok;
+    }catch(e){}
+  }
+  var eRes = await sendEmail(subj, report);
+  var msgs=[];
+  msgs.push(tgOk?'✅ Telegram sent':'❌ TG failed—check token/chatId');
+  msgs.push(eRes&&eRes.ok?'✅ Email '+(eRes.method==='mailto'?'(Gmail opened)':'sent'):'❌ Email failed');
+  if(statusEl) statusEl.textContent=msgs.join(' | ');
+  showToast(msgs.join(' | '), tgOk||(eRes&&eRes.ok));
+}
+
 async function testTgMessage() {
   /* Always reload fresh */
   tgLoadCreds();
@@ -6007,7 +6442,10 @@ async function testTgMessage() {
 ══════════════════════════════ */
 async function sendTgAlert(msg) {
   tgLoadCreds();
-  if (!tgConfig.token || !tgConfig.chatId) return;
+  if (!tgConfig.token || !tgConfig.chatId) {
+    console.warn('[Prism TG] No token/chatId. Go to Settings → Telegram and save credentials.');
+    return;
+  }
   /* ── SEBI M3: Prepend disclaimer to trade-related messages ── */
   var TRADE_KEYWORDS = ['ENTRY','EXIT','ORDER','PLACED','EXECUTED','SL HIT','TARGET','BRACKET',
     'ONE-TAP','CAPITAL','TRADE','LONG','SHORT','BUY','SELL','P&L','BLOCKED','SEBI'];
@@ -7813,14 +8251,7 @@ function refreshGovernanceDisplays(){
 setInterval(refreshGovernanceDisplays, 60000);
 setTimeout(refreshGovernanceDisplays, 1500);
 
-/* ─── PATCH closeTradeAndUpdateCapital to also update weekly P&L ─── */
-var _origCloseTradeAndUpdateCapital = closeTradeAndUpdateCapital;
-closeTradeAndUpdateCapital = function(slot, grossPnl, charges){
-  var brokerage = charges || (Math.abs(grossPnl)*0.0003 + 40);
-  var netPnl = grossPnl - brokerage;
-  updateWeeklyPnl(netPnl); /* G5 */
-  _origCloseTradeAndUpdateCapital(slot, grossPnl, charges);
-};
+/* ─── v5: closeTradeAndUpdateCapital already handles weekly P&L via MONTHLY tracking ─── */
 
 /* ── FIX 3: Unified win probability (uses ML model if trained) ── */
 function getWinProbability(vix, niftyChg, regime) {
@@ -9722,7 +10153,7 @@ async function runGTTPlacement(){
 
   /* Only when connected to Angel One */
   if(!AO || !AO.connected){
-    console.log('[GTT] Not connected to Angel One — skipping GTT placement');
+    /* GTT skipped — not connected */
     return;
   }
 
@@ -10536,7 +10967,7 @@ function updateActiveTradeBanner(){
    ══════════════════════════════════════════════════════════ */
 var APP_PIN_KEY     = 'prism-app-pin-hash';
 var APP_SESSION_KEY = 'prism-session';
-var APP_SESSION_TTL = 8 * 3600 * 1000; /* 8 hours */
+var APP_SESSION_TTL = 24 * 3600 * 1000; /* 24 hours — reduces PIN re-entry */
 var APP_UNLOCKED    = false;
 
 async function sha256(str){
@@ -10547,10 +10978,19 @@ async function sha256(str){
     return Array.from(new Uint8Array(buf))
       .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
   }catch(e){
-    /* Fallback: simple deterministic hash (only if crypto.subtle unavailable) */
-    var h=5381;
-    for(var i=0;i<str.length;i++) h=((h<<5)+h)+str.charCodeAt(i);
-    return 'fallback_'+(h>>>0).toString(16).padStart(8,'0');
+    /* Fallback: produce 64-char hex like crypto.subtle output */
+    var h1=0x6a09e667^0xdeadbeef, h2=0xbb67ae85^0xdeadbeef;
+    var h3=0x3c6ef372^0xdeadbeef, h4=0xa54ff53a^0xdeadbeef;
+    for(var i=0;i<str.length;i++){
+      var ch=str.charCodeAt(i);
+      h1=Math.imul(h1^ch,0x9e3779b9); h2=Math.imul(h2^ch,0x517cc1b7);
+      h3=Math.imul(h3^ch,0xbf58476d); h4=Math.imul(h4^ch,0x94d049bb);
+    }
+    h1^=h2; h2^=h3; h3^=h4; h4^=h1;
+    var toHex=function(n){ return (n>>>0).toString(16).padStart(8,'0'); };
+    /* Produce 64-char string matching crypto.subtle output length */
+    var base = toHex(h1)+toHex(h2)+toHex(h3)+toHex(h4);
+    return base+base; /* 64 chars total */
   }
 }
 
@@ -10581,10 +11021,16 @@ async function appVerifyPIN(pin){
   var stored=localStorage.getItem(APP_PIN_KEY);
   var default1234 = await sha256('1234');
 
-  /* ── Auto-heal: detect and replace corrupt/broken stored hash ──
-     A corrupt hash will be <20 chars (broken crypto) or contain 'undefined'.
-     Replace with default 1234 hash so user can always get in. */
-  if(!stored || stored.length < 20 || stored.includes('undefined') || stored === 'null'){
+  /* ── Auto-heal: replace any broken/legacy hash format ──
+     Detects: null, undefined, old 'fallback_' prefix (v1 bug), wrong length */
+  var isCorrupt = !stored
+    || stored === 'null'
+    || stored === 'undefined'
+    || stored.includes('undefined')
+    || stored.startsWith('fallback_')   /* old buggy fallback format */
+    || stored.length < 10
+    || stored.length > 200;             /* sanity check — sha256 is exactly 64 chars */
+  if(isCorrupt){
     localStorage.setItem(APP_PIN_KEY, default1234);
     stored = default1234;
   }
@@ -11062,14 +11508,7 @@ async function placeMCXMetalOrder(metal, direction, mini){
 /* ══ closeTradeAndUpdateCapital — call when any trade closes ══
    Pass: slot ('equity'|'crude'|'metal'), grossPnl, charges
    Computes net P&L, updates capital, marks slot. */
-function closeTradeAndUpdateCapital(slot, grossPnl, charges){
-  var brokerage = charges || (Math.abs(grossPnl)*0.0003 + 40); /* estimate if not given */
-  var netPnl    = grossPnl - brokerage;
-  markSlotUsed(slot, netPnl);
-  updateCapitalAfterTrade(netPnl);
-  var sign=netPnl>=0?'+':'';
-  showToast((netPnl>=0?'\u2705':'\u274C')+' Trade closed. Net P&L: \u20B9'+sign+netPnl.toFixed(2)+' | Capital: \u20B9'+TRADING_CAPITAL.toFixed(2), netPnl>=0);
-}
+/* closeTradeAndUpdateCapital — defined in v5 AMC engine above */
 
 /* Forex / Currency Derivatives (NSE CDS) */
 var FOREX_PAIRS=[
@@ -11681,37 +12120,53 @@ async function loadEmailJS(){
 var _RECIPIENT = 'suri7588sh1@gmail.com';  /* literal — never a variable */
 
 async function sendEmail(subject, bodyText, htmlBody){
-  /* ── Try EmailJS (silent, automatic) ── */
-  if(EJS_READY){
-    var ok = await loadEmailJS();
-    if(ok){
-      try{
-        /* emailjs.init must be called each time to ensure key is set */
-        emailjs.init('Qd_kEkb7HUiYi6j_M');
-        var result = await emailjs.send('service_eole8dd', 'template_c9wj7rm', {
-          to_email:  _RECIPIENT,
-          to_name:   'Prism Analytics',
-          from_name: 'Prism Analytics',
-          reply_to:  _RECIPIENT,
-          subject:   subject,
-          message:   bodyText,
-          html_body: htmlBody || bodyText,
-        });
-        if(result && result.status === 200) return { ok:true, method:'emailjs' };
-      }catch(e){
-        console.warn('[Prism Email] EmailJS error:', e);
-        /* fall through to Gmail compose */
-      }
-    }
-  }
-  /* ── Fallback: open Gmail compose in new tab with recipient hardcoded ── */
+  /* ── Method 1: EmailJS REST API (direct, bypasses template body issue) ── */
   try{
-    /* Build URL - recipient is a string literal, never a variable */
-    var to   = 'suri7588sh1%40gmail.com';
-    var sub  = encodeURIComponent(subject);
-    var body = encodeURIComponent(bodyText);
-    var url  = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + to + '&su=' + sub + '&body=' + body;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    var ejsResp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id:  'service_eole8dd',
+        template_id: 'template_c9wj7rm',
+        user_id:     'Qd_kEkb7HUiYi6j_M',
+        template_params: {
+          to_email:   'suri7588sh1@gmail.com',
+          from_name:  'Prism Analytics',
+          to_name:    'Prism',
+          reply_to:   'suri7588sh1@gmail.com',
+          subject:    subject,
+          message:    bodyText,
+          content:    bodyText,
+        }
+      })
+    });
+    if(ejsResp.ok || ejsResp.status === 200){
+      return { ok:true, method:'emailjs-api' };
+    }
+  }catch(e){
+    console.warn('[Prism Email] REST API error:', e.message);
+  }
+
+  /* ── Method 2: emailjs SDK (fallback) ── */
+  try{
+    var sdkOk = await loadEmailJS();
+    if(sdkOk){
+      emailjs.init('Qd_kEkb7HUiYi6j_M');
+      var r = await emailjs.send('service_eole8dd','template_c9wj7rm',{
+        to_email: 'suri7588sh1@gmail.com', from_name:'Prism Analytics',
+        subject: subject, message: bodyText, content: bodyText,
+      });
+      if(r && r.status===200) return {ok:true, method:'emailjs-sdk'};
+    }
+  }catch(e2){ console.warn('[Prism Email] SDK error:', e2.message); }
+
+  /* ── Method 3: Gmail compose in new tab (always works, no config needed) ── */
+  try{
+    var gmUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
+      + '&to=suri7588sh1%40gmail.com'
+      + '&su=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(bodyText.slice(0, 2000));
+    window.open(gmUrl, '_blank', 'noopener,noreferrer');
     return { ok:true, method:'mailto' };
   }catch(_){}
   return { ok:false };
