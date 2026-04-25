@@ -96,12 +96,11 @@ body{
 @keyframes sp{to{transform:rotate(360deg)}}
 
 /* ── LAYOUT ── */
-.app-shell{flex:1;display:flex;overflow:hidden;min-height:0;}
-.sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:none;flex-direction:column;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#3b5280 #1a2338;}
+.app-shell{flex:1;display:flex;overflow:hidden;min-height:0;position:relative;}
+.sidebar{flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:none;flex-direction:column;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#3b5280 #1a2338;z-index:500;position:relative;width:220px;}
 .sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:#3b5280;border-radius:4px;}
 @media(min-width:768px){.sidebar{display:flex;width:230px;}}
 @media(min-width:1280px){.sidebar{width:250px;}}
-@media(min-width:1600px){.sidebar{width:270px;}}
 .nav-section{padding:12px 14px 3px;font-size:9px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);}
 .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:12.5px;color:var(--muted);border-left:3px solid transparent;transition:all .15s;user-select:none;}
 .nav-item:hover{background:var(--bbg);color:var(--text);}
@@ -138,85 +137,28 @@ body{
 /* Firefox */
 .scroll-area { scrollbar-width:thin; scrollbar-color:#4f6fa0 #0f172a; }
 /* Light theme */
-[data-theme="light"] .scroll-area::-webkit-scrollbar { background:#f1f5f9; }
-[data-theme="light"] .scroll-area::-webkit-scrollbar-track { background:#f1f5f9; }
-[data-theme="light"] .scroll-area::-webkit-scrollbar-thumb { background:#94a3b8; border:2px solid #f1f5f9; }
-[data-theme="light"] .scroll-area { scrollbar-color:#94a3b8 #f1f5f9; }
-
-/* ── HORIZONTAL SCROLLBAR (appears only when content wider than viewport) ── */
-.scroll-area::-webkit-scrollbar-corner { background:#1a2338; }
-
-/* ── LIGHT THEME scrollbar ── */
 [data-theme="light"] .scroll-area::-webkit-scrollbar       { background:#e2e8f0; }
 [data-theme="light"] .scroll-area::-webkit-scrollbar-track { background:#e2e8f0; border-left:1px solid rgba(0,0,0,0.08); }
 [data-theme="light"] .scroll-area::-webkit-scrollbar-thumb { background:#94a3b8; border:2px solid #e2e8f0; }
 [data-theme="light"] .scroll-area::-webkit-scrollbar-thumb:hover { background:#64748b; }
 [data-theme="light"] .scroll-area { scrollbar-color:#94a3b8 #e2e8f0; }
+/* ── HORIZONTAL SCROLLBAR (appears only when content wider than viewport) ── */
+.scroll-area::-webkit-scrollbar-corner { background:#1a2338; }
 
-/* ── PAGE-CONTENT: base rule FIRST, then responsive overrides ──
-   IMPORTANT: base must come before @media so media queries win in cascade */
+/* ── LIGHT THEME scrollbar ── */
+
+/* ── PAGE-CONTENT: single-column flex, responsive padding ── */
 .page-content{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
   padding:12px;
-  /* Safe-area padding: clears bottom nav (60px) + home indicator on notched phones */
   padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px));
   box-sizing:border-box;
   width:100%;
-  max-width:100%;
 }
-
-/* ── DESKTOP: 2-column responsive layout using flexbox wrap ── */
-@media(min-width:768px){
-  .page-content{
-    display:flex;
-    flex-flow:row wrap;
-    gap:16px;
-    padding:20px;
-    padding-bottom:20px;
-    align-items:flex-start;
-  }
-  /* Default: cards take 50% width minus gap */
-  .page-content > .card,
-  .page-content > div.card {
-    flex:0 0 calc(50% - 8px);
-    min-width:0;
-    box-sizing:border-box;
-  }
-  /* Full-width items */
-  .page-content > .alert,
-  .page-content > .phase-banner,
-  .page-content > .tiles-4,
-  .page-content > .chart-card,
-  .page-content > .card-full {
-    flex:0 0 100%;
-    width:100%;
-  }
-}
-
-@media(min-width:1280px){
-  .page-content{
-    gap:18px;
-    padding:24px;
-  }
-  .page-content > .card,
-  .page-content > div.card {
-    flex:0 0 calc(33.333% - 12px);
-  }
-}
-
-/* Mobile: single column */
-@media(max-width:767px){
-  .page-content{
-    display:flex;
-    flex-direction:column;
-    padding:12px;
-    padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px));
-    gap:12px;
-  }
-}
-
-/* ── Cards: visible overflow so content isn't clipped ── */
-.card { max-width:100%; box-sizing:border-box; overflow:visible; }
-.page-content > * { min-width:0; max-width:100%; }
+@media(min-width:768px){.page-content{padding:16px;padding-bottom:16px;gap:14px;}}
+@media(min-width:1280px){.page-content{padding:20px;gap:16px;}}
 
 /* ── Horizontal scroll INSIDE cards (tables, option chains) ── */
 .options-table-wrap, .chain-wrap, .table-scroll {
@@ -237,7 +179,7 @@ body{
 .bottom-nav{
   height:60px;
   flex-shrink:0;
-  z-index:300;
+  z-index:1000;
   background:var(--bg2);
   border-top:1px solid var(--border);
   display:flex;
@@ -251,7 +193,7 @@ body{
 @media(min-width:768px){.topbar{padding:0 20px;}.market-bar{padding:0 4px;}}
 
 /* ── PAGE VISIBILITY ── */
-.page{display:none;}.page.active{display:block;}
+.page{display:none !important;}.page.active{display:block !important;}
 .bnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 4px;cursor:pointer;color:var(--muted);transition:color .15s;background:none;border:none;font-family:'Outfit',sans-serif;min-height:44px;}
 .bnav-btn.active{color:var(--blue);}
 .bnav-icon{font-size:20px;line-height:1;}
@@ -4703,7 +4645,7 @@ function updateFundDashboard(){
 setTimeout(updateFundDashboard, 2000);
 
 /* ── Legacy capital functions ── */
-/* Legacy saveCapital removed — v5 version defined above */
+
 function updateCapitalAfterTrade(netPnl){
   if(typeof netPnl !== 'number' || isNaN(netPnl)) return;
   /* Capital floor: ₹8000 → 0.5% risk, but capital itself can go below (no artificial floor) */
@@ -10139,7 +10081,7 @@ async function runGTTPlacement(){
   /* Only run once per day */
   var today = new Date().toDateString();
   if(GTT_STATE.placedDate === today && GTT_STATE.status === 'active'){
-    console.log('[GTT] Already placed for today');
+    /* logged */
     return;
   }
 
@@ -10772,7 +10714,7 @@ function startPostExecutionMonitor(){
   _monitorInterval = setInterval(async function(){
     await autoMonitorPosition();
   }, 60000); /* check every 60s */
-  console.log('[Prism] Post-execution monitor started');
+  /* logged */
 }
 
 function stopPostExecutionMonitor(){
@@ -11656,7 +11598,7 @@ function buildAIPrompt(){
 async function callClaudeAPI(prompt){
   var apiKey = '';
   try{
-    var stored = JSON.parse(localStorage.getItem('prism-vault-v1')||'{}');
+    var stored = JSON.parse(localStorage.getItem(typeof VAULT_KEY!=='undefined'?VAULT_KEY:'prism-vault-v1')||'{}');
     apiKey = stored['v-claude'] || '';
   }catch(_){}
   if(!apiKey || !apiKey.startsWith('sk-ant-')){
@@ -12056,7 +11998,7 @@ setTimeout(function(){
     };
     /* Also persist to localStorage so it survives page refresh */
     if(typeof saveP3 === 'function') saveP3();
-    console.log('[Prism ML] Pre-trained model injected. Accuracy:', TRAINED_ACC + '%');
+    /* logged */
     /* Update UI if ML page is visible */
     if(typeof updateModelDashboard === 'function') setTimeout(updateModelDashboard, 500);
   }
@@ -12436,7 +12378,7 @@ function buildAuditReport(){
 async function sendDailyAuditEmail(){
   var report = buildAuditReport();
   var today  = report.today;
-  if(_auditSentDate === today){ console.log('[Prism Audit] Already sent for', today); return; }
+  if(_auditSentDate === today){ /* logged */ }
   _auditSentDate = today;
   try{ localStorage.setItem('prism-audit-sent', today); }catch(_){}
 
