@@ -126,8 +126,7 @@ body{
   scroll-behavior:smooth;
   overscroll-behavior-y:contain;
   scrollbar-gutter:stable;
-  touch-action:pan-y;         /* tell browser: vertical scroll only — don't intercept */
-  will-change:scroll-position; /* GPU layer — smoother scroll on mobile */
+  /* NO touch-action here — it blocks nav button taps on mobile */
 }
 
 /* ── SCROLLBAR — always visible, high contrast ── */
@@ -4704,14 +4703,7 @@ function updateFundDashboard(){
 setTimeout(updateFundDashboard, 2000);
 
 /* ── Legacy capital functions ── */
-var CAPITAL_KEY = 'prism-trading-capital';
-var BASE_CAPITAL = 10000;
-function saveCapital(){
-  try{ localStorage.setItem(CAPITAL_KEY, JSON.stringify({
-    capital: TRADING_CAPITAL, updated: new Date().toISOString(),
-    base: BASE_CAPITAL, totalReturn: +((TRADING_CAPITAL-BASE_CAPITAL)/BASE_CAPITAL*100).toFixed(2)
-  })); }catch(_){}
-}
+/* Legacy saveCapital removed — v5 version defined above */
 function updateCapitalAfterTrade(netPnl){
   if(typeof netPnl !== 'number' || isNaN(netPnl)) return;
   /* Capital floor: ₹8000 → 0.5% risk, but capital itself can go below (no artificial floor) */
@@ -4888,8 +4880,8 @@ const sa=document.getElementById('scroll-area');
 sa.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
 sa.addEventListener('touchend',e=>{
   const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
-  /* Only fire horizontal swipe if: horizontal movement > 60px AND vertical < 30px (not a scroll) */
-  if(Math.abs(dy)>30||Math.abs(dx)<60) return;
+  /* Only trigger horizontal page swipe — vertical movement > 50px = scroll, not swipe */
+  if(Math.abs(dy)>50||Math.abs(dx)<70) return;
   const cur=ALL_PAGES.find(id=>document.getElementById('page-'+id)?.classList.contains('active'));
   const idx=SWIPE_PAGES.indexOf(cur); if(idx===-1) return;
   const ni=dx<0?Math.min(idx+1,SWIPE_PAGES.length-1):Math.max(idx-1,0);
@@ -11021,15 +11013,13 @@ async function appVerifyPIN(pin){
   var stored=localStorage.getItem(APP_PIN_KEY);
   var default1234 = await sha256('1234');
 
-  /* ── Auto-heal: replace any broken/legacy hash format ──
-     Detects: null, undefined, old 'fallback_' prefix (v1 bug), wrong length */
+  /* ── Auto-heal: ONLY if hash is completely missing or clearly invalid ── */
   var isCorrupt = !stored
     || stored === 'null'
     || stored === 'undefined'
-    || stored.includes('undefined')
-    || stored.startsWith('fallback_')   /* old buggy fallback format */
-    || stored.length < 10
-    || stored.length > 200;             /* sanity check — sha256 is exactly 64 chars */
+    || stored.length === 0
+    || stored.startsWith('fallback_');  /* old buggy format from v1 */
+  /* Note: do NOT check length — valid hashes can vary in length */
   if(isCorrupt){
     localStorage.setItem(APP_PIN_KEY, default1234);
     stored = default1234;
@@ -12569,93 +12559,7 @@ function renderShortPositions(){
 
 
 /* ══ PRISM SIMULATION: April 24 2026 — auto-fires once ══ */
-(async function sendApril24Report(){
-  var SENT_KEY = 'prism-sim-apr24-2026';
-  try{ if(localStorage.getItem(SENT_KEY)) return; localStorage.setItem(SENT_KEY,'1'); }catch(_){ return; }
-  await new Promise(function(r){ setTimeout(r, 3000); }); /* wait 3s for app to init */
-
-  var capital  = (typeof TRADING_CAPITAL !== 'undefined' ? TRADING_CAPITAL : null) || 10000;
-  var vix      = 19.70;
-  var vixMult  = 1.0; /* VIX 19.7 is within 15-20 range */
-  var risk1pct = capital * 0.01 * vixMult;
-
-  /* Trade: SHORT INFOSYS MIS */
-  var entry    = 1259.50;
-  var atrVal   = entry * 0.012;
-  var sl       = +(entry + atrVal).toFixed(2);
-  var tgt      = +(entry - atrVal * 2).toFixed(2);
-  var qty      = Math.max(1, Math.floor(risk1pct / atrVal));
-  var exitPx   = 1231.40;
-  var gross    = +((entry - exitPx) * qty).toFixed(2);
-  var charges  = +(40 + Math.abs(gross)*0.0003 + 2.95 + 0.77 + 0.08 + 7.20).toFixed(2);
-  var net      = +(gross - charges).toFixed(2);
-  var capNew   = +(capital + net).toFixed(2);
-  var sign     = net >= 0 ? '+' : '';
-
-  if(typeof closeTradeAndUpdateCapital === 'function'){
-    closeTradeAndUpdateCapital('equity', gross, charges);
-  } else if(typeof TRADING_CAPITAL !== 'undefined'){
-    TRADING_CAPITAL = capNew;
-    if(typeof saveCapital === 'function') saveCapital();
-  }
-
-  var line = '------------------------------';
-  var tg =
-    'PRISM ANALYTICS - DAILY P&L REPORT\n' + line + '\n' +
-    'Date: April 24, 2026 (Friday)\n\n' +
-    'MARKET SNAPSHOT\n' +
-    'Nifty 50    : 23,897.95  (-1.14%)\n' +
-    'Bank Nifty  : 55,956.85  (-0.62%)\n' +
-    'India VIX   : 19.70  (+6.0%  SPIKED)\n' +
-    'FII Flow    : -Rs 8,827 Cr  (MEGA SELL)\n' +
-    'DII Flow    : +Rs 4,700 Cr  (counter)\n' +
-    'Crude (WTI) : $82.59  (+9.41%  Hormuz)\n' +
-    line + '\n' +
-    'TRADE EXECUTED\n' +
-    'Stock   : INFOSYS (INFY-NSE)\n' +
-    'Type    : SHORT MIS (Intraday)\n' +
-    'Entry   : Rs ' + entry + '  (9:25 AM)\n' +
-    'Exit    : Rs ' + exitPx + '  (2:48 PM)\n' +
-    'SL      : Rs ' + sl + '  (never hit)\n' +
-    'Target  : Rs ' + tgt + '\n' +
-    'Qty     : ' + qty + ' shares\n' +
-    'Gross   : +Rs ' + gross + '\n' +
-    'Charges : -Rs ' + charges + '\n' +
-    'NET P&L : ' + sign + 'Rs ' + net + '  WIN\n' +
-    line + '\n' +
-    'CAPITAL\n' +
-    'Previous : Rs ' + capital.toFixed(2) + '\n' +
-    'P&L      : ' + sign + 'Rs ' + net + '\n' +
-    'NEW      : Rs ' + capNew + '\n' +
-    line + '\n' +
-    'GOVERNANCE\n' +
-    '1% risk rule   : PASS (Rs ' + risk1pct.toFixed(0) + ' risked)\n' +
-    'VIX sizing     : PASS (100% size @ VIX 19.7)\n' +
-    'SL respected   : PASS\n' +
-    'No-trade zones : PASS\n' +
-    'SEBI MIS rules : PASS\n' +
-    line + '\n' +
-    'WHY THIS TRADE:\n' +
-    'FII sold Rs 8,827 Cr - biggest selloff in months.\n' +
-    'Infosys gapped down 7% on Q4 miss. VIX +6%.\n' +
-    'Nifty IT index crashed 5%+. Short INFY was the\n' +
-    'highest conviction bearish setup of the day.\n' +
-    line + '\n' +
-    'Private AMC Engine | Not investment advice';
-
-  var subj = 'Prism Analytics - P&L ' + sign + 'Rs ' + net + ' | Apr 24 2026';
-
-  if(typeof sendTgAlert === 'function'){
-    sendTgAlert('*' + subj + '*\n\n' + tg);
-  }
-  if(typeof sendEmail === 'function'){
-    var res = await sendEmail(subj, tg);
-    var msg = (res && res.ok && res.method === 'emailjs')
-      ? 'P&L report sent to Telegram + Gmail!'
-      : 'P&L sent to Telegram. Check Gmail compose tab.';
-    if(typeof showToast === 'function') showToast(msg, true);
-  }
-})();
+/* April 24 simulation removed — use Send P&L Now button in Telegram page */
 
 </script>
 </body>
