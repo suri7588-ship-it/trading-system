@@ -193,7 +193,7 @@ body{
 @media(min-width:768px){.topbar{padding:0 20px;}.market-bar{padding:0 4px;}}
 
 /* ── PAGE VISIBILITY ── */
-.page{display:none !important;}.page.active{display:block !important;}
+.page{display:none;}.page.active{display:block;}
 .bnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 4px;cursor:pointer;color:var(--muted);transition:color .15s;background:none;border:none;font-family:'Outfit',sans-serif;min-height:44px;}
 .bnav-btn.active{color:var(--blue);}
 .bnav-icon{font-size:20px;line-height:1;}
@@ -4757,23 +4757,31 @@ setInterval(()=>{
 },1000);
 
 /* ── NAVIGATION ── */
-function nav(id,el,src){
-  try {
-    /* Hide all pages */
-    var _pages = typeof ALL_PAGES !== 'undefined' ? ALL_PAGES : [];
-    _pages.forEach(function(p){
+function nav(id, el, src){
+  try{
+    var pages = typeof ALL_PAGES !== 'undefined' ? ALL_PAGES : [];
+
+    /* Hide ALL pages via direct style — never fails on any mobile browser */
+    pages.forEach(function(p){
       var pg = document.getElementById('page-'+p);
-      if(pg) pg.classList.remove('active');
+      if(pg){ pg.style.display='none'; pg.classList.remove('active'); }
     });
+
     /* Show target page */
     var t = document.getElementById('page-'+id);
-    if(t) t.classList.add('active');
+    if(t){ t.style.display='block'; t.classList.add('active'); }
+
     /* Scroll to top */
     var sa = document.getElementById('scroll-area');
     if(sa) sa.scrollTop = 0;
-    /* Update nav highlights */
-    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-    document.querySelectorAll('.bnav-btn').forEach(function(b){ b.classList.remove('active'); });
+
+    /* Update sidebar nav highlights */
+    document.querySelectorAll('.nav-item').forEach(function(n){
+      n.classList.remove('active');
+    });
+    document.querySelectorAll('.bnav-btn').forEach(function(b){
+      b.classList.remove('active');
+    });
     if(el) el.classList.add('active');
     if(src==='bn'){
       document.querySelectorAll('.nav-item').forEach(function(n){
@@ -4783,36 +4791,33 @@ function nav(id,el,src){
       var bn = document.getElementById('bn-'+id);
       if(bn) bn.classList.add('active');
     }
-    /* Page init hooks */
+
+    /* Page-specific init hooks */
     if(id==='orders')    { if(typeof renderOrders==='function') renderOrders(); }
     if(id==='journal')   { if(typeof renderJournal==='function') renderJournal(); }
-    if(id==='risk')      { if(typeof updateRiskPage==='function') updateRiskPage(); }
-    if(id==='portfolio') { if(typeof updatePortfolio==='function') updatePortfolio(); }
+    if(id==='risk')      { if(typeof updateRiskPage==='function') updateRiskPage(); if(typeof updateRiskPageFull==='function') setTimeout(updateRiskPageFull,200); }
+    if(id==='portfolio') { if(typeof updatePortfolio==='function') updatePortfolio(); if(typeof updateFundDashboard==='function') setTimeout(updateFundDashboard,100); }
     if(id==='ai-engine') { if(typeof updateAIEnginePage==='function') updateAIEnginePage(); }
     if(id==='screener')  { if(typeof runScreener==='function' && wlData && wlData.length) runScreener(); }
     if(id==='backtest')  { setTimeout(function(){ if(typeof runBacktest==='function') runBacktest(); },80); }
     if(id==='telegram')  { if(typeof initTelegramPage==='function') initTelegramPage(); if(typeof loadEJSInputs==='function') setTimeout(loadEJSInputs,100); }
-    if(id==='settings')  { if(typeof loadSettings==='function') loadSettings(); if(typeof loadEmailSettings==='function') setTimeout(loadEmailSettings,100); }
+    if(id==='settings')  { if(typeof loadSettings==='function') loadSettings(); }
     if(id==='learning')  { if(typeof updateLearningDashboard==='function') updateLearningDashboard(); }
     if(id==='options')   { if(typeof buildOptionsChain==='function') buildOptionsChain(); }
     if(id==='smartmoney'){ if(typeof updateSmartMoney==='function') updateSmartMoney(); }
     if(id==='fiidii')    { if(typeof buildFIIDII==='function') buildFIIDII(); }
-    if(id==='sectorrsi') { if(typeof buildSectorRSI==='function') buildSectorRSI(); setTimeout(function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); },2000); }
+    if(id==='sectorrsi') { if(typeof buildSectorRSI==='function') buildSectorRSI(); }
     if(id==='global')    { if(typeof fetchGlobalMarkets==='function') fetchGlobalMarkets(); }
     if(id==='ml')        { if(typeof updateMLLivePrediction==='function') try{updateMLLivePrediction();}catch(_){} }
     if(id==='modeldash') { if(typeof updateModelDashboard==='function') updateModelDashboard(); }
-    if(id==='risk')      { if(typeof updateRiskPageFull==='function') updateRiskPageFull(); }
-    if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); }
+    if(id==='governance'){ if(typeof syncGovernanceFromSignal==='function' && window._lastTrade) syncGovernanceFromSignal(); setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); },200); }
+    if(id==='charts')    { if(typeof loadChartJS==='function') loadChartJS(); }
+    if(id==='news')      { if(typeof fetchNews==='function') setTimeout(fetchNews,50); }
+    if(id==='prices')    { setTimeout(function(){ if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines(); },500); }
+    if(id==='vault')     { if(typeof showVaultUnlocked==='function' && typeof vaultUnlocked!=='undefined' && vaultUnlocked) setTimeout(function(){ if(typeof loadEJSInputs==='function') loadEJSInputs(); },100); }
 
-    /* Post-nav page enhancements */
-    if(id==='sectorrsi') { setTimeout(function(){ if(typeof buildSectorRSI==='function') buildSectorRSI(); }, 500); }
-    if(id==='risk')      { setTimeout(function(){ if(typeof refreshRiskDisplay==='function') refreshRiskDisplay(); }, 200); }
-    if(id==='governance'){ setTimeout(function(){ if(typeof runGovernance==='function') runGovernance(); }, 200); }
-    if(id==='prices')    { setTimeout(function(){ if(typeof updateAdvancesDeclines==='function') updateAdvancesDeclines(); }, 500); }
-    if(id==='charts')    { loadChartJS(); }
-    if(id==='news')      { if(typeof fetchNews==='function') setTimeout(fetchNews, 50); }
-  } catch(navErr) {
-    console.error('nav() error for page '+id+':', navErr);
+  }catch(navErr){
+    console.error('nav() error:',navErr);
   }
 }
 
@@ -9882,7 +9887,40 @@ Object.defineProperty(window, 'OT_EXECUTED', {
   configurable: true
 });
 
-/* ── Reset OT_EXECUTED on new day ── */
+/* ══ MOBILE NAV — direct touch listeners on all nav buttons ══
+   Fires nav() immediately on touchend without waiting for click event synthesis.
+   This ensures navigation works on ALL mobile browsers regardless of CSS/event quirks. */
+function wireNavTouchListeners(){
+  /* Bottom nav buttons */
+  document.querySelectorAll('.bnav-btn').forEach(function(btn){
+    btn.addEventListener('touchend', function(e){
+      e.preventDefault(); /* prevent double-fire with click */
+      var oc = btn.getAttribute('onclick')||'';
+      var match = oc.match(/nav\('([^']+)'/);
+      if(match) nav(match[1], btn, 'bn');
+    }, {passive:false});
+  });
+
+  /* Sidebar nav items */
+  document.querySelectorAll('.nav-item').forEach(function(item){
+    item.addEventListener('touchend', function(e){
+      e.preventDefault();
+      var oc = item.getAttribute('onclick')||'';
+      var match = oc.match(/nav\('([^']+)'/);
+      if(match) nav(match[1], item, 'sidebar');
+    }, {passive:false});
+  });
+}
+
+/* Wire on app load */
+setTimeout(wireNavTouchListeners, 500);
+
+/* Also wire after login (in case app-root was hidden during initial wire) */
+var _origAppLogin = appLogin;
+appLogin = async function(){
+  await _origAppLogin();
+  setTimeout(wireNavTouchListeners, 300);
+};
 (function checkOTExecFlag(){
   try{
     var stored = localStorage.getItem('prism-ot-exec');
@@ -11001,6 +11039,11 @@ async function appLogin(){
     }catch(_){}
     document.getElementById('app-pin-gate').style.display = 'none';
     document.getElementById('app-root').style.display     = 'block';
+    /* Explicitly show dashboard */
+    var dash = document.getElementById('page-dashboard');
+    if(dash){ dash.style.display='block'; dash.classList.add('active'); }
+    /* Wire touch listeners */
+    setTimeout(wireNavTouchListeners, 200);
     /* Init app */
     if(typeof fetchAll==='function') fetchAll();
     if(typeof initTelegramPage==='function') initTelegramPage();
@@ -11213,6 +11256,11 @@ async function confirmPINReset(){
   if(sessionOk){
     pinGate.style.display = 'none';
     appRoot.style.display = 'block';
+    /* Explicitly show dashboard page via style (belt+suspenders) */
+    var dashPage = document.getElementById('page-dashboard');
+    if(dashPage){ dashPage.style.display='block'; dashPage.classList.add('active'); }
+    /* Wire touch listeners now that app is visible */
+    setTimeout(wireNavTouchListeners, 200);
     /* Init app normally */
     if(typeof fetchAll==='function') fetchAll();
     if(typeof initTelegramPage==='function') initTelegramPage();
