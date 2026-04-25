@@ -12514,6 +12514,118 @@ function renderShortPositions(){
 /* ══ PRISM SIMULATION: April 24 2026 — auto-fires once ══ */
 /* April 24 simulation removed — use Send P&L Now button in Telegram page */
 
+
+/* ═══════════════════════════════════════════════════════
+   BULLETPROOF NAV — runs last, overrides everything
+   Uses direct DOM style manipulation, no CSS dependency
+═══════════════════════════════════════════════════════ */
+(function(){
+  var ALL_P = typeof ALL_PAGES !== 'undefined' ? ALL_PAGES : [
+    'dashboard','prices','mcx','governance','signals','trade-engine','orders',
+    'portfolio','ai-engine','screener','backtest','journal','risk','telegram',
+    'vault','settings','learning','options','smartmoney','news','fiidii',
+    'sectorrsi','global','ml','histbt','walkfwd','rl','modeldash','charts',
+    'angelone','forex','short'
+  ];
+
+  /* Core show-page function */
+  function goPage(id){
+    if(!id) return;
+    /* Hide all */
+    ALL_P.forEach(function(p){
+      var el=document.getElementById('page-'+p);
+      if(el) el.style.cssText='display:none';
+    });
+    /* Show target */
+    var t=document.getElementById('page-'+id);
+    if(t) t.style.cssText='display:block';
+    /* Scroll to top */
+    var sa=document.getElementById('scroll-area');
+    if(sa) sa.scrollTop=0;
+    /* Highlight nav */
+    document.querySelectorAll('.nav-item,.bnav-btn').forEach(function(n){
+      n.classList.remove('active');
+    });
+    var match_attr="'"+id+"'";
+    document.querySelectorAll('.nav-item[onclick*="'+id+'"]').forEach(function(n){
+      n.classList.add('active');
+    });
+    var bn=document.getElementById('bn-'+id);
+    if(bn) bn.classList.add('active');
+    /* Call page init if nav() is available */
+    if(typeof nav==='function') try{ nav(id,null,'_override'); }catch(_){}
+    return false;
+  }
+  window._goPage = goPage;
+
+  /* Wire ALL nav items and buttons with both click + touch */
+  function wireAll(){
+    /* Sidebar nav items */
+    document.querySelectorAll('.nav-item').forEach(function(el){
+      var oc=el.getAttribute('onclick')||'';
+      var m=oc.match(/nav\('([^']+)'/);
+      if(!m) return;
+      var pageId=m[1];
+      /* Replace onclick entirely */
+      el.setAttribute('onclick','_goPage("'+pageId+'");return false;');
+      /* Backup click listener */
+      el.addEventListener('click',function(e){
+        e.stopPropagation();
+        goPage(pageId);
+      });
+    });
+
+    /* Bottom nav buttons */
+    document.querySelectorAll('.bnav-btn').forEach(function(el){
+      var oc=el.getAttribute('onclick')||'';
+      var m=oc.match(/nav\('([^']+)'/);
+      if(!m) return;
+      var pageId=m[1];
+      el.setAttribute('onclick','_goPage("'+pageId+'");return false;');
+      el.addEventListener('click',function(e){
+        e.stopPropagation();
+        goPage(pageId);
+      });
+    });
+
+    /* Show dashboard by default if nothing else is shown */
+    var anyVisible=ALL_P.some(function(p){
+      var el=document.getElementById('page-'+p);
+      return el && el.style.display==='block';
+    });
+    if(!anyVisible) goPage('dashboard');
+  }
+
+  /* Wire immediately */
+  wireAll();
+
+  /* Also wire after login (case: gate was covering DOM) */
+  var _origNav = typeof nav==='function' ? nav : null;
+  window.nav = function(id,el,src){
+    goPage(id);
+    if(_origNav && src !== '_override'){
+      try{ _origNav(id,el,src); }catch(_){}
+    }
+  };
+
+  /* Re-wire after any DOM changes (MutationObserver) */
+  if(typeof MutationObserver !== 'undefined'){
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        if(muts[i].type==='attributes' && muts[i].attributeName==='style'){
+          var t=muts[i].target;
+          if(t && t.id==='app-root' && t.style.display==='block'){
+            setTimeout(wireAll, 100);
+            break;
+          }
+        }
+      }
+    });
+    var ar=document.getElementById('app-root');
+    if(ar) obs.observe(ar,{attributes:true});
+  }
+})();
+
 </script>
 </body>
 </html>
