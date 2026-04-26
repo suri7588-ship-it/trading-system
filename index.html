@@ -1175,13 +1175,22 @@ function applyQuote(sym, p, c, pct){
     setText('mcx-crude','₹'+p.toFixed(0)); setColor('mcx-crude',color);
     setText('mcx-crude-c',sign+pct.toFixed(2)+'%'); setColor('mcx-crude-c',color);
   }
+  if(sym==='SILVER'){
+    var sstr='₹'+p.toLocaleString('en-IN');
+    setText('mcx-silver',sstr); setColor('mcx-silver',color);
+    setText('mcx-silver-c',sign+pct.toFixed(2)+'%'); setColor('mcx-silver-c',color);
+  }
+  if(sym==='COPPER'){
+    setText('mcx-copper','₹'+p.toFixed(1)+'/kg'); setColor('mcx-copper',color);
+    setText('mcx-copper-c',sign+pct.toFixed(2)+'%'); setColor('mcx-copper-c',color);
+  }
 }
 
 
 /* SOURCE 1: Yahoo Finance via proxies — fetches each symbol group */
 async function fetchYahoo(){
   /* Fetch indices + USDINR + GOLDBEES in one call */
-  var syms=['^NSEI','^BSESN','^NSEBANK','^INDIAVIX','USDINR=X','GOLDBEES.NS'];
+  var syms=['^NSEI','^BSESN','^NSEBANK','^INDIAVIX','USDINR=X','GOLDBEES.NS','SI=F','HG=F'];
   var qurl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+
     syms.map(encodeURIComponent).join(',')+'&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent';
 
@@ -1203,11 +1212,23 @@ async function fetchYahoo(){
       q.forEach(function(s){
         var p=s.regularMarketPrice,c=s.regularMarketChange||0,pct=s.regularMarketChangePercent||0;
         var map={'^NSEI':'^NSEI','^BSESN':'^BSESN','^NSEBANK':'^NSEBANK',
-          '^INDIAVIX':'VIX','USDINR=X':'USDINR','GOLDBEES.NS':'GOLD'};
+          '^INDIAVIX':'VIX','USDINR=X':'USDINR','GOLDBEES.NS':'GOLD',
+          'SI=F':'SILVER_USD','HG=F':'COPPER_USD'};
         if(map[s.symbol]){
-          /* GOLDBEES.NS → convert to MCX gold equivalent (×100 ≈ price per 10g) */
           var adjP = s.symbol==='GOLDBEES.NS' ? p*100 : p;
           var adjC = s.symbol==='GOLDBEES.NS' ? c*100 : c;
+          /* Silver (SI=F) = USD/troy oz → convert to INR/kg: ×84.47 USD/INR × 32.15 oz/kg */
+          if(s.symbol==='SI=F'){
+            var usdInr=LIVE['USDINR']?LIVE['USDINR'].p:84.47;
+            adjP=+(p*usdInr*32.1507).toFixed(0); adjC=+(c*usdInr*32.1507).toFixed(0);
+            applyQuote('SILVER',adjP,adjC,pct); got=true; return;
+          }
+          /* Copper (HG=F) = USD/lb → convert to INR/kg: ×84.47 × 2.2046 lb/kg */
+          if(s.symbol==='HG=F'){
+            var usdInr2=LIVE['USDINR']?LIVE['USDINR'].p:84.47;
+            adjP=+(p*usdInr2*2.2046).toFixed(1); adjC=+(c*usdInr2*2.2046).toFixed(1);
+            applyQuote('COPPER',adjP,adjC,pct); got=true; return;
+          }
           applyQuote(map[s.symbol], adjP, adjC, pct);
           got=true;
         }
@@ -1273,6 +1294,8 @@ function useFallbackPrices(){
     {sym:'USDINR', p:84.47,    c:-0.10,   pct:-0.12},
     {sym:'GOLD',   p:151310,   c:-450,    pct:-0.30},
     {sym:'CRUDE',  p:7320,     c:690,     pct:10.41},
+    {sym:'SILVER', p:240775,   c:-750,    pct:-0.31},
+    {sym:'COPPER', p:832,      c:5,       pct:0.60},
   ];
   known.forEach(function(k){ applyQuote(k.sym,k.p,k.c,k.pct); });
   setText('d-nifty', '24,039.35 (+0.59%) ★Last Close');
