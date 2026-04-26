@@ -1013,7 +1013,9 @@ function nav(id){
   /* Page hooks */
   var hooks={
     portfolio:updatePortfolio, risk:updateRisk,
-    governance:updateGovernance, dashboard:updateDashboard
+    governance:updateGovernance, dashboard:updateDashboard,
+    short:updateShortSelling, prices:updatePricesTable,
+    forex:updateForexPage, mcx:updateMCXPage
   };
   if(hooks[id]) try{hooks[id]();}catch(_){}
 }
@@ -1338,6 +1340,9 @@ async function fetchLive(){
     updatePricesTable();
     updateGovernance();
     updateDashboard();
+    updateShortSelling();
+    updateForexPage();
+    updateMCXPage();
   }finally{
     _fetchingLive=false;
   }
@@ -1465,6 +1470,58 @@ function updateCAGR(){
     badge.textContent = bl;
     badge.className   = 'badge '+(cagrYearly>=12?'badge-g':cagrYearly>0?'badge-b':'badge-a');
   }
+}
+
+function updateShortSelling(){
+  var vix    = LIVE['VIX']    ? LIVE['VIX'].p    : null;
+  var nifty  = LIVE['^NSEI']  ? LIVE['^NSEI']    : null;
+  var regime = vix ? (vix>25?'HIGH VOLATILITY':vix>20?'Cautious/Bearish':vix>15?'Normal':'Trending/Bullish') : '—';
+  var bias   = nifty && nifty.pct < -0.5 ? 'BEARISH ↓ — Short bias confirmed' :
+               nifty && nifty.pct > 0.5  ? 'BULLISH ↑ — Avoid shorts today'   : 'NEUTRAL — Wait for clear signal';
+  var sector = nifty && nifty.pct < -1   ? 'IT / Pharma (defensive sell)' :
+               nifty && nifty.pct < 0    ? 'Auto / Metal (cyclical weakness)' : 'No clear short sector';
+
+  setText('ss-fii','Data via Angel One (connect to see)');
+  setText('ss-regime', regime); setColor('ss-regime', vix&&vix>20?'var(--red)':vix&&vix<15?'var(--green)':'var(--amber)');
+  setText('ss-vix', vix ? vix.toFixed(2)+' ('+( vix>25?'⚠️ High':vix>20?'Elevated':'Normal')+')' : '—');
+  setColor('ss-vix', vix&&vix>20?'var(--red)':'var(--green)');
+  setText('ss-sector', sector);
+  setText('d-regime', regime.split('/')[0]);
+}
+
+function updateForexPage(){
+  var pairs = [
+    {sym:'USDINR', id:'fx-usdinr', label:'USD/INR'},
+    {sym:'EURINR', id:'fx-eurinr', label:'EUR/INR'},
+    {sym:'GBPINR', id:'fx-gbpinr', label:'GBP/INR'},
+  ];
+  pairs.forEach(function(p){
+    var d=LIVE[p.sym];
+    if(!d) return;
+    var color=d.c>=0?'var(--green)':'var(--red)';
+    var sign=d.c>=0?'+':'';
+    setText(p.id,'₹'+d.p.toFixed(2)); setColor(p.id,color);
+    setText(p.id+'-c',sign+d.pct.toFixed(2)+'%'); setColor(p.id+'-c',color);
+  });
+  var wti=LIVE['WTI'];
+  if(wti){
+    var wc=wti.c>=0?'var(--green)':'var(--red)';
+    var ws=wti.c>=0?'+':'';
+    setText('fx-wti','$'+wti.p.toFixed(2)); setColor('fx-wti',wc);
+    setText('fx-wti-c',ws+wti.pct.toFixed(2)+'%'); setColor('fx-wti-c',wc);
+  }
+}
+
+function updateMCXPage(){
+  var now=new Date();
+  var ist=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  var h=ist.getHours(),m=ist.getMinutes();
+  var dayOk=ist.getDay()>=1&&ist.getDay()<=5;
+  var sess= !dayOk ? 'Weekend — MCX Closed' :
+    (h>=9&&h<17)   ? 'Day Session (09:00–17:00)' :
+    (h>=17&&h<23)  ? 'Evening Session (17:00–23:30)' :
+    (h===23&&m<30) ? 'Evening Session (closing)' : 'Closed';
+  setText('mcx-sess', sess);
 }
 
 function updateDashboard(){
