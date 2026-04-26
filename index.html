@@ -253,25 +253,17 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </div>
     <div class="gate-err" id="gate-err"></div>
     <div class="gate-note">Private &amp; local — data never leaves device<br>Not SEBI-registered · Not investment advice</div>
-    <!-- OTP Reset Flow -->
-    <div id="otp-section" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:14px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;text-align:center" id="otp-info">Enter the 6-digit code sent to your email</div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input id="otp-input" type="number" inputmode="numeric" maxlength="6" placeholder="6-digit code"
-          style="text-align:center;font-size:20px;font-family:var(--mono);letter-spacing:6px;flex:1"
-          oninput="if(this.value.length>6)this.value=this.value.slice(0,6)">
+    <!-- Inline PIN Reset -->
+    <div id="pin-reset-section" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:14px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">Set a new PIN</div>
+      <input id="new-pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)"
+        style="text-align:center;font-size:20px;font-family:var(--mono);letter-spacing:6px;margin-bottom:8px">
+      <div class="row">
+        <button class="btn btn-primary" onclick="setNewPin()">✅ Save PIN</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('pin-reset-section').style.display='none';document.getElementById('forgot-pin-btn').style.display='block'">Cancel</button>
       </div>
-      <div id="new-pin-section" style="display:none">
-        <input id="new-pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)"
-          style="text-align:center;font-size:18px;font-family:var(--mono);margin-bottom:8px">
-        <button class="btn btn-primary" style="width:100%" onclick="setNewPin()">✅ Set New PIN</button>
-      </div>
-      <div id="otp-verify-btn" style="">
-        <button class="btn btn-primary" style="width:100%" onclick="verifyOtp()">Verify Code</button>
-      </div>
-      <button class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:11px" onclick="cancelOtpReset()">Cancel</button>
     </div>
-    <button class="btn btn-ghost" id="forgot-pin-btn" style="width:100%;margin-top:10px;font-size:12px;color:var(--muted);border-color:var(--border2)" onclick="initForgotPin()">🔑 Forgot PIN? Reset via Email</button>
+    <button class="btn btn-ghost" id="forgot-pin-btn" style="width:100%;margin-top:10px;font-size:12px;color:var(--muted);border-color:var(--border2)" onclick="showPinReset()">🔑 Forgot PIN? Set New PIN</button>
   </div>
 </div>
 
@@ -828,6 +820,8 @@ var RISK_PCT = 0.01;
 var PIN_KEY  = 'prism-pin-v3';
 var CAP_KEY  = 'prism-capital-v3';
 var TG_KEY   = 'prism-tg-v3';
+var TG_TOKEN  = '8654013919:AAEBOFmSWjOcaabdTYV9Lr6vXKPgsjyA8jo';
+var TG_CHATID = '785808467';
 var VAULT_KEY= 'prism-vault-v3';
 var MONTHLY_KEY = 'prism-monthly-v3';
 var SESSION_KEY = 'prism-session-v3';
@@ -840,7 +834,8 @@ var CAP = +(localStorage.getItem(CAP_KEY)||BASE_CAP);
 var MONTHLY = JSON.parse(localStorage.getItem(MONTHLY_KEY)||'{"pnl":0,"withdrawn":0,"totalWithdrawn":0,"trades":0}');
 var CONSEC = +(localStorage.getItem('prism-consec-v3')||0);
 var BHAV_LOCKED = localStorage.getItem('prism-bhav-v3') === '1';
-var TG = JSON.parse(localStorage.getItem(TG_KEY)||'{"token":"","chatId":""}');
+var _tgSaved = JSON.parse(localStorage.getItem(TG_KEY)||'{}');
+var TG = { token: _tgSaved.token||TG_TOKEN, chatId: _tgSaved.chatId||TG_CHATID };
 
 /* ── PIN SYSTEM ── */
 var pinBuffer = '';
@@ -901,79 +896,14 @@ function logout(){
   pinBuffer=''; updatePinDots();
   document.getElementById('gate-err').textContent='Locked. Enter PIN to access.';
 }
-/* ── SECURE OTP PIN RESET ── */
-var _otp=null, _otpExpiry=0;
-
-function initForgotPin(){
-  var errEl=document.getElementById('gate-err');
-  var fpBtn=document.getElementById('forgot-pin-btn');
-  errEl.style.color='var(--muted)'; errEl.textContent='⏳ Sending OTP…';
-  fpBtn.disabled=true; fpBtn.textContent='⏳ Sending…';
-  sendOtpSilent().then(function(sent){
-    fpBtn.disabled=false; fpBtn.textContent='🔑 Forgot PIN? Reset via Email';
-    if(sent){
-      document.getElementById('otp-section').style.display='block';
-      fpBtn.style.display='none';
-      errEl.textContent='';
-      document.getElementById('otp-input').focus();
-    } else {
-      errEl.textContent='❌ Could not send OTP — check internet connection.';
-      errEl.style.color='var(--red)';
-    }
-  });
-}
-
-async function sendOtpSilent(){
-  _otp=String(Math.floor(100000+Math.random()*900000));
-  _otpExpiry=Date.now()+15*60*1000;
-  var now=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  var msg='Your Prism Analytics PIN reset code is: '+_otp
-    +'\n\nThis code expires in 15 minutes.'
-    +'\nRequested at: '+now+' IST'
-    +'\n\nDo NOT share this code with anyone.'
-    +'\nIf you did not request this, your PIN is unchanged.';
-  try{
-    var r=await fetch('https://api.emailjs.com/api/v1.0/email/send',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        service_id:'service_eole8dd', template_id:'template_c9wj7rm',
-        user_id:'Qd_kEkb7HUiYi6j_M',
-        template_params:{
-          to_email:'suri7588sh1@gmail.com', from_name:'Prism Analytics',
-          subject:'Prism Analytics — PIN Reset Code',
-          message:msg, content:msg
-        }
-      })
-    });
-    if(r.ok){
-      document.getElementById('otp-info').textContent='✅ OTP sent discreetly to suri7588sh1@gmail.com';
-      return true;
-    }
-    console.warn('[OTP] status:',r.status);
-  }catch(e){ console.warn('[OTP]',e.message); }
-  /* NEVER open a tab or compose window — security requirement */
-  return false;
-}
-
-function verifyOtp(){
-  var entered=(document.getElementById('otp-input').value||'').trim();
-  var errEl=document.getElementById('gate-err');
-  if(!_otp||Date.now()>_otpExpiry){
-    errEl.textContent='⏰ OTP expired. Request a new one.'; errEl.style.color='var(--red)';
-    cancelOtpReset(); return;
-  }
-  if(entered!==_otp){
-    errEl.textContent='❌ Wrong code. Check your email and try again.'; errEl.style.color='var(--red)';
-    document.getElementById('otp-input').value=''; document.getElementById('otp-input').focus(); return;
-  }
-  errEl.textContent='';
-  document.getElementById('otp-info').textContent='✅ Code verified! Enter your new PIN.';
-  document.getElementById('otp-info').style.color='var(--green)';
-  document.getElementById('otp-verify-btn').style.display='none';
-  document.getElementById('new-pin-section').style.display='block';
+/* ── SIMPLE PIN RESET (no OTP — single-user system) ── */
+function showPinReset(){
+  document.getElementById('pin-reset-section').style.display='block';
+  document.getElementById('forgot-pin-btn').style.display='none';
+  document.getElementById('new-pin-input').value='';
   document.getElementById('new-pin-input').focus();
+  document.getElementById('gate-err').textContent='';
 }
-
 async function setNewPin(){
   var np=(document.getElementById('new-pin-input').value||'').trim();
   var errEl=document.getElementById('gate-err');
@@ -982,24 +912,15 @@ async function setNewPin(){
   }
   var h=await sha256(np);
   localStorage.setItem(PIN_KEY,h);
-  _otp=null; _otpExpiry=0;
-  cancelOtpReset();
-  errEl.textContent='✅ New PIN set. Please log in with your new PIN.';
-  errEl.style.color='var(--green)';
-}
-
-function cancelOtpReset(){
-  document.getElementById('otp-section').style.display='none';
+  document.getElementById('pin-reset-section').style.display='none';
   document.getElementById('forgot-pin-btn').style.display='block';
-  document.getElementById('otp-input').value='';
   document.getElementById('new-pin-input').value='';
-  document.getElementById('otp-verify-btn').style.display='block';
-  document.getElementById('new-pin-section').style.display='none';
-  document.getElementById('otp-info').textContent='Enter the 6-digit code sent to your email';
-  document.getElementById('otp-info').style.color='';
-  _otp=null; _otpExpiry=0;
+  errEl.style.color='var(--green)';
+  errEl.textContent='✅ New PIN set. Log in with your new PIN.';
+  pinBuffer=''; updatePinDots();
+  /* Notify via Telegram (silent) */
+  sendTg('🔑 *Prism PIN Reset*\nPIN was changed at '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST');
 }
-
 
 function checkSession(){
   try{
@@ -1566,18 +1487,15 @@ function saveTg(){
   loadTg(); toast('✅ Telegram credentials saved',true);
 }
 function loadTg(){
-  /* Migrate from old storage keys if new key is empty */
-  if(!TG.token){
-    try{
-      var oldTg=JSON.parse(localStorage.getItem('prism-tg')||'{}');
-      if(oldTg.token){ TG.token=oldTg.token; TG.chatId=oldTg.chatId||TG.chatId; localStorage.setItem(TG_KEY,JSON.stringify(TG)); }
-    }catch(_){}
-  }
-  if(TG.token) document.getElementById('tg-token').value=TG.token;
-  if(TG.chatId) document.getElementById('tg-chatid').value=TG.chatId;
-  /* Show status */
+  /* Always use hardcoded values as base, merge with any saved overrides */
+  TG.token  = TG.token  || TG_TOKEN;
+  TG.chatId = TG.chatId || TG_CHATID;
+  var el_tok = document.getElementById('tg-token');
+  var el_cid = document.getElementById('tg-chatid');
+  if(el_tok) el_tok.value = TG.token;
+  if(el_cid) el_cid.value = TG.chatId;
   var st=document.getElementById('tg-load-status');
-  if(st) st.textContent=TG.token?'✅ Token loaded ('+TG.token.slice(0,8)+'…)':'⚠️ No token saved — enter below';
+  if(st){ st.textContent='✅ Token hardcoded ('+TG.token.slice(0,8)+'…) | Chat: '+TG.chatId; st.style.color='var(--green)'; }
 }
 async function sendTg(msg){
   if(!TG.token||!TG.chatId) return false;
