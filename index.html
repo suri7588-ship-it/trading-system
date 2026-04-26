@@ -856,10 +856,15 @@ function updPinDots(){ for(var i=0;i<4;i++){var d=document.getElementById('d'+i)
 
 /* Verify PIN -> if ok send TG OTP */
 async function verifyPin(){
-  var stored=localStorage.getItem(PIN_KEY);
+  var stored = localStorage.getItem(PIN_KEY);
+  var isFirstTime = !stored;
   if(!stored){var h=await sha256('1234');localStorage.setItem(PIN_KEY,h);stored=h;}
   var h=await sha256(pinBuffer); pinBuffer=''; updPinDots();
-  if(h===stored){ clrErr(); sendOtp(); }
+  if(h===stored){
+    clrErr(); sendOtp();
+    /* If first time on this device, flag to show PIN change prompt after login */
+    if(isFirstTime) sessionStorage.setItem('prism-first-login','1');
+  }
   else showErr('\u274c Wrong PIN. Try again.');
 }
 
@@ -1078,12 +1083,12 @@ function openDrawer(){
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
 
 /* ── TOAST ── */
-function toast(msg, ok){
+function toast(msg, ok, duration){
   var t=document.getElementById('toast');
   t.textContent=msg;
   t.style.borderColor=ok?'var(--gborder)':ok===false?'var(--rborder)':'var(--border)';
   t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},3000);
+  setTimeout(function(){t.classList.remove('show');}, duration||3000);
 }
 
 /* ── CLOCK ── */
@@ -1861,6 +1866,14 @@ function saveState(){
 
 /* ── ON APP START ── */
 function onAppStart(){
+  /* First login on this device — prompt PIN change */
+  if(sessionStorage.getItem('prism-first-login')){
+    sessionStorage.removeItem('prism-first-login');
+    setTimeout(function(){
+      toast('📱 New device detected. Go to Vault → Change PIN to set your PIN on this device.', true, 6000);
+      sendTg('📱 *New device login*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST\nPIN was 1234 (first use on this device)');
+    }, 1500);
+  }
   loadTheme();
   loadTg();
   loadVault();
