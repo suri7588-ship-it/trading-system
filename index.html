@@ -3318,6 +3318,20 @@ async function testEmail(){
 }
 
 /* ── VAULT ── */
+async function changePin(){
+  var np=(document.getElementById('v-pin').value||'').trim();
+  if(!np||np.length<4||!/^\d+$/.test(np)){
+    toast('PIN must be 4+ digits, numbers only.',false); return;
+  }
+  var h=await sha256(np);
+  localStorage.setItem(PIN_KEY,h);
+  document.getElementById('v-pin').value='';
+  /* Sync to Firebase */
+  if(window.fbSave) window.fbSave({pinHash:h});
+  toast('✅ PIN updated successfully. Use new PIN next login.',true);
+  sendTg('🔑 *PIN Changed*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST');
+}
+
 function saveVault(){
   var v={clientId:document.getElementById('v-clientid').value.trim(),
     apiKey:document.getElementById('v-apikey').value.trim(),
