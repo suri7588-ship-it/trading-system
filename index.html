@@ -226,48 +226,19 @@ tr:hover td{background:rgba(255,255,255,.02);}
 </head>
 <body>
 
-<!-- ══ GATE ══ -->
+<!-- ══ GATE — TRUE 2FA ══ -->
 <div id="gate">
   <div class="gate-box">
     <div class="gate-logo">🔐 Prism Analytics</div>
     <div class="gate-sub">Intelligence Engine v3.0</div>
-
-    <!-- ── METHOD TABS ── -->
-    <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px">
-      <button id="tab-tg"  onclick="switchTab('tg')"  style="flex:1;padding:8px;font-size:12px;font-weight:600;background:var(--blue);color:#fff;border:none;cursor:pointer;font-family:var(--font);touch-action:manipulation">📱 Telegram OTP</button>
-      <button id="tab-pin" onclick="switchTab('pin')" style="flex:1;padding:8px;font-size:12px;font-weight:600;background:var(--bg3);color:var(--muted);border:none;cursor:pointer;font-family:var(--font);touch-action:manipulation">🔢 PIN Login</button>
+    <div style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <div id="si1" style="flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:700;background:var(--blue);color:#fff">STEP 1<br><span style="font-weight:400;font-size:10px">Enter PIN</span></div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div id="si2" style="flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:700;background:var(--bg3);color:var(--muted)">STEP 2<br><span style="font-weight:400;font-size:10px">Telegram OTP</span></div>
     </div>
-
-    <!-- ── TELEGRAM OTP ── -->
-    <div id="section-tg">
-      <div id="tg-otp-status" style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:14px">Send a one-time code to your Telegram bot</div>
-      <div id="tg-otp-entry" style="display:none">
-        <div class="pin-dots" id="otp-dots">
-          <div class="pin-dot" id="od0"></div><div class="pin-dot" id="od1"></div>
-          <div class="pin-dot" id="od2"></div><div class="pin-dot" id="od3"></div>
-          <div class="pin-dot" id="od4"></div><div class="pin-dot" id="od5"></div>
-        </div>
-        <div class="pin-pad">
-          <div class="pin-key" onclick="otpKey(1)">1</div><div class="pin-key" onclick="otpKey(2)">2</div><div class="pin-key" onclick="otpKey(3)">3</div>
-          <div class="pin-key" onclick="otpKey(4)">4</div><div class="pin-key" onclick="otpKey(5)">5</div><div class="pin-key" onclick="otpKey(6)">6</div>
-          <div class="pin-key" onclick="otpKey(7)">7</div><div class="pin-key" onclick="otpKey(8)">8</div><div class="pin-key" onclick="otpKey(9)">9</div>
-          <div class="pin-key" onclick="otpClear()" style="font-size:12px">CLR</div>
-          <div class="pin-key" onclick="otpKey(0)">0</div>
-          <div class="pin-key" onclick="otpBack()" style="font-size:12px">⌫</div>
-        </div>
-      </div>
-      <button id="btn-send-otp" class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="sendTgOtp()">📨 Send OTP to Telegram</button>
-      <div id="otp-timer" style="display:none;font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px"></div>
-      <button id="btn-verify-otp" class="btn btn-success" style="width:100%;display:none" onclick="verifyTgOtp()">✅ Verify Code</button>
-      <button id="btn-resend-otp" class="btn btn-ghost" style="width:100%;display:none;font-size:11px" onclick="sendTgOtp()">↻ Resend OTP</button>
-    </div>
-
-    <!-- ── PIN LOGIN ── -->
-    <div id="section-pin" style="display:none">
-      <div class="pin-dots">
-        <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-        <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
-      </div>
+    <div id="step1">
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px">Enter your PIN</div>
+      <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
       <div class="pin-pad">
         <div class="pin-key" onclick="pinKey(1)">1</div><div class="pin-key" onclick="pinKey(2)">2</div><div class="pin-key" onclick="pinKey(3)">3</div>
         <div class="pin-key" onclick="pinKey(4)">4</div><div class="pin-key" onclick="pinKey(5)">5</div><div class="pin-key" onclick="pinKey(6)">6</div>
@@ -276,18 +247,28 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="pin-key" onclick="pinKey(0)">0</div>
         <div class="pin-key" onclick="pinBackspace()" style="font-size:12px">⌫</div>
       </div>
-      <!-- Inline PIN Reset -->
-      <div id="pin-reset-section" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:14px;">
+      <div id="pin-reset-section" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:14px">
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">Set a new PIN</div>
         <input id="new-pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)" style="text-align:center;font-size:20px;font-family:var(--mono);letter-spacing:6px;margin-bottom:8px">
-        <div class="row">
-          <button class="btn btn-primary" onclick="setNewPin()">✅ Save PIN</button>
-          <button class="btn btn-ghost" onclick="document.getElementById('pin-reset-section').style.display='none';document.getElementById('forgot-pin-btn').style.display='block'">Cancel</button>
-        </div>
+        <div class="row"><button class="btn btn-primary" onclick="setNewPin()">✅ Save PIN</button><button class="btn btn-ghost" onclick="cancelPinReset()">Cancel</button></div>
       </div>
       <button class="btn btn-ghost" id="forgot-pin-btn" style="width:100%;margin-top:10px;font-size:12px;color:var(--muted);border-color:var(--border2)" onclick="showPinReset()">🔑 Forgot PIN? Set New PIN</button>
     </div>
-
+    <div id="step2" style="display:none">
+      <div id="otp-status" style="font-size:12px;text-align:center;margin-bottom:12px;line-height:1.5;color:var(--green)">✅ PIN OK! OTP sent to Telegram.</div>
+      <div class="pin-dots"><div class="pin-dot" id="od0"></div><div class="pin-dot" id="od1"></div><div class="pin-dot" id="od2"></div><div class="pin-dot" id="od3"></div><div class="pin-dot" id="od4"></div><div class="pin-dot" id="od5"></div></div>
+      <div id="otp-timer" style="font-size:11px;color:var(--muted);text-align:center;margin:6px 0 10px"></div>
+      <div class="pin-pad">
+        <div class="pin-key" onclick="otpKey(1)">1</div><div class="pin-key" onclick="otpKey(2)">2</div><div class="pin-key" onclick="otpKey(3)">3</div>
+        <div class="pin-key" onclick="otpKey(4)">4</div><div class="pin-key" onclick="otpKey(5)">5</div><div class="pin-key" onclick="otpKey(6)">6</div>
+        <div class="pin-key" onclick="otpKey(7)">7</div><div class="pin-key" onclick="otpKey(8)">8</div><div class="pin-key" onclick="otpKey(9)">9</div>
+        <div class="pin-key" onclick="otpBufClear()" style="font-size:12px">CLR</div>
+        <div class="pin-key" onclick="otpKey(0)">0</div>
+        <div class="pin-key" onclick="otpBufBack()" style="font-size:12px">⌫</div>
+      </div>
+      <button class="btn btn-ghost" onclick="resendOtp()" style="width:100%;margin-top:8px;font-size:12px">↻ Resend OTP</button>
+      <button class="btn btn-ghost" onclick="backToPin()" style="width:100%;margin-top:6px;font-size:11px;color:var(--muted)">← Back to PIN</button>
+    </div>
     <div class="gate-err" id="gate-err"></div>
     <div class="gate-note">Private &amp; local · data never leaves device<br>Not SEBI-registered · Not investment advice</div>
   </div>
@@ -835,188 +816,131 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 <script>
 'use strict';
-/* ══════════════════════════════════════════════════════════════
-   PRISM ANALYTICS v3.0 — Clean rebuild
-   All navigation via data-page attribute + single nav() function
-══════════════════════════════════════════════════════════════ */
-
-/* ── CONSTANTS ── */
-var BASE_CAP = 10000;
-var RISK_PCT = 0.01;
-var PIN_KEY  = 'prism-pin-v3';
-var CAP_KEY  = 'prism-capital-v3';
-var TG_KEY   = 'prism-tg-v3';
-var TG_TOKEN  = '8619005494:AAHzq93-SLbqfayUEeoa5kDWXPWzG7NfJSY';
-var TG_CHATID = '785808467';
-var VAULT_KEY= 'prism-vault-v3';
-var MONTHLY_KEY = 'prism-monthly-v3';
-var SESSION_KEY = 'prism-session-v3';
-var SESSION_TTL = 24 * 3600 * 1000;
-var OWNER_EMAIL = 'suri7588sh1@gmail.com';
+/* ══ CONSTANTS ══ */
+var BASE_CAP  = 10000;
+var RISK_PCT  = 0.01;
+var PIN_KEY   = 'prism-pin-v3';
+var CAP_KEY   = 'prism-capital-v3';
+var TG_KEY    = 'prism-tg-v3';
+var VAULT_KEY = 'prism-vault-v3';
+var MONTHLY_KEY  = 'prism-monthly-v3';
+var SESSION_KEY  = 'prism-session-v3';
+var SESSION_TTL  = 24 * 3600 * 1000;
+var OWNER_EMAIL  = 'suri7588sh1@gmail.com';
+var TG_TOKEN     = '8619005494:AAHzq93-SLbqfayUEeoa5kDWXPWzG7NfJSY';
+var TG_CHATID    = '785808467';
 var EJS = { pub:'Qd_kEkb7HUiYi6j_M', svc:'service_eole8dd', tpl:'template_c9wj7rm' };
 
-/* ── CAPITAL STATE ── */
-var CAP = +(localStorage.getItem(CAP_KEY)||BASE_CAP);
+/* ══ CAPITAL STATE ══ */
+var CAP     = +(localStorage.getItem(CAP_KEY)||BASE_CAP);
 var MONTHLY = JSON.parse(localStorage.getItem(MONTHLY_KEY)||'{"pnl":0,"withdrawn":0,"totalWithdrawn":0,"trades":0}');
-var CONSEC = +(localStorage.getItem('prism-consec-v3')||0);
+var CONSEC  = +(localStorage.getItem('prism-consec-v3')||0);
 var BHAV_LOCKED = localStorage.getItem('prism-bhav-v3') === '1';
 var _tgSaved = JSON.parse(localStorage.getItem(TG_KEY)||'{}');
 var TG = { token: _tgSaved.token||TG_TOKEN, chatId: _tgSaved.chatId||TG_CHATID };
 
-/* ── DUAL AUTH: Telegram OTP + PIN ── */
-var _tgOtp = null, _tgOtpExp = 0, _otpBuf = '';
-
-/* Tab switcher */
-function switchTab(tab){
-  var isTg = tab==='tg';
-  document.getElementById('section-tg').style.display  = isTg?'block':'none';
-  document.getElementById('section-pin').style.display = isTg?'none':'block';
-  document.getElementById('tab-tg').style.background   = isTg?'var(--blue)':'var(--bg3)';
-  document.getElementById('tab-tg').style.color        = isTg?'#fff':'var(--muted)';
-  document.getElementById('tab-pin').style.background  = isTg?'var(--bg3)':'var(--blue)';
-  document.getElementById('tab-pin').style.color       = isTg?'var(--muted)':'#fff';
-  document.getElementById('gate-err').textContent = '';
-}
-
-/* ── TELEGRAM OTP AUTH ── */
-var _otpTimerInterval = null;
-async function sendTgOtp(){
-  var statusEl = document.getElementById('tg-otp-status');
-  var btnSend  = document.getElementById('btn-send-otp');
-  statusEl.textContent = '⏳ Sending OTP to Telegram…';
-  statusEl.style.color = 'var(--muted)';
-  btnSend.disabled = true;
-
-  _tgOtp    = String(Math.floor(100000 + Math.random() * 900000));
-  _tgOtpExp = Date.now() + 10 * 60 * 1000; /* 10 min */
-  _otpBuf   = '';
-  updateOtpDots();
-
-  var msg = '🔐 *Prism Analytics — Login OTP*\n'
-    + 'Code: *' + _tgOtp + '*\n'
-    + 'Expires in 10 minutes.\n'
-    + 'Do NOT share this code.';
-
-  /* Send via Telegram */
-  var tok = TG_TOKEN, cid = TG_CHATID;
-  var sent = false;
+/* SHA-256 */
+async function sha256(str){
   try{
-    var r = await fetch('https://api.telegram.org/bot'+tok+'/sendMessage',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({chat_id:cid, text:msg, parse_mode:'Markdown'})
+    var b=new TextEncoder().encode(str);
+    var h=await crypto.subtle.digest('SHA-256',b);
+    return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+  }catch(_){
+    var h=5381; for(var i=0;i<str.length;i++) h=((h<<5)+h)+str.charCodeAt(i);
+    var s=(h>>>0).toString(16).padStart(8,'0'); return s+s+s+s+s+s+s+s;
+  }
+}
+
+/* ══ 2FA AUTH: PIN then Telegram OTP ══ */
+var pinBuffer='', _otp=null, _otpExp=0, _otpBuf='', _otpClock=null;
+
+/* PIN numpad */
+function pinKey(n){ if(pinBuffer.length>=4) return; pinBuffer+=n; updPinDots(); if(pinBuffer.length===4) setTimeout(verifyPin,80); }
+function pinBackspace(){ pinBuffer=pinBuffer.slice(0,-1); updPinDots(); }
+function pinClear(){ pinBuffer=''; updPinDots(); clrErr(); }
+function updPinDots(){ for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.classList.toggle('filled',i<pinBuffer.length);} }
+
+/* Verify PIN -> if ok send TG OTP */
+async function verifyPin(){
+  var stored=localStorage.getItem(PIN_KEY);
+  if(!stored){var h=await sha256('1234');localStorage.setItem(PIN_KEY,h);stored=h;}
+  var h=await sha256(pinBuffer); pinBuffer=''; updPinDots();
+  if(h===stored){ clrErr(); sendOtp(); }
+  else showErr('\u274c Wrong PIN. Try again.');
+}
+
+/* Send OTP to Telegram */
+async function sendOtp(){
+  _otp=String(Math.floor(100000+Math.random()*900000));
+  _otpExp=Date.now()+10*60*1000;
+  _otpBuf=''; updOtpDots();
+  try{
+    var r=await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendMessage',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG_CHATID,text:'Prism Analytics Login OTP\nCode: '+_otp+'\nValid 10 min. Do NOT share.'})
     });
-    var d = await r.json().catch(function(){ return {}; });
-    sent = !!(d && d.ok);
-    if(!sent) statusEl.textContent = '❌ TG error: ' + (d.description||r.status);
-  }catch(e){ statusEl.textContent = '❌ Network error: '+e.message; }
-
-  btnSend.disabled = false;
-  if(sent){
-    statusEl.textContent = '✅ OTP sent to your Telegram bot! Enter the 6-digit code below.';
-    statusEl.style.color = 'var(--green)';
-    document.getElementById('tg-otp-entry').style.display  = 'block';
-    document.getElementById('btn-verify-otp').style.display = 'block';
-    document.getElementById('btn-resend-otp').style.display = 'block';
-    btnSend.style.display = 'none';
-    startOtpTimer();
-  }
+    var d=await r.json().catch(function(){return{};});
+    if(d&&d.ok){
+      document.getElementById('step1').style.display='none';
+      document.getElementById('step2').style.display='block';
+      document.getElementById('si1').style.background='var(--gbg)';
+      document.getElementById('si1').style.color='var(--green)';
+      document.getElementById('si2').style.background='var(--blue)';
+      document.getElementById('si2').style.color='#fff';
+      document.getElementById('otp-status').textContent='\u2705 PIN verified! OTP sent to your Telegram.';
+      startOtpClock();
+    } else {
+      showErr('\u274c TG error: '+(d.description||r.status)+'. Send /start to your bot first.');
+    }
+  }catch(e){ showErr('\u274c Network error: '+e.message); }
 }
 
-function startOtpTimer(){
-  clearInterval(_otpTimerInterval);
-  var timerEl = document.getElementById('otp-timer');
-  timerEl.style.display = 'block';
-  _otpTimerInterval = setInterval(function(){
-    var rem = Math.max(0, Math.floor((_tgOtpExp - Date.now()) / 1000));
-    var m = Math.floor(rem/60), s = rem%60;
-    timerEl.textContent = 'Expires in ' + m + ':' + (s<10?'0':'') + s;
-    if(rem === 0){ clearInterval(_otpTimerInterval); timerEl.textContent = '⏰ OTP expired. Resend.'; _tgOtp=null; }
-  }, 1000);
+function resendOtp(){ _otp=null; _otpBuf=''; updOtpDots(); clearInterval(_otpClock); document.getElementById('otp-status').textContent='\u23f3 Resending...'; sendOtp(); }
+function backToPin(){ clearInterval(_otpClock); _otp=null; _otpBuf=''; document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block'; document.getElementById('si1').style.background='var(--blue)'; document.getElementById('si1').style.color='#fff'; document.getElementById('si2').style.background='var(--bg3)'; document.getElementById('si2').style.color='var(--muted)'; clrErr(); }
+
+function startOtpClock(){
+  clearInterval(_otpClock);
+  _otpClock=setInterval(function(){
+    var rem=Math.max(0,Math.floor((_otpExp-Date.now())/1000));
+    var el=document.getElementById('otp-timer');
+    if(el) el.textContent='Expires in '+Math.floor(rem/60)+':'+(rem%60<10?'0':'')+rem%60;
+    if(rem===0){clearInterval(_otpClock);_otp=null;if(el)el.textContent='\u23f0 OTP expired. Tap Resend.';}
+  },1000);
 }
 
-function otpKey(n){
-  if(_otpBuf.length >= 6) return;
-  _otpBuf += n; updateOtpDots();
-  if(_otpBuf.length === 6) setTimeout(verifyTgOtp, 80);
-}
-function otpBack(){ _otpBuf = _otpBuf.slice(0,-1); updateOtpDots(); }
-function otpClear(){ _otpBuf = ''; updateOtpDots(); }
-function updateOtpDots(){
-  for(var i=0;i<6;i++){
-    var d=document.getElementById('od'+i);
-    if(d) d.classList.toggle('filled', i<_otpBuf.length);
-  }
-}
-function verifyTgOtp(){
-  var errEl = document.getElementById('gate-err');
-  if(!_tgOtp || Date.now()>_tgOtpExp){
-    errEl.textContent='⏰ OTP expired. Tap Resend.'; errEl.style.color='var(--red)';
-    _otpBuf=''; updateOtpDots(); return;
-  }
-  if(_otpBuf !== _tgOtp){
-    errEl.textContent='❌ Wrong code. Try again.'; errEl.style.color='var(--red)';
-    _otpBuf=''; updateOtpDots(); return;
-  }
-  /* SUCCESS */
-  clearInterval(_otpTimerInterval);
-  _tgOtp=null; _tgOtpExp=0; _otpBuf='';
-  sendTg('✅ *Login successful*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST');
+/* OTP numpad */
+function otpKey(n){ if(_otpBuf.length>=6) return; _otpBuf+=n; updOtpDots(); if(_otpBuf.length===6) setTimeout(verifyOtp,80); }
+function otpBufBack(){ _otpBuf=_otpBuf.slice(0,-1); updOtpDots(); }
+function otpBufClear(){ _otpBuf=''; updOtpDots(); clrErr(); }
+function updOtpDots(){ for(var i=0;i<6;i++){var d=document.getElementById('od'+i);if(d)d.classList.toggle('filled',i<_otpBuf.length);} }
+
+/* Verify OTP -> unlock */
+function verifyOtp(){
+  if(!_otp||Date.now()>_otpExp){showErr('\u23f0 OTP expired. Tap Resend.');_otpBuf='';updOtpDots();return;}
+  if(_otpBuf!==_otp){showErr('\u274c Wrong code. Check Telegram and try again.');_otpBuf='';updOtpDots();return;}
+  clearInterval(_otpClock); _otp=null; _otpBuf='';
+  /* Silent confirm */
+  fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHATID,text:'Login OK '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST | 2FA PIN+OTP'})}).catch(function(){});
   unlockApp();
 }
 
-/* ── PIN AUTH ── */
-var pinBuffer = '';
-function pinKey(n){ if(pinBuffer.length>=4) return; pinBuffer+=n; updatePinDots(); if(pinBuffer.length===4) setTimeout(verifyPin,80); }
-function pinBackspace(){ pinBuffer=pinBuffer.slice(0,-1); updatePinDots(); }
-function pinClear(){ pinBuffer=''; updatePinDots(); document.getElementById('gate-err').textContent=''; }
-function updatePinDots(){
-  for(var i=0;i<4;i++){
-    var d=document.getElementById('d'+i);
-    if(d) d.classList.toggle('filled', i<pinBuffer.length);
-  }
-}
-async function verifyPin(){
-  var stored = localStorage.getItem(PIN_KEY);
-  if(!stored){ /* No PIN set — first time setup */
-    var h = await sha256('1234');
-    localStorage.setItem(PIN_KEY, h);
-    stored = h;
-  }
-  var h = await sha256(pinBuffer);
-  if(h===stored){
-    sendTg('✅ *PIN Login*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST');
-    unlockApp();
-  } else {
-    document.getElementById('gate-err').textContent='Wrong PIN. Try again.';
-    document.getElementById('gate-err').style.color='var(--red)';
-    pinBuffer=''; updatePinDots();
-  }
-}
-
-/* ── PIN RESET ── */
-function showPinReset(){
-  document.getElementById('pin-reset-section').style.display='block';
-  document.getElementById('forgot-pin-btn').style.display='none';
-  document.getElementById('new-pin-input').value='';
-  document.getElementById('new-pin-input').focus();
-  document.getElementById('gate-err').textContent='';
-}
+/* PIN Reset */
+function showPinReset(){ document.getElementById('pin-reset-section').style.display='block'; document.getElementById('forgot-pin-btn').style.display='none'; clrErr(); }
+function cancelPinReset(){ document.getElementById('pin-reset-section').style.display='none'; document.getElementById('forgot-pin-btn').style.display='block'; }
 async function setNewPin(){
   var np=(document.getElementById('new-pin-input').value||'').trim();
-  var errEl=document.getElementById('gate-err');
-  if(!np||np.length<4||!/^\d+$/.test(np)){
-    errEl.textContent='PIN must be 4+ digits.'; errEl.style.color='var(--red)'; return;
-  }
-  var h=await sha256(np);
-  localStorage.setItem(PIN_KEY,h);
-  document.getElementById('pin-reset-section').style.display='none';
-  document.getElementById('forgot-pin-btn').style.display='block';
-  document.getElementById('new-pin-input').value='';
-  errEl.style.color='var(--green)';
-  errEl.textContent='✅ New PIN set. Log in with your new PIN.';
-  pinBuffer=''; updatePinDots();
-  sendTg('🔑 *PIN Changed*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST');
+  if(!np||np.length<4){ showErr('PIN must be 4+ digits.'); return; }
+  var h=await sha256(np); localStorage.setItem(PIN_KEY,h);
+  cancelPinReset(); document.getElementById('new-pin-input').value='';
+  showOk('\u2705 New PIN saved. Log in with it now.');
+  fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHATID,text:'PIN Changed '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST'})}).catch(function(){});
 }
+
+/* Helpers */
+function clrErr(){ var e=document.getElementById('gate-err'); if(e){e.textContent='';e.style.color='';} }
+function showErr(m){ var e=document.getElementById('gate-err'); if(e){e.textContent=m;e.style.color='var(--red)';} }
+function showOk(m){ var e=document.getElementById('gate-err'); if(e){e.textContent=m;e.style.color='var(--green)';} }
+
 
 /* ── UNLOCK + SESSION ── */
 async function sha256(str){
