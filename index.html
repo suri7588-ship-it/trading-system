@@ -223,6 +223,71 @@ tr:hover td{background:rgba(255,255,255,.02);}
 /* ══ RESPONSIVE ══ */
 @media(max-width:380px){body{font-size:13px;}}
 </style>
+  <!-- Firebase SDK (CDN - no npm needed for static HTML) -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCEKMUJ1gRo3zfSJqtcK8uPwijJpnXA9m4",
+      authDomain: "prismanalytics-35bc0.firebaseapp.com",
+      projectId: "prismanalytics-35bc0",
+      storageBucket: "prismanalytics-35bc0.firebasestorage.app",
+      messagingSenderId: "639432465045",
+      appId: "1:639432465045:web:c37915c8addec8fa70599c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    const UID = 'surender'; /* single-user — fixed doc ID */
+
+    /* ── FIREBASE SYNC ENGINE ── */
+    window._db  = db;
+    window._doc = doc(db, 'prism', UID);
+
+    /* Save all state to Firebase */
+    window.fbSave = async function(data){
+      try{
+        await setDoc(window._doc, data, {merge:true});
+        var ind = document.getElementById('fb-sync-ind');
+        if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; }
+        return true;
+      }catch(e){
+        console.warn('[FB] save failed:',e.message);
+        var ind = document.getElementById('fb-sync-ind');
+        if(ind){ ind.textContent='⚠️'; ind.style.color='var(--amber)'; }
+        return false;
+      }
+    };
+
+    /* Load all state from Firebase */
+    window.fbLoad = async function(){
+      try{
+        var snap = await getDoc(window._doc);
+        if(snap.exists()){
+          var ind = document.getElementById('fb-sync-ind');
+          if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; }
+          return snap.data();
+        }
+        return null;
+      }catch(e){
+        console.warn('[FB] load failed:',e.message);
+        return null;
+      }
+    };
+
+    /* Real-time listener — syncs across devices instantly */
+    window.fbListen = function(callback){
+      return onSnapshot(window._doc, function(snap){
+        if(snap.exists()) callback(snap.data());
+      }, function(err){ console.warn('[FB] listen:',err.message); });
+    };
+
+    /* Mark Firebase as ready */
+    window._fbReady = true;
+    document.dispatchEvent(new Event('fb-ready'));
+    console.log('[Prism] Firebase connected ✅');
+  </script>
 </head>
 <body>
 
@@ -279,6 +344,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div class="tb-spacer"></div>
     <span class="tb-badge tb-weekend" id="mkt-status">WEEKEND</span>
     <div class="tb-time" id="tb-time">00:00:00</div>
+    <span id="fb-sync-ind" title="Firebase sync" style="font-size:14px;cursor:default">☁️</span>
     <button class="tb-theme" onclick="toggleTheme()">☀</button>
     <button class="tb-theme" onclick="logout()" title="Lock App" style="margin-left:4px">🔒</button>
   </div>
@@ -3258,6 +3324,7 @@ function saveVault(){
     totp:document.getElementById('v-totp').value.trim(),
     algoId:document.getElementById('v-algoid').value.trim()};
   localStorage.setItem(VAULT_KEY,JSON.stringify(v));
+  if(window.fbSave) window.fbSave({vault:v});
   toast('✅ Vault saved',true);
 }
 function loadVault(){
@@ -3290,14 +3357,27 @@ function connectAngelOne(){
 
 /* ── STATE PERSISTENCE ── */
 function saveState(){
+  /* Local cache — instant */
   localStorage.setItem(CAP_KEY,CAP);
   localStorage.setItem(MONTHLY_KEY,JSON.stringify(MONTHLY));
   localStorage.setItem('prism-consec-v3',CONSEC);
   localStorage.setItem('prism-bhav-v3',BHAV_LOCKED?'1':'0');
+  localStorage.setItem(JOURNAL_KEY,JSON.stringify(JOURNAL));
+  /* Firebase cloud sync — cross-device */
+  if(window.fbSave){
+    window.fbSave({
+      capital:CAP, monthly:MONTHLY, consec:CONSEC,
+      bhavLocked:BHAV_LOCKED, journal:JOURNAL,
+      tg:TG,
+      vault:JSON.parse(localStorage.getItem(VAULT_KEY)||'{}'),
+      theme:localStorage.getItem('prism-theme-v3')||'dark',
+      lastSync:new Date().toISOString()
+    });
+  }
 }
 
 /* ── ON APP START ── */
-function onAppStart(){
+async function onAppStart(){
   /* First login on this device — prompt PIN change */
   if(sessionStorage.getItem('prism-first-login')){
     sessionStorage.removeItem('prism-first-login');
@@ -3305,6 +3385,37 @@ function onAppStart(){
       toast('📱 New device detected. Go to Vault → Change PIN to set your PIN on this device.', true, 6000);
       sendTg('📱 *New device login*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST\nPIN was 1234 (first use on this device)');
     }, 1500);
+  }
+  /* Load from Firebase cloud first — syncs across devices */
+  var ind = document.getElementById('fb-sync-ind');
+  if(ind){ ind.textContent='⏳'; ind.style.color='var(--muted)'; }
+  if(window.fbLoad){
+    try{
+      var fbData = await window.fbLoad();
+      if(fbData){
+        /* Firebase data is newer/authoritative — use it */
+        if(typeof fbData.capital === 'number')   CAP     = fbData.capital;
+        if(fbData.monthly)                        MONTHLY = fbData.monthly;
+        if(typeof fbData.consec === 'number')     CONSEC  = fbData.consec;
+        if(typeof fbData.bhavLocked === 'boolean') BHAV_LOCKED = fbData.bhavLocked;
+        if(Array.isArray(fbData.journal))         JOURNAL = fbData.journal;
+        if(fbData.theme) { localStorage.setItem('prism-theme-v3', fbData.theme); loadTheme(); }
+        if(fbData.tg && fbData.tg.token)          TG = fbData.tg;
+        if(fbData.vault)                          localStorage.setItem(VAULT_KEY, JSON.stringify(fbData.vault));
+        /* Update localStorage cache with Firebase data */
+        localStorage.setItem(CAP_KEY,     CAP);
+        localStorage.setItem(MONTHLY_KEY, JSON.stringify(MONTHLY));
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(JOURNAL));
+        if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; }
+        toast('☁️ Synced from cloud', true, 2000);
+      } else {
+        /* No Firebase data yet — push local data to cloud */
+        if(ind){ ind.textContent='☁️'; ind.style.color='var(--amber)'; }
+        saveState(); /* first upload */
+      }
+    }catch(e){
+      if(ind){ ind.textContent='⚠️'; ind.style.color='var(--amber)'; }
+    }
   }
   loadTheme();
   loadTg();
