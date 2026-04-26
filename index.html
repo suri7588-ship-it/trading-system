@@ -247,12 +247,6 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="pin-key" onclick="pinKey(0)">0</div>
         <div class="pin-key" onclick="pinBackspace()" style="font-size:12px">⌫</div>
       </div>
-      <div id="pin-reset-section" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:14px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">Set a new PIN</div>
-        <input id="new-pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)" style="text-align:center;font-size:20px;font-family:var(--mono);letter-spacing:6px;margin-bottom:8px">
-        <div class="row"><button class="btn btn-primary" onclick="setNewPin()">✅ Save PIN</button><button class="btn btn-ghost" onclick="cancelPinReset()">Cancel</button></div>
-      </div>
-      <button class="btn btn-ghost" id="forgot-pin-btn" style="width:100%;margin-top:10px;font-size:12px;color:var(--muted);border-color:var(--border2)" onclick="showPinReset()">🔑 Forgot PIN? Set New PIN</button>
     </div>
     <div id="step2" style="display:none">
       <div id="otp-status" style="font-size:12px;text-align:center;margin-bottom:12px;line-height:1.5;color:var(--green)">✅ PIN OK! OTP sent to Telegram.</div>
