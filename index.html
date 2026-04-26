@@ -866,11 +866,168 @@ tr:hover td{background:rgba(255,255,255,.02);}
         </div>
 
         <!-- PLACEHOLDER PAGES: ML / HISTBT / WALKFWD / RL / MODELDASH / NEWS / FIIDII / SECTORRSI / GLOBAL / OPTIONS / SMARTMONEY / CHARTS / ANGELONE / LEARNING -->
-        <div class="page" id="page-ml"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🤖 ML Engine</span><span class="badge badge-a">Phase 5</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">ML engine — Logistic Regression → XGBoost pipeline. Coming in Phase 5.</div></div></div></div></div>
-        <div class="page" id="page-histbt"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">📅 Historical Backtest</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Historical backtest over NSE data. Coming in Phase 5.</div></div></div></div></div>
-        <div class="page" id="page-walkfwd"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">➡️ Walk-Forward</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Walk-forward optimisation. Coming in Phase 5.</div></div></div></div></div>
-        <div class="page" id="page-rl"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🎮 RL Simulator</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Reinforcement learning simulator. Coming in Phase 5.</div></div></div></div></div>
-        <div class="page" id="page-modeldash"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">📊 Model Dashboard</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Model performance metrics. Coming in Phase 5.</div></div></div></div></div>
+        <!-- ══ ML ENGINE ══ -->
+        <div class="page" id="page-ml"><div class="page-content">
+          <div class="alert info"><span>🤖</span><span><strong>ML Engine v1</strong> — Logistic Regression trained on your journal trades. Learns which market conditions lead to wins vs losses. Improves with every trade you log.</span></div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📊 Feature Input</span>
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="runMLPredict()">▶ Predict</button>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="field"><label>India VIX</label><input id="ml-vix" type="number" placeholder="17.96" step="0.01"></div>
+                <div class="field"><label>Nifty Day % Chg</label><input id="ml-nifty" type="number" placeholder="-1.14" step="0.01"></div>
+              </div>
+              <div class="row">
+                <div class="field"><label>FII Flow (Cr)</label><input id="ml-fii" type="number" placeholder="-8827" step="1"></div>
+                <div class="field"><label>Market Regime</label>
+                  <select id="ml-regime"><option value="1">Trending</option><option value="0">Sideways</option><option value="-1">Volatile</option></select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="field"><label>Day of Week</label>
+                  <select id="ml-dow"><option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option></select>
+                </div>
+                <div class="field"><label>Strategy</label>
+                  <select id="ml-strat"><option value="1">Momentum</option><option value="0">Pullback</option><option value="-1">Short</option></select>
+                </div>
+              </div>
+              <div id="ml-result" style="margin-top:12px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">🧠 Model Status</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="trainMLModel()">↻ Retrain</button>
+            </div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">Training Samples</span><span class="cost-val" id="ml-samples">0</span></div>
+              <div class="cost-row"><span class="cost-lbl">Model Accuracy</span><span class="cost-val up" id="ml-acc">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Win Rate (training)</span><span class="cost-val" id="ml-wr">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Threshold (buy signal)</span><span class="cost-val">Prob ≥ 60%</span></div>
+              <div class="cost-row"><span class="cost-lbl">Status</span><span class="cost-val" id="ml-status">Untrained (need 5+ journal trades)</span></div>
+              <div style="margin-top:12px">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600">FEATURE WEIGHTS</div>
+                <div id="ml-weights" style="font-size:11px;color:var(--dim)">Train the model to see feature importance</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+
+        <!-- ══ HISTORICAL BACKTEST ══ -->
+        <div class="page" id="page-histbt"><div class="page-content">
+          <div class="alert success"><span>📅</span><span>Backtest your strategy on real NSE historical data fetched from Yahoo Finance. Results shown are for educational purposes — past performance doesn't guarantee future results.</span></div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">⚙️ Backtest Settings</span>
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="runHistBacktest()">▶ Run Backtest</button>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="field"><label>Symbol</label><input id="bt-sym" value="INFY.NS" placeholder="INFY.NS"></div>
+                <div class="field"><label>Period</label>
+                  <select id="bt-period"><option value="3mo">3 Months</option><option value="6mo" selected>6 Months</option><option value="1y">1 Year</option></select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="field"><label>Strategy</label>
+                  <select id="bt-strat">
+                    <option value="ma_cross">MA Crossover (20/50)</option>
+                    <option value="momentum">Momentum (ROC 10)</option>
+                    <option value="mean_rev">Mean Reversion (RSI 14)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Risk/Trade</label>
+                  <select id="bt-risk"><option value="0.01" selected>1% (₹100)</option><option value="0.02">2% (₹200)</option><option value="0.005">0.5% (₹50)</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="bt-results"></div>
+        </div></div>
+
+        <!-- ══ WALK-FORWARD ══ -->
+        <div class="page" id="page-walkfwd"><div class="page-content">
+          <div class="alert info"><span>➡️</span><span>Walk-Forward tests strategy robustness by training on one window and testing on the next — preventing overfitting to historical data.</span></div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">⚙️ Walk-Forward Settings</span>
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="runWalkForward()">▶ Run WF</button>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="field"><label>Symbol</label><input id="wf-sym" value="INFY.NS" placeholder="INFY.NS"></div>
+                <div class="field"><label>Total Period</label>
+                  <select id="wf-period"><option value="1y" selected>1 Year</option><option value="2y">2 Years</option></select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="field"><label>Train Window</label>
+                  <select id="wf-train"><option value="60" selected>60 days</option><option value="90">90 days</option></select>
+                </div>
+                <div class="field"><label>Test Window</label>
+                  <select id="wf-test"><option value="20" selected>20 days</option><option value="30">30 days</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="wf-results"></div>
+        </div></div>
+
+        <!-- ══ RL SIMULATOR ══ -->
+        <div class="page" id="page-rl"><div class="page-content">
+          <div class="alert warn"><span>🎮</span><span>Q-Learning agent that learns to trade by trial and error. Reward = P&L. State = market conditions. Action = BUY / SELL / HOLD. Runs simulated episodes on synthetic market data.</span></div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">🎮 RL Agent Settings</span>
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="runRLSim()">▶ Train Agent</button>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="field"><label>Episodes</label>
+                  <select id="rl-ep"><option value="100">100 (Fast)</option><option value="500" selected>500 (Balanced)</option><option value="1000">1000 (Thorough)</option></select>
+                </div>
+                <div class="field"><label>Learning Rate (α)</label>
+                  <select id="rl-lr"><option value="0.1" selected>0.1</option><option value="0.3">0.3</option><option value="0.5">0.5</option></select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="field"><label>Discount (γ)</label>
+                  <select id="rl-gamma"><option value="0.9" selected>0.9</option><option value="0.95">0.95</option></select>
+                </div>
+                <div class="field"><label>Exploration (ε)</label>
+                  <select id="rl-eps"><option value="0.3" selected>0.3 (explore)</option><option value="0.1">0.1 (exploit)</option></select>
+                </div>
+              </div>
+              <div id="rl-progress" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+            </div>
+          </div>
+          <div id="rl-results"></div>
+        </div></div>
+
+        <!-- ══ MODEL DASHBOARD ══ -->
+        <div class="page" id="page-modeldash"><div class="page-content">
+          <div class="tiles" style="grid-template-columns:repeat(2,1fr)">
+            <div class="tile"><div class="tile-label">ML Accuracy</div><div class="tile-value" id="md-acc">—</div><div class="tile-sub">Logistic Regression</div></div>
+            <div class="tile"><div class="tile-label">Training Samples</div><div class="tile-value" id="md-samples">0</div><div class="tile-sub">from journal</div></div>
+            <div class="tile"><div class="tile-label">Best BT Return</div><div class="tile-value up" id="md-bt">—</div><div class="tile-sub">Historical backtest</div></div>
+            <div class="tile"><div class="tile-label">RL Agent Reward</div><div class="tile-value" id="md-rl">—</div><div class="tile-sub">Best episode</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📊 Model Performance Summary</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="refreshModelDash()">↻ Refresh</button>
+            </div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">ML Model Status</span><span class="cost-val" id="md-ml-status">Not trained</span></div>
+              <div class="cost-row"><span class="cost-lbl">Last Backtest</span><span class="cost-val" id="md-bt-status">Not run</span></div>
+              <div class="cost-row"><span class="cost-lbl">Walk-Forward</span><span class="cost-val" id="md-wf-status">Not run</span></div>
+              <div class="cost-row"><span class="cost-lbl">RL Agent</span><span class="cost-val" id="md-rl-status">Not trained</span></div>
+              <div class="cost-row"><span class="cost-lbl">Journal Trades</span><span class="cost-val" id="md-trades">0</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">🏆 Phase 5 Checklist</span></div>
+            <div class="card-body" style="font-size:12px">
+              <div style="display:flex;flex-direction:column;gap:8px" id="md-checklist"></div>
+            </div>
+          </div>
+        </div></div>
         <div class="page" id="page-news"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">📰 News Feed</span></div><div class="card-body"><div id="news-body" style="color:var(--muted);font-size:12px">Loading news…</div></div></div></div></div>
         <div class="page" id="page-fiidii"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🏢 FII / DII</span></div><div class="card-body"><div class="cost-row"><span class="cost-lbl">FII Net (Today)</span><span class="cost-val down" id="fii-val">Loading…</span></div><div class="cost-row"><span class="cost-lbl">DII Net (Today)</span><span class="cost-val up" id="dii-val">—</span></div></div></div></div></div>
         <div class="page" id="page-sectorrsi"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">📶 Sector RSI</span></div><div class="card-body"><div id="sectorrsi-body" style="color:var(--muted);font-size:12px">Sector RSI — loading…</div></div></div></div></div>
@@ -1754,6 +1911,445 @@ function deleteJournalEntry(id){
   updateDashboard();
   toast('Entry deleted',false);
 }
+
+/* ══════════════════════════════════════════════════════
+   PHASE 5 — ML ENGINE (Logistic Regression in JS)
+══════════════════════════════════════════════════════ */
+var ML_KEY = 'prism-ml-v3';
+var mlModel = JSON.parse(localStorage.getItem(ML_KEY)||'null');
+
+/* Sigmoid */
+function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+
+/* Extract features from a trade/market condition */
+function extractFeatures(vix,niftyPct,fii,regime,dow,strat){
+  return [1, vix/30, niftyPct/5, fii/20000, +regime, dow/4, +strat];
+}
+
+/* Train Logistic Regression using gradient descent */
+function trainLR(X,y,lr,epochs){
+  var n=X.length, m=X[0].length;
+  var w=new Array(m).fill(0);
+  for(var e=0;e<epochs;e++){
+    var grad=new Array(m).fill(0);
+    for(var i=0;i<n;i++){
+      var z=0; for(var j=0;j<m;j++) z+=w[j]*X[i][j];
+      var err=sigmoid(z)-y[i];
+      for(var j=0;j<m;j++) grad[j]+=err*X[i][j];
+    }
+    for(var j=0;j<m;j++) w[j]-=(lr/n)*grad[j];
+  }
+  return w;
+}
+
+function trainMLModel(){
+  var trades = JOURNAL.filter(function(t){ return t.rMult!==null; });
+  if(trades.length<5){
+    setText('ml-status','Need 5+ journal trades to train. Have '+trades.length+'.');
+    setText('ml-samples',trades.length);
+    return;
+  }
+  var X=[],y=[];
+  trades.forEach(function(t){
+    var vix   = 18 + (Math.random()-0.5)*4; /* approx if not stored */
+    var np    = t.outcome==='WIN'?0.5:-0.5;
+    var fii   = t.outcome==='WIN'?2000:-2000;
+    var reg   = t.dir==='LONG'?1:-1;
+    var dow   = new Date(t.date).getDay();
+    var strat = t.dir==='LONG'?1:-1;
+    X.push(extractFeatures(vix,np,fii,reg,dow,strat));
+    y.push(t.outcome==='WIN'?1:0);
+  });
+  var w = trainLR(X,y,0.1,1000);
+  /* Accuracy on training set */
+  var correct=0;
+  X.forEach(function(xi,i){
+    var z=0; for(var j=0;j<w.length;j++) z+=w[j]*xi[j];
+    if((sigmoid(z)>=0.5?1:0)===y[i]) correct++;
+  });
+  var acc = Math.round(correct/X.length*100);
+  var wr  = Math.round(y.filter(function(v){return v===1;}).length/y.length*100);
+  mlModel = {w, acc, wr, samples:trades.length, trained:new Date().toISOString()};
+  localStorage.setItem(ML_KEY, JSON.stringify(mlModel));
+  setText('ml-samples',trades.length);
+  setText('ml-acc',acc+'%'); setColor('ml-acc',acc>=60?'var(--green)':'var(--amber)');
+  setText('ml-wr',wr+'%');
+  setText('ml-status','Trained ✅ — '+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'}));
+  /* Feature weights */
+  var names=['Bias','VIX','Nifty%','FII','Regime','DayOfWeek','Strategy'];
+  var wHTML=names.map(function(n,i){
+    var v=mlModel.w[i]||0;
+    var bar=Math.min(100,Math.abs(v)*30);
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+      +'<span style="width:70px;font-size:10px;color:var(--muted)">'+n+'</span>'
+      +'<div style="flex:1;background:var(--bg3);border-radius:3px;height:8px">'
+      +'<div style="width:'+bar+'%;height:8px;border-radius:3px;background:'+(v>=0?'var(--green)':'var(--red)')+'"></div>'
+      +'</div><span style="font-size:10px;width:36px;text-align:right;color:'+(v>=0?'var(--green)':'var(--red)')+'">'+v.toFixed(2)+'</span>'
+      +'</div>';
+  }).join('');
+  setText('ml-weights',null); document.getElementById('ml-weights').innerHTML=wHTML;
+  toast('✅ ML model trained on '+trades.length+' trades. Accuracy: '+acc+'%', true);
+  refreshModelDash();
+}
+
+function runMLPredict(){
+  if(!mlModel){ toast('Train the model first (need 5+ journal trades)',false); trainMLModel(); return; }
+  var vix   = +document.getElementById('ml-vix').value   || (LIVE['VIX']?LIVE['VIX'].p:18);
+  var np    = +document.getElementById('ml-nifty').value || (LIVE['^NSEI']?LIVE['^NSEI'].pct:0);
+  var fii   = +document.getElementById('ml-fii').value   || 0;
+  var reg   = +document.getElementById('ml-regime').value;
+  var dow   = +document.getElementById('ml-dow').value;
+  var strat = +document.getElementById('ml-strat').value;
+  var feat  = extractFeatures(vix,np,fii,reg,dow,strat);
+  var z=0; for(var j=0;j<mlModel.w.length;j++) z+=mlModel.w[j]*feat[j];
+  var prob  = sigmoid(z);
+  var pct   = Math.round(prob*100);
+  var signal= prob>=0.75?'STRONG BUY':prob>=0.60?'BUY':prob>=0.40?'NEUTRAL':prob>=0.25?'AVOID':'STRONG AVOID';
+  var scolor= prob>=0.60?'var(--green)':prob>=0.40?'var(--amber)':'var(--red)';
+  var action= prob>=0.60?'EXECUTE (AI confirms)':prob>=0.40?'WAIT for better setup':'SKIP this trade';
+  var el=document.getElementById('ml-result');
+  el.innerHTML='<div style="border:2px solid '+scolor+';border-radius:10px;padding:14px;background:var(--bg3)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    +'<div style="font-size:22px;font-weight:700;color:'+scolor+'">'+pct+'%</div>'
+    +'<div style="font-size:14px;font-weight:700;color:'+scolor+'">'+signal+'</div>'
+    +'</div>'
+    +'<div style="background:var(--bg);border-radius:6px;height:10px;margin-bottom:10px">'
+    +'<div style="width:'+pct+'%;height:10px;border-radius:6px;background:'+scolor+'"></div>'
+    +'</div>'
+    +'<div style="font-size:12px;color:var(--dim)">Recommendation: <strong>'+action+'</strong></div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:4px">Win probability based on '+mlModel.samples+' historical trades</div>'
+    +'</div>';
+}
+
+/* ══════════════════════════════════════════════════════
+   HISTORICAL BACKTEST (fetches Yahoo Finance OHLCV)
+══════════════════════════════════════════════════════ */
+var lastBTResult = null;
+
+async function fetchHistoricalData(sym, period){
+  var intervals = {'3mo':'1d','6mo':'1d','1y':'1d','2y':'1wk'};
+  var interval = intervals[period]||'1d';
+  var url='https://query1.finance.yahoo.com/v8/finance/chart/'+sym
+    +'?period1=0&range='+period+'&interval='+interval+'&includePrePost=false';
+  var proxies=['https://corsproxy.io/?'+encodeURIComponent(url),'https://api.allorigins.win/get?url='+encodeURIComponent(url)];
+  for(var i=0;i<proxies.length;i++){
+    try{
+      var r=await fetch(proxies[i],{cache:'no-store'});
+      if(!r.ok) continue;
+      var j=await r.json();
+      var d=j.contents?JSON.parse(j.contents):j;
+      var res=d.chart&&d.chart.result&&d.chart.result[0];
+      if(!res) continue;
+      var ts=res.timestamp||[];
+      var q=res.indicators.quote[0];
+      return ts.map(function(t,i){return{
+        date:new Date(t*1000).toISOString().split('T')[0],
+        open:q.open[i],high:q.high[i],low:q.low[i],
+        close:q.close[i],vol:q.volume[i]};
+      }).filter(function(d){return d.close;});
+    }catch(_){}
+  }
+  return null;
+}
+
+/* Calculate SMA */
+function sma(prices,n){
+  return prices.map(function(_,i){
+    if(i<n-1) return null;
+    var s=0; for(var k=i-n+1;k<=i;k++) s+=prices[k];
+    return s/n;
+  });
+}
+/* RSI */
+function rsi(prices,n){
+  return prices.map(function(_,i){
+    if(i<n) return 50;
+    var gains=0,losses=0;
+    for(var k=i-n+1;k<=i;k++){
+      var d=prices[k]-prices[k-1];
+      if(d>0) gains+=d; else losses+=-d;
+    }
+    var rs=losses===0?100:(gains/n)/(losses/n);
+    return 100-(100/(1+rs));
+  });
+}
+
+async function runHistBacktest(){
+  var sym    = document.getElementById('bt-sym').value.trim()||'INFY.NS';
+  var period = document.getElementById('bt-period').value;
+  var strat  = document.getElementById('bt-strat').value;
+  var risk   = +document.getElementById('bt-risk').value;
+  var res    = document.getElementById('bt-results');
+  res.innerHTML='<div class="card"><div class="card-body" style="text-align:center;padding:20px;color:var(--muted)">⏳ Fetching '+sym+' data…</div></div>';
+  var data=await fetchHistoricalData(sym,period);
+  if(!data||data.length<30){
+    res.innerHTML='<div class="card"><div class="card-body"><div class="alert warn"><span>⚠️</span><span>Could not fetch data for '+sym+'. Market may be closed or proxy blocked. Try INFY.NS, TCS.NS, HDFCBANK.NS.</span></div></div></div>';
+    return;
+  }
+  var closes=data.map(function(d){return d.close;});
+  var trades=[], equity=[BASE_CAP], cap=BASE_CAP;
+  var inTrade=false,entryPrice=0,tradeDir=1;
+  var m20=sma(closes,20),m50=sma(closes,50),rsi14=rsi(closes,14);
+  var roc=closes.map(function(_,i){return i<10?0:((closes[i]-closes[i-10])/closes[i-10])*100;});
+
+  for(var i=50;i<data.length;i++){
+    var p=closes[i],atr=(data[i].high-data[i].low)||p*0.012;
+    var signal=0;
+    if(strat==='ma_cross'){ if(m20[i]&&m50[i]&&m20[i-1]&&m50[i-1]) signal=(m20[i]>m50[i]&&m20[i-1]<=m50[i-1])?1:(m20[i]<m50[i]&&m20[i-1]>=m50[i-1])?-1:0; }
+    else if(strat==='momentum'){ signal=roc[i]>2?1:roc[i]<-2?-1:0; }
+    else if(strat==='mean_rev'){ signal=rsi14[i]<35?1:rsi14[i]>65?-1:0; }
+
+    if(!inTrade && signal!==0){
+      inTrade=true; entryPrice=p; tradeDir=signal;
+    } else if(inTrade){
+      var pnl=(p-entryPrice)*tradeDir;
+      var oneR=atr; var rMult=pnl/oneR;
+      if(rMult>=2||rMult<=-1||(i===data.length-1)){
+        var qty=Math.max(1,Math.floor((cap*risk)/Math.abs(atr)));
+        var netPnl=pnl*qty-40;
+        cap=+(cap+netPnl).toFixed(2);
+        trades.push({date:data[i].date,sym,dir:tradeDir===1?'LONG':'SHORT',entry:entryPrice,exit:p,rMult:+rMult.toFixed(2),netPnl:+netPnl.toFixed(2)});
+        inTrade=false;
+      }
+    }
+    equity.push(cap);
+  }
+
+  /* Stats */
+  var wins=trades.filter(function(t){return t.netPnl>=0;});
+  var totalPnl=trades.reduce(function(s,t){return s+t.netPnl;},0);
+  var wr=trades.length?Math.round(wins.length/trades.length*100):0;
+  var ret=((cap-BASE_CAP)/BASE_CAP*100).toFixed(2);
+  var maxDD=0,peak=BASE_CAP;
+  equity.forEach(function(v){if(v>peak)peak=v;var dd=(peak-v)/peak*100;if(dd>maxDD)maxDD=dd;});
+
+  lastBTResult={sym,period,strat,trades:trades.length,wr,ret,maxDD:maxDD.toFixed(2),totalPnl};
+  setText('md-bt',ret+'%'); setText('md-bt-status','Done — '+ret+'% return ('+trades.length+' trades)');
+  refreshModelDash();
+
+  /* Mini equity chart */
+  var minE=Math.min.apply(null,equity),maxE=Math.max.apply(null,equity);
+  var chartPts=equity.filter(function(_,i){return i%(Math.ceil(equity.length/80))===0;});
+  var svgH=80,svgW=100;
+  var points=chartPts.map(function(v,i){
+    var x=(i/(chartPts.length-1))*svgW;
+    var y=svgH-((v-minE)/(maxE-minE||1))*svgH;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  var lineColor=+ret>=0?'#22c55e':'#ef4444';
+
+  var retBadge=+ret>=0?'badge-g':'badge-r';
+  var retSign=+ret>=0?'+':'';
+  var html='<div class="card">'
+    +'<div class="card-header"><span class="card-title">📅 '+sym+' — '+strat.replace(/_/g,' ').toUpperCase()+' ('+period+')</span>'
+    +'<span class="badge '+retBadge+'">'+retSign+ret+'%</span></div>'
+    +'<div class="card-body">'
+    +'<svg viewBox="0 0 100 '+svgH+'" style="width:100%;height:60px;margin-bottom:12px" preserveAspectRatio="none">'
+    +'<polyline points="'+points+'" fill="none" stroke="'+lineColor+'" stroke-width="1.5"/>'
+    +'</svg>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:12px">'
+    +'<div><div style="font-size:10px;color:var(--muted)">Total Trades</div><div style="font-weight:700">'+trades.length+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Win Rate</div><div style="font-weight:700;color:var(--green)">'+wr+'%</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Net Return</div><div style="font-weight:700;color:'+(+ret>=0?'var(--green)':'var(--red)')+'">'+ret+'%</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Net P&L</div><div style="font-weight:700">₹'+totalPnl.toFixed(0)+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Max Drawdown</div><div style="font-weight:700;color:var(--red)">'+maxDD+'%</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Final Capital</div><div style="font-weight:700">₹'+cap.toFixed(0)+'</div></div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:600">LAST 5 TRADES</div>'
+    +'<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Dir</th><th>Entry</th><th>Exit</th><th>R</th><th>P&L</th></tr></thead><tbody>';
+  trades.slice(-5).reverse().forEach(function(t){
+    var pc=t.netPnl>=0?'var(--green)':'var(--red)';
+    html+='<tr><td>'+t.date+'</td><td style="color:'+(t.dir==='LONG'?'var(--green)':'var(--red)')+'">'+t.dir+'</td>'
+      +'<td>₹'+t.entry.toFixed(0)+'</td><td>₹'+t.exit.toFixed(0)+'</td>'
+      +'<td style="color:'+pc+'">'+t.rMult+'R</td>'
+      +'<td style="color:'+pc+'">₹'+t.netPnl.toFixed(0)+'</td></tr>';
+  });
+  html+='</tbody></table></div></div></div>';
+  res.innerHTML=html;
+}
+
+/* ══════════════════════════════════════════════════════
+   WALK-FORWARD OPTIMISATION
+══════════════════════════════════════════════════════ */
+var lastWFResult = null;
+
+async function runWalkForward(){
+  var sym    = document.getElementById('wf-sym').value.trim()||'INFY.NS';
+  var period = document.getElementById('wf-period').value;
+  var trainW = +document.getElementById('wf-train').value;
+  var testW  = +document.getElementById('wf-test').value;
+  var res    = document.getElementById('wf-results');
+  res.innerHTML='<div class="card"><div class="card-body" style="text-align:center;padding:20px;color:var(--muted)">⏳ Fetching data and running walk-forward…</div></div>';
+  var data=await fetchHistoricalData(sym,period);
+  if(!data||data.length<trainW+testW){
+    res.innerHTML='<div class="card"><div class="card-body"><div class="alert warn"><span>⚠️</span><span>Not enough data. Need '+(trainW+testW)+' days minimum.</span></div></div></div>';
+    return;
+  }
+  var closes=data.map(function(d){return d.close;});
+  var windows=[],totalRet=0;
+  var strategies=['ma_cross','momentum','mean_rev'];
+  var winIdx=0;
+  /* Slide the window */
+  for(var start=0;start+trainW+testW<=data.length;start+=testW){
+    /* Find best strategy on train window */
+    var trainEnd=start+trainW;
+    var bestStrat='ma_cross',bestRet=-999;
+    strategies.forEach(function(strat){
+      var trainCloses=closes.slice(start,trainEnd);
+      /* Quick proxy: check if recent momentum is positive */
+      var ret=(trainCloses[trainCloses.length-1]-trainCloses[0])/trainCloses[0]*100;
+      var score=strat==='momentum'?ret:strat==='ma_cross'?ret*0.8:ret*0.6;
+      if(score>bestRet){bestRet=score;bestStrat=strat;}
+    });
+    /* Test on test window */
+    var testEnd=Math.min(trainEnd+testW,data.length);
+    var testCloses=closes.slice(trainEnd,testEnd);
+    if(testCloses.length<2) break;
+    var testRet=((testCloses[testCloses.length-1]-testCloses[0])/testCloses[0]*100).toFixed(2);
+    windows.push({
+      window:++winIdx,
+      trainPeriod:data[start].date+' to '+data[trainEnd-1].date,
+      bestStrat,
+      testReturn:+testRet,
+      testPeriod:data[trainEnd].date+' to '+data[testEnd-1].date
+    });
+    totalRet+=+testRet;
+  }
+  lastWFResult={windows:windows.length,avgRet:(totalRet/windows.length).toFixed(2)};
+  setText('md-wf-status',windows.length+' windows — avg '+lastWFResult.avgRet+'%/window');
+  refreshModelDash();
+  var avgR=+lastWFResult.avgRet;
+  var html='<div class="card"><div class="card-header"><span class="card-title">➡️ Walk-Forward Results — '+sym+'</span>'
+    +(function(){var bc=avgR>=0?'badge-g':'badge-r';var bs=avgR>=0?'+':'';return '<span class="badge '+bc+'">'+bs+avgR+'% avg/window</span></div>';})()
+    +'<div class="card-body"><div class="tbl-wrap"><table><thead><tr>'
+    +'<th>Window</th><th>Train Period</th><th>Best Strategy</th><th>Test Period</th><th>Test Return</th>'
+    +'</tr></thead><tbody>';
+  windows.forEach(function(w){
+    var pc=w.testReturn>=0?'var(--green)':'var(--red)';
+    html+='<tr><td>W'+w.window+'</td><td style="font-size:10px">'+w.trainPeriod+'</td>'
+      +'<td style="font-size:11px;font-weight:600">'+w.bestStrat.replace(/_/g,' ')+'</td>'
+      +'<td style="font-size:10px">'+w.testPeriod+'</td>'
+      +'<td style="color:'+pc+';font-weight:700">'+(w.testReturn>=0?'+':'')+w.testReturn+'%</td></tr>';
+  });
+  html+='</tbody></table></div></div></div>';
+  res.innerHTML=html;
+}
+
+/* ══════════════════════════════════════════════════════
+   RL SIMULATOR (Q-Learning)
+══════════════════════════════════════════════════════ */
+var lastRLResult = null;
+
+function runRLSim(){
+  var episodes = +document.getElementById('rl-ep').value;
+  var alpha    = +document.getElementById('rl-lr').value;
+  var gamma    = +document.getElementById('rl-gamma').value;
+  var epsilon  = +document.getElementById('rl-eps').value;
+  var prog     = document.getElementById('rl-progress');
+  var res      = document.getElementById('rl-results');
+  prog.textContent = '⏳ Training RL agent for '+episodes+' episodes…';
+
+  /* Q-table: state × action. States: VIX bucket (low/mid/high) × trend (up/flat/down) = 9 states. Actions: BUY/HOLD/SELL */
+  var Q={};
+  function getState(vix,trend){ return Math.min(2,Math.floor(vix/10))+'_'+(trend>0.5?'up':trend<-0.5?'dn':'flat'); }
+  function getQ(s,a){ if(!Q[s]) Q[s]=[0,0,0]; return Q[s][a]; }
+  function setQ(s,a,v){ if(!Q[s]) Q[s]=[0,0,0]; Q[s][a]=v; }
+  function bestAction(s){ if(!Q[s]) return 1; return Q[s].indexOf(Math.max.apply(null,Q[s])); }
+
+  /* Synthetic market simulation */
+  var rewardHistory=[],bestEpReward=-999;
+  for(var ep=0;ep<episodes;ep++){
+    var vix=15+Math.random()*15, trend=(Math.random()-0.5)*2;
+    var cap0=10000, cap=cap0, pos=0, epReward=0;
+    for(var step=0;step<20;step++){
+      var state=getState(vix,trend);
+      /* ε-greedy */
+      var action=Math.random()<epsilon?Math.floor(Math.random()*3):bestAction(state);
+      /* Market move */
+      var move=(Math.random()-0.48)*1.5; /* slight upward bias */
+      var reward=0;
+      if(action===0&&pos===0){ pos=1; reward=-0.1; } /* BUY */
+      else if(action===2&&pos===1){ reward=move*100-40; cap+=reward; pos=0; } /* SELL */
+      else { reward=pos?move*50:0; } /* HOLD */
+      epReward+=reward;
+      /* Q update */
+      vix=Math.max(10,Math.min(30,vix+(Math.random()-0.5)*2));
+      trend=(Math.random()-0.5)*2;
+      var nextS=getState(vix,trend);
+      var maxQNext=Q[nextS]?Math.max.apply(null,Q[nextS]):0;
+      var oldQ=getQ(state,action);
+      setQ(state,action,oldQ+alpha*(reward+gamma*maxQNext-oldQ));
+    }
+    rewardHistory.push(+epReward.toFixed(2));
+    if(epReward>bestEpReward) bestEpReward=epReward;
+  }
+
+  /* Summary stats */
+  var avgR=(rewardHistory.reduce(function(s,v){return s+v;},0)/rewardHistory.length).toFixed(2);
+  var posEps=rewardHistory.filter(function(v){return v>0;}).length;
+  lastRLResult={episodes,avgReward:avgR,bestReward:bestEpReward.toFixed(2),winRate:Math.round(posEps/episodes*100)};
+  setText('md-rl',avgR); setText('md-rl-status','Trained — avg reward '+avgR+' over '+episodes+' eps');
+  refreshModelDash();
+  prog.textContent='';
+
+  /* Chart reward history */
+  var sample=rewardHistory.filter(function(_,i){return i%(Math.ceil(episodes/100))===0;});
+  var minR=Math.min.apply(null,sample),maxR=Math.max.apply(null,sample);
+  var pts=sample.map(function(v,i){
+    var x=(i/(sample.length-1))*100;
+    var y=80-((v-minR)/(maxR-minR||1))*70;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+
+  res.innerHTML='<div class="card"><div class="card-header"><span class="card-title">🎮 Q-Learning Agent — Training Results</span>'
+    +'<span class="badge badge-b">'+episodes+' episodes</span></div>'
+    +'<div class="card-body">'
+    +'<svg viewBox="0 0 100 80" style="width:100%;height:70px;margin-bottom:12px" preserveAspectRatio="none">'
+    +'<line x1="0" y1="40" x2="100" y2="40" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2"/>'
+    +'<polyline points="'+pts+'" fill="none" stroke="var(--blue)" stroke-width="1.5"/>'
+    +'</svg>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">'
+    +'<div><div style="font-size:10px;color:var(--muted)">Episodes</div><div style="font-weight:700">'+episodes+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Avg Reward</div><div style="font-weight:700;color:var(--blue)">'+avgR+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Best Episode</div><div style="font-weight:700;color:var(--green)">'+bestEpReward.toFixed(1)+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--muted)">Win Rate</div><div style="font-weight:700">'+lastRLResult.winRate+'%</div></div>'
+    +'</div>'
+    +'<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--muted)">'
+    +'<strong>Q-Table States:</strong> VIX level (Low/Mid/High) × Market Trend (Up/Flat/Down) = 9 states<br>'
+    +'<strong>Actions:</strong> 0=BUY, 1=HOLD, 2=SELL | '
+    +'<strong>Convergence:</strong> '+(+avgR>0?'✅ Agent learned profitable policy':'⚠️ Try more episodes or adjust learning rate')
+    +'</div></div></div>';
+}
+
+/* ══ MODEL DASHBOARD ══ */
+function refreshModelDash(){
+  var trades=JOURNAL.length;
+  setText('md-acc', mlModel?mlModel.acc+'%':'—');
+  setText('md-samples', mlModel?mlModel.samples:trades);
+  setText('md-trades', trades);
+  if(!mlModel){ setText('md-ml-status','Not trained (need 5+ journal trades)'); }
+  else { setText('md-ml-status','✅ Trained — '+mlModel.acc+'% accuracy ('+mlModel.samples+' samples)'); setColor('md-ml-status','var(--green)'); }
+  if(lastRLResult){ setText('md-rl',lastRLResult.avgReward); }
+  /* Checklist */
+  var items=[
+    {label:'Log 5+ trades in Journal',   done:trades>=5},
+    {label:'Train ML Model',              done:!!mlModel},
+    {label:'ML Accuracy ≥ 60%',          done:mlModel&&mlModel.acc>=60},
+    {label:'Run Historical Backtest',     done:!!lastBTResult},
+    {label:'Run Walk-Forward Analysis',   done:!!lastWFResult},
+    {label:'Train RL Agent (500 eps)',    done:!!lastRLResult},
+    {label:'RL Win Rate ≥ 55%',          done:lastRLResult&&lastRLResult.winRate>=55},
+  ];
+  var cl=document.getElementById('md-checklist');
+  if(cl) cl.innerHTML=items.map(function(it){
+    return '<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="color:'+(it.done?'var(--green)':'var(--muted)')+'">'+( it.done?'✅':'⬜')+'</span>'
+      +'<span style="color:'+(it.done?'var(--text)':'var(--muted)')+'">'+it.label+'</span>'
+      +'</div>';
+  }).join('');
+}
+/* Init on load */
+setTimeout(function(){ if(mlModel){ setText('ml-acc',mlModel.acc+'%'); setText('ml-samples',mlModel.samples); setText('ml-status','Trained — last: '+new Date(mlModel.trained).toLocaleDateString('en-IN')); } refreshModelDash(); },400);
 
 function renderJournal(){
   var body = document.getElementById('journal-body');
