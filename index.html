@@ -710,9 +710,69 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <!-- JOURNAL -->
         <div class="page" id="page-journal">
           <div class="page-content">
+            <!-- Entry Form -->
+            <div class="card" id="journal-form-card" style="display:none">
+              <div class="card-header"><span class="card-title">📝 New Trade Entry</span>
+                <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="closeJournalForm()">✕ Cancel</button>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="field"><label>Symbol</label><input id="j-sym" placeholder="INFY" style="text-transform:uppercase"></div>
+                  <div class="field"><label>Date</label><input id="j-date" type="date"></div>
+                </div>
+                <div class="row">
+                  <div class="field"><label>Direction</label>
+                    <select id="j-dir"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
+                  </div>
+                  <div class="field"><label>Type</label>
+                    <select id="j-type"><option value="MIS">MIS (Intraday)</option><option value="NRML">NRML (Positional)</option><option value="CNC">CNC (Delivery)</option></select>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field"><label>Entry ₹</label><input id="j-entry" type="number" placeholder="1293.00"></div>
+                  <div class="field"><label>Exit ₹</label><input id="j-exit" type="number" placeholder="1262.00"></div>
+                  <div class="field"><label>Qty</label><input id="j-qty" type="number" placeholder="6"></div>
+                </div>
+                <div class="row">
+                  <div class="field"><label>Stop Loss ₹</label><input id="j-sl" type="number" placeholder="1308.00"></div>
+                  <div class="field"><label>Charges ₹</label><input id="j-charges" type="number" placeholder="49.66"></div>
+                </div>
+                <div class="field"><label>Reason / Setup</label>
+                  <input id="j-reason" placeholder="e.g. IT sector weakness, FII selling, below 50MA">
+                </div>
+                <div class="field"><label>Emotion / Notes</label>
+                  <input id="j-notes" placeholder="e.g. Followed plan, exited at 2R target">
+                </div>
+                <div id="j-calc" style="margin:10px 0;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;display:none"></div>
+                <div class="row">
+                  <button class="btn btn-primary" onclick="saveJournalEntry()">💾 Save Entry</button>
+                  <button class="btn btn-ghost" onclick="calcJournalPreview()">🧮 Preview P&L</button>
+                </div>
+              </div>
+            </div>
+            <!-- Journal List -->
             <div class="card">
-              <div class="card-header"><span class="card-title">📓 Trade Journal</span><button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="addJournalEntry()">+ Entry</button></div>
-              <div class="card-body"><div id="journal-body"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No journal entries yet. Add your first trade.</div></div></div>
+              <div class="card-header">
+                <span class="card-title">📓 Trade Journal</span>
+                <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="addJournalEntry()">+ Entry</button>
+              </div>
+              <div id="journal-body">
+                <div style="color:var(--muted);font-size:12px;text-align:center;padding:24px">
+                  No journal entries yet. Click + Entry to log your first trade.
+                </div>
+              </div>
+            </div>
+            <!-- Stats -->
+            <div class="card" id="j-stats-card" style="display:none">
+              <div class="card-header"><span class="card-title">📊 Journal Stats</span></div>
+              <div class="card-body">
+                <div class="row">
+                  <div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">Total Trades</div><div style="font-size:20px;font-weight:700" id="js-total">0</div></div>
+                  <div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">Win Rate</div><div style="font-size:20px;font-weight:700;color:var(--green)" id="js-wr">—</div></div>
+                  <div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">Net P&L</div><div style="font-size:20px;font-weight:700" id="js-pnl">₹0</div></div>
+                  <div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">Avg R</div><div style="font-size:20px;font-weight:700" id="js-avgr">—</div></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1057,7 +1117,8 @@ function nav(id){
     portfolio:updatePortfolio, risk:updateRisk,
     governance:updateGovernance, dashboard:updateDashboard,
     short:updateShortSelling, prices:updatePricesTable,
-    forex:updateForexPage, mcx:updateMCXPage
+    forex:updateForexPage, mcx:updateMCXPage,
+    journal:renderJournal
   };
   if(hooks[id]) try{hooks[id]();}catch(_){}
 }
@@ -1591,6 +1652,157 @@ function getSampleQuotes(stocks){
     };
   });
 }
+
+/* ── TRADE JOURNAL ── */
+var JOURNAL_KEY = 'prism-journal-v3';
+var JOURNAL = JSON.parse(localStorage.getItem(JOURNAL_KEY)||'[]');
+
+function saveJournalData(){ localStorage.setItem(JOURNAL_KEY, JSON.stringify(JOURNAL)); }
+
+function addJournalEntry(){
+  /* Pre-fill today's date */
+  var d = new Date().toISOString().split('T')[0];
+  document.getElementById('j-date').value = d;
+  document.getElementById('j-sym').value = '';
+  document.getElementById('j-entry').value = '';
+  document.getElementById('j-exit').value = '';
+  document.getElementById('j-qty').value = '';
+  document.getElementById('j-sl').value = '';
+  document.getElementById('j-charges').value = '';
+  document.getElementById('j-reason').value = '';
+  document.getElementById('j-notes').value = '';
+  document.getElementById('j-calc').style.display = 'none';
+  document.getElementById('journal-form-card').style.display = 'block';
+  document.getElementById('journal-form-card').scrollIntoView({behavior:'smooth'});
+}
+
+function closeJournalForm(){
+  document.getElementById('journal-form-card').style.display = 'none';
+}
+
+function calcJournalPreview(){
+  var entry   = +document.getElementById('j-entry').value;
+  var exit    = +document.getElementById('j-exit').value;
+  var qty     = +document.getElementById('j-qty').value;
+  var sl      = +document.getElementById('j-sl').value;
+  var charges = +document.getElementById('j-charges').value || 0;
+  var dir     = document.getElementById('j-dir').value;
+  if(!entry||!exit||!qty){ toast('Fill Entry, Exit and Qty first',false); return; }
+  var gross = dir==='LONG' ? (exit-entry)*qty : (entry-exit)*qty;
+  var net   = gross - charges;
+  var oneR  = sl ? Math.abs(entry-sl) : Math.abs(exit-entry)/2;
+  var rMult = oneR>0 ? (gross/qty/oneR).toFixed(2) : '—';
+  var el = document.getElementById('j-calc');
+  el.style.display = 'block';
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">'
+    +'<div><div style="color:var(--muted);font-size:10px">Gross P&L</div><div style="font-weight:700;color:'+(gross>=0?'var(--green)':'var(--red)')+'">₹'+gross.toFixed(2)+'</div></div>'
+    +'<div><div style="color:var(--muted);font-size:10px">Charges</div><div style="font-weight:700;color:var(--red)">-₹'+charges.toFixed(2)+'</div></div>'
+    +'<div><div style="color:var(--muted);font-size:10px">Net P&L</div><div style="font-weight:700;color:'+(net>=0?'var(--green)':'var(--red)')+'">₹'+net.toFixed(2)+'</div></div>'
+    +'<div><div style="color:var(--muted);font-size:10px">R-Multiple</div><div style="font-weight:700">'+rMult+'R</div></div>'
+    +'<div><div style="color:var(--muted);font-size:10px">Outcome</div><div style="font-weight:700;color:'+(net>=0?'var(--green)':'var(--red)')+'">'+( net>=0?'WIN':'LOSS')+'</div></div>'
+    +'<div><div style="color:var(--muted);font-size:10px">Return %</div><div style="font-weight:700">'+((net/CAP)*100).toFixed(2)+'%</div></div>'
+    +'</div>';
+}
+
+function saveJournalEntry(){
+  var sym     = document.getElementById('j-sym').value.trim().toUpperCase();
+  var date    = document.getElementById('j-date').value;
+  var dir     = document.getElementById('j-dir').value;
+  var type    = document.getElementById('j-type').value;
+  var entry   = +document.getElementById('j-entry').value;
+  var exit    = +document.getElementById('j-exit').value;
+  var qty     = +document.getElementById('j-qty').value;
+  var sl      = +document.getElementById('j-sl').value || 0;
+  var charges = +document.getElementById('j-charges').value || 0;
+  var reason  = document.getElementById('j-reason').value.trim();
+  var notes   = document.getElementById('j-notes').value.trim();
+  if(!sym||!date||!entry||!exit||!qty){ toast('Fill Symbol, Date, Entry, Exit and Qty',false); return; }
+  var gross = dir==='LONG' ? (exit-entry)*qty : (entry-exit)*qty;
+  var net   = gross - charges;
+  var oneR  = sl ? Math.abs(entry-sl) : 0;
+  var rMult = oneR>0 ? +((gross/qty)/oneR).toFixed(2) : null;
+  var trade = { id:Date.now(), date, sym, dir, type, entry, exit, qty, sl, charges, gross:+gross.toFixed(2), net:+net.toFixed(2), rMult, reason, notes, outcome: net>=0?'WIN':'LOSS' };
+  JOURNAL.unshift(trade); /* newest first */
+  saveJournalData();
+  /* Update capital */
+  CAP = +(CAP + net).toFixed(2);
+  MONTHLY.pnl  = +((MONTHLY.pnl||0)+net).toFixed(2);
+  MONTHLY.trades = (MONTHLY.trades||0)+1;
+  localStorage.setItem(CAP_KEY, CAP);
+  localStorage.setItem(MONTHLY_KEY, JSON.stringify(MONTHLY));
+  closeJournalForm();
+  renderJournal();
+  updateDashboard();
+  toast((net>=0?'✅ WIN':'📉 Loss')+' ₹'+net.toFixed(2)+' logged', net>=0);
+  /* Telegram alert */
+  sendTg((net>=0?'WIN':'LOSS')+' '+sym+' '+dir+'\nP&L: Rs '+net.toFixed(2)+'\nCapital: Rs '+CAP.toFixed(2)+'\nR: '+(rMult!==null?rMult+'R':'—'));
+}
+
+function deleteJournalEntry(id){
+  if(!confirm('Delete this trade entry?')) return;
+  var idx = JOURNAL.findIndex(function(t){ return t.id===id; });
+  if(idx<0) return;
+  var t = JOURNAL[idx];
+  /* Reverse the P&L from capital */
+  CAP = +(CAP - t.net).toFixed(2);
+  MONTHLY.pnl = +((MONTHLY.pnl||0)-t.net).toFixed(2);
+  localStorage.setItem(CAP_KEY, CAP);
+  localStorage.setItem(MONTHLY_KEY, JSON.stringify(MONTHLY));
+  JOURNAL.splice(idx,1);
+  saveJournalData();
+  renderJournal();
+  updateDashboard();
+  toast('Entry deleted',false);
+}
+
+function renderJournal(){
+  var body = document.getElementById('journal-body');
+  if(!body) return;
+  if(!JOURNAL.length){
+    body.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:24px">No journal entries yet. Click + Entry to log your first trade.</div>';
+    document.getElementById('j-stats-card').style.display='none';
+    return;
+  }
+  /* Stats */
+  var wins    = JOURNAL.filter(function(t){ return t.net>=0; });
+  var totPnl  = JOURNAL.reduce(function(s,t){ return s+t.net; },0);
+  var rVals   = JOURNAL.filter(function(t){ return t.rMult!==null; }).map(function(t){ return t.rMult; });
+  var avgR    = rVals.length ? (rVals.reduce(function(s,v){ return s+v; },0)/rVals.length).toFixed(2) : '—';
+  document.getElementById('js-total').textContent = JOURNAL.length;
+  document.getElementById('js-wr').textContent    = Math.round(wins.length/JOURNAL.length*100)+'%';
+  document.getElementById('js-pnl').textContent   = (totPnl>=0?'+':'')+'₹'+totPnl.toFixed(2);
+  document.getElementById('js-pnl').style.color   = totPnl>=0?'var(--green)':'var(--red)';
+  document.getElementById('js-avgr').textContent  = avgR!=='—'?avgR+'R':'—';
+  document.getElementById('j-stats-card').style.display='block';
+
+  /* Table */
+  var html = '<div class="tbl-wrap"><table><thead><tr>'
+    +'<th>Date</th><th>Symbol</th><th>Dir</th><th>Entry</th><th>Exit</th>'
+    +'<th>Qty</th><th>Net P&L</th><th>R</th><th>Setup</th><th></th>'
+    +'</tr></thead><tbody>';
+  JOURNAL.forEach(function(t){
+    var pcolor = t.net>=0?'var(--green)':'var(--red)';
+    var psign  = t.net>=0?'+':'';
+    var dcolor = t.dir==='LONG'?'var(--green)':'var(--red)';
+    html += '<tr>'
+      +'<td>'+t.date+'</td>'
+      +'<td style="font-weight:700">'+t.sym+'</td>'
+      +'<td style="color:'+dcolor+';font-weight:600">'+t.dir+'</td>'
+      +'<td>₹'+t.entry+'</td>'
+      +'<td>₹'+t.exit+'</td>'
+      +'<td>'+t.qty+'</td>'
+      +'<td style="color:'+pcolor+';font-weight:700">'+psign+'₹'+t.net.toFixed(2)+'</td>'
+      +'<td>'+(t.rMult!==null?'<span style="color:'+pcolor+'">'+t.rMult+'R</span>':'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( t.reason||'—')+'</td>'
+      +'<td><button onclick="deleteJournalEntry('+t.id+')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px">🗑</button></td>'
+      +'</tr>';
+  });
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+/* Call renderJournal on page load */
+setTimeout(renderJournal, 300);
 
 function updatePricesTable(){
   var rows=[
