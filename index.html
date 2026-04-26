@@ -1184,13 +1184,30 @@ function applyQuote(sym, p, c, pct){
     setText('mcx-copper','₹'+p.toFixed(1)+'/kg'); setColor('mcx-copper',color);
     setText('mcx-copper-c',sign+pct.toFixed(2)+'%'); setColor('mcx-copper-c',color);
   }
+  if(sym==='EURINR'){
+    setText('fx-eurinr','₹'+p.toFixed(2)); setColor('fx-eurinr',color);
+    setText('fx-eurinr-c',sign+pct.toFixed(2)+'%'); setColor('fx-eurinr-c',color);
+  }
+  if(sym==='GBPINR'){
+    setText('fx-gbpinr','₹'+p.toFixed(2)); setColor('fx-gbpinr',color);
+    setText('fx-gbpinr-c',sign+pct.toFixed(2)+'%'); setColor('fx-gbpinr-c',color);
+  }
+  if(sym==='WTI'){
+    setText('fx-wti','$'+p.toFixed(2)); setColor('fx-wti',color);
+    setText('fx-wti-c',sign+pct.toFixed(2)+'%'); setColor('fx-wti-c',color);
+    /* WTI also feeds crude MCX approx: USD/bbl × USDINR */
+    var usdInr3=LIVE['USDINR']?LIVE['USDINR'].p:84.47;
+    var wtiInr=+(p*usdInr3).toFixed(0);
+    setText('t-crude','₹'+wtiInr); setColor('t-crude',color);
+    setText('t-crude-c',sign+pct.toFixed(2)+'%'); setColor('t-crude-c',color);
+  }
 }
 
 
 /* SOURCE 1: Yahoo Finance via proxies — fetches each symbol group */
 async function fetchYahoo(){
   /* Fetch indices + USDINR + GOLDBEES in one call */
-  var syms=['^NSEI','^BSESN','^NSEBANK','^INDIAVIX','USDINR=X','GOLDBEES.NS','SI=F','HG=F'];
+  var syms=['^NSEI','^BSESN','^NSEBANK','^INDIAVIX','USDINR=X','GOLDBEES.NS','SI=F','HG=F','EURINR=X','GBPINR=X','CL=F'];
   var qurl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+
     syms.map(encodeURIComponent).join(',')+'&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent';
 
@@ -1213,7 +1230,8 @@ async function fetchYahoo(){
         var p=s.regularMarketPrice,c=s.regularMarketChange||0,pct=s.regularMarketChangePercent||0;
         var map={'^NSEI':'^NSEI','^BSESN':'^BSESN','^NSEBANK':'^NSEBANK',
           '^INDIAVIX':'VIX','USDINR=X':'USDINR','GOLDBEES.NS':'GOLD',
-          'SI=F':'SILVER_USD','HG=F':'COPPER_USD'};
+          'SI=F':'SILVER_USD','HG=F':'COPPER_USD',
+          'EURINR=X':'EURINR','GBPINR=X':'GBPINR','CL=F':'WTI'};
         if(map[s.symbol]){
           var adjP = s.symbol==='GOLDBEES.NS' ? p*100 : p;
           var adjC = s.symbol==='GOLDBEES.NS' ? c*100 : c;
@@ -1292,6 +1310,9 @@ function useFallbackPrices(){
     {sym:'^NSEBANK',p:54664.35,c:707.50,  pct:1.31},
     {sym:'VIX',    p:17.96,    c:-1.74,   pct:-8.83},
     {sym:'USDINR', p:84.47,    c:-0.10,   pct:-0.12},
+    {sym:'EURINR', p:95.82,    c:0.12,    pct:0.13},
+    {sym:'GBPINR', p:112.35,   c:-0.08,   pct:-0.07},
+    {sym:'WTI',    p:63.15,    c:0.85,    pct:1.36},
     {sym:'GOLD',   p:151310,   c:-450,    pct:-0.30},
     {sym:'CRUDE',  p:7320,     c:690,     pct:10.41},
     {sym:'SILVER', p:240775,   c:-750,    pct:-0.31},
