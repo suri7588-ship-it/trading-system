@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a0f1e">
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Prism Analytics v3.0</title>
+<title>Prism Analytics Intelligence Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -230,7 +230,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <div id="gate">
   <div class="gate-box">
     <div class="gate-logo">🔐 Prism Analytics</div>
-    <div class="gate-sub">AMC Intelligence Engine v3.0</div>
+    <div class="gate-sub">Intelligence Engine v3.0</div>
     <div class="pin-dots">
       <div class="pin-dot" id="d0"></div>
       <div class="pin-dot" id="d1"></div>
@@ -254,6 +254,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div class="gate-err" id="gate-err"></div>
     <button class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:12px;" onclick="resetPin()">Reset to 1234</button>
     <div class="gate-note">Private &amp; local — data never leaves device<br>Not SEBI-registered · Not investment advice</div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:11px;color:var(--muted);border-color:var(--border2)" onclick="forgotPin()">🔑 Forgot PIN? Reset via Email</button>
   </div>
 </div>
 
@@ -262,13 +263,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <!-- Topbar -->
   <div class="topbar">
     <div>
-      <div class="tb-logo">PA Prism Analytics</div>
-      <div class="tb-sub">AMC Intelligence Engine</div>
+      <div class="tb-logo">Prism Analytics</div>
+      <div class="tb-sub">Intelligence Engine</div>
     </div>
     <div class="tb-spacer"></div>
     <span class="tb-badge tb-weekend" id="mkt-status">WEEKEND</span>
     <div class="tb-time" id="tb-time">00:00:00</div>
     <button class="tb-theme" onclick="toggleTheme()">☀</button>
+    <button class="tb-theme" onclick="logout()" title="Lock App" style="margin-left:4px">🔒</button>
   </div>
 
   <!-- Market Ticker -->
@@ -397,6 +399,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
                   <span class="cost-lbl">Net Wealth Growth</span>
                   <span class="cost-val up" id="cagr-nw">—</span>
                 </div>
+                <div style="font-size:10px;color:var(--muted);margin-top:6px;padding:6px 8px;background:var(--bg3);border-radius:6px" id="cagr-days">Calculating…</div>
                 <!-- SB Account Transfers -->
                 <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin:14px 0 8px">Savings Bank Account</div>
                 <div class="cost-row">
@@ -873,6 +876,21 @@ function unlockApp(){
   document.getElementById('app').style.display='flex';
   setTimeout(onAppStart, 100);
 }
+/* ── LOGOUT / SESSION ── */
+function logout(){
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById('app').style.display='none';
+  document.getElementById('gate').style.display='flex';
+  pinBuffer=''; updatePinDots();
+  document.getElementById('gate-err').textContent='Locked. Enter PIN to access.';
+}
+async function forgotPin(){
+  var subj='Prism Analytics — PIN Reset Request';
+  var body='Someone requested a PIN reset at '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+'.\n\nTo reset, go to the app gate screen and tap "Reset to 1234".';
+  var ok=await sendEmail(subj, body);
+  document.getElementById('gate-err').textContent=ok?'Reset email sent to '+OWNER_EMAIL+'. Tap Reset to 1234 below.':'Tap "Reset to 1234" below to reset to default PIN.';
+}
+
 function checkSession(){
   try{
     var s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
@@ -1218,59 +1236,78 @@ function updateGovernance(){
 /* ── DASHBOARD ── */
 /* ── CAGR + SB TRANSFER ENGINE ── */
 function updateCAGR(){
-  var startDate = new Date('2026-01-01T00:00:00+05:30');
-  var now = new Date();
-  var msElapsed = now - startDate;
-  var daysElapsed = msElapsed / 86400000;
+  var startDate  = new Date('2026-01-01T00:00:00+05:30');
+  var now        = new Date();
+  var daysElapsed  = (now - startDate) / 86400000;
   var yearsElapsed = daysElapsed / 365.25;
 
-  if(yearsElapsed < 0.001 || CAP <= 0){ return; }
+  if(daysElapsed < 1) return;
 
-  /* Core CAGR = (current/base)^(1/years) - 1 */
-  var cagrYearly = (Math.pow(CAP / BASE_CAP, 1 / yearsElapsed) - 1) * 100;
-  var cagrMonthly = (Math.pow(CAP / BASE_CAP, 1 / (yearsElapsed * 12)) - 1) * 100;
-  var cagrDaily = (Math.pow(CAP / BASE_CAP, 1 / daysElapsed) - 1) * 100;
-
-  /* Rupee equivalents — what this rate means in money terms on current capital */
-  var rsPerYear  = CAP * (cagrYearly / 100);
-  var rsPerMonth = CAP * (cagrMonthly / 100);
-  var rsPerDay   = CAP * (cagrDaily / 100);
-
-  /* Net wealth = capital + total withdrawn */
   var tw = MONTHLY.totalWithdrawn || 0;
-  var nwGrowth = ((CAP + tw) / BASE_CAP - 1) * 100;
+  var totalCap = CAP + tw; /* effective capital including what's been withdrawn */
+  var totalReturn = (totalCap - BASE_CAP) / BASE_CAP * 100;
 
-  function fmt(n){ return (n>=0?'+':'')+n.toFixed(2)+'%'; }
-  function rs(n){ return (n>=0?'+₹':'-₹')+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  /* ── CAGR: annualise the actual total return earned so far ── */
+  /* If no P&L yet, derive a projection from monthly run-rate instead */
+  var cagrYearly, cagrMonthly, cagrDaily;
+  if(Math.abs(totalCap - BASE_CAP) < 0.01){
+    /* No trades yet — show 0 cleanly */
+    cagrYearly = 0; cagrMonthly = 0; cagrDaily = 0;
+  } else {
+    /* Actual CAGR from start to now */
+    cagrYearly  = (Math.pow(totalCap / BASE_CAP, 365.25 / daysElapsed) - 1) * 100;
+    cagrMonthly = (Math.pow(totalCap / BASE_CAP, 30.44  / daysElapsed) - 1) * 100;
+    cagrDaily   = (Math.pow(totalCap / BASE_CAP, 1      / daysElapsed) - 1) * 100;
+  }
 
-  var yColor = cagrYearly>=0?'var(--green)':'var(--red)';
-  var mColor = cagrMonthly>=0?'var(--green)':'var(--red)';
-  var dColor = cagrDaily>=0?'var(--green)':'var(--red)';
+  /* Rupee amounts: what each rate earns ON CURRENT CAPITAL per period */
+  var rsPerYear  = CAP * (cagrYearly  / 100);
+  var rsPerMonth = CAP * (cagrMonthly / 100);
+  var rsPerDay   = CAP * (cagrDaily   / 100);
+  var nwGrowth   = totalReturn;
 
-  setText('cagr-yearly', fmt(cagrYearly)); setColor('cagr-yearly', yColor);
-  setText('cagr-yearly-rs', rs(rsPerYear)+' / year at this rate');
-  setText('cagr-monthly', fmt(cagrMonthly)); setColor('cagr-monthly', mColor);
-  setText('cagr-monthly-rs', rs(rsPerMonth)+' / month at this rate');
-  setText('cagr-daily', fmt(cagrDaily)); setColor('cagr-daily', dColor);
-  setText('cagr-daily-rs', rs(rsPerDay)+' / day at this rate');
-  setText('cagr-nw', (nwGrowth>=0?'+':'')+nwGrowth.toFixed(2)+'% (capital + SB transfers)');
+  function fmt(n){ return (n===0?'0.00%':(n>=0?'+':'')+n.toFixed(2)+'%'); }
+  function rsFmt(n){
+    if(n===0) return '₹0.00 / period (start trading to see projection)';
+    return (n>=0?'+₹':'-₹')+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  /* Apply to DOM */
+  var yC = cagrYearly>=0?'var(--green)':'var(--red)';
+  var mC = cagrMonthly>=0?'var(--green)':'var(--red)';
+  var dC = cagrDaily>=0?'var(--green)':'var(--red)';
+
+  setText('cagr-yearly',  fmt(cagrYearly));  setColor('cagr-yearly',  yC);
+  setText('cagr-monthly', fmt(cagrMonthly)); setColor('cagr-monthly', mC);
+  setText('cagr-daily',   fmt(cagrDaily));   setColor('cagr-daily',   dC);
+
+  setText('cagr-yearly-rs',  rsFmt(rsPerYear)  + (rsPerYear!==0  ? ' / year'  : ''));
+  setText('cagr-monthly-rs', rsFmt(rsPerMonth) + (rsPerMonth!==0 ? ' / month' : ''));
+  setText('cagr-daily-rs',   rsFmt(rsPerDay)   + (rsPerDay!==0   ? ' / day'   : ''));
+
+  setText('cagr-nw', (nwGrowth>=0?'+':'')+nwGrowth.toFixed(3)+'% total return (capital + SB)');
   setColor('cagr-nw', nwGrowth>=0?'var(--green)':'var(--red)');
 
+  /* Days elapsed display */
+  var dEl = document.getElementById('cagr-days');
+  if(dEl) dEl.textContent = Math.floor(daysElapsed)+' days since Jan 1 2026 | Total return: '+(nwGrowth>=0?'+':'')+nwGrowth.toFixed(3)+'%';
+
   /* SB Account */
-  var monthWithdrawn = MONTHLY.withdrawn || 0;
-  var nextAvail = MONTHLY.pnl > 0 ? MONTHLY.pnl * 0.2 : 0;
-  var dd = CAP < BASE_CAP ? (BASE_CAP - CAP) / BASE_CAP * 100 : 0;
+  var monthW = MONTHLY.withdrawn || 0;
+  var dd     = CAP < BASE_CAP ? (BASE_CAP - CAP) / BASE_CAP * 100 : 0;
+  var nextW  = MONTHLY.pnl > 0 ? +(MONTHLY.pnl * 0.2).toFixed(2) : 0;
 
-  setText('sb-total', '₹'+tw.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}));
-  setText('sb-month', '₹'+monthWithdrawn.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}));
-  setText('sb-next', dd>3?'Suspended (drawdown >3%)':(nextAvail>0?'₹'+nextAvail.toFixed(2)+' available':'₹0 (no profit yet)'));
-  setColor('sb-next', dd>3?'var(--red)':nextAvail>0?'var(--green)':'var(--muted)');
+  setText('sb-total', tw>0?'₹'+tw.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'₹0.00');
+  setText('sb-month', monthW>0?'₹'+monthW.toFixed(2):'₹0.00');
+  setText('sb-next',  dd>3?'🔴 Suspended — drawdown >3%':(nextW>0?'✅ ₹'+nextW+' ready to transfer':'—'));
+  setColor('sb-next', dd>3?'var(--red)':nextW>0?'var(--green)':'var(--muted)');
 
-  /* Badge colour */
+  /* Badge */
   var badge = document.getElementById('cagr-badge');
   if(badge){
-    badge.textContent = cagrYearly >= 20 ? '🚀 >20% CAGR' : cagrYearly >= 10 ? 'GROWING' : cagrYearly >= 0 ? 'LIVE' : '⚠️ LOSS';
-    badge.className = 'badge ' + (cagrYearly >= 20 ? 'badge-g' : cagrYearly >= 0 ? 'badge-b' : 'badge-r');
+    var bl = cagrYearly>=24?'🚀 >24% pa': cagrYearly>=12?'GROWING': cagrYearly>0?'EARLY':'NO TRADES';
+    badge.textContent = bl;
+    badge.className   = 'badge '+(cagrYearly>=12?'badge-g':cagrYearly>0?'badge-b':'badge-a');
   }
 }
 
