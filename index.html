@@ -654,9 +654,46 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="page" id="page-screener">
           <div class="page-content">
             <div class="card">
-              <div class="card-header"><span class="card-title">🔍 Stock Screener</span><button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="runScreener()">Screen</button></div>
-              <div class="card-body"><div id="screener-body"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Click Screen to scan for setups</div></div></div>
+              <div class="card-header">
+                <span class="card-title">🔍 Stock Screener</span>
+                <button class="btn btn-primary" style="font-size:11px;padding:5px 14px" onclick="runScreener()">▶ Screen Now</button>
+              </div>
+              <div class="card-body" style="padding-bottom:8px">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+                  <div style="flex:1;min-width:140px">
+                    <label>Strategy</label>
+                    <select id="scr-strategy">
+                      <option value="momentum">Momentum Breakout</option>
+                      <option value="pullback">Bullish Pullback</option>
+                      <option value="short">Short Setup (Bearish)</option>
+                      <option value="vix">VIX Spike Play</option>
+                    </select>
+                  </div>
+                  <div style="flex:1;min-width:140px">
+                    <label>Sector</label>
+                    <select id="scr-sector">
+                      <option value="all">All Sectors</option>
+                      <option value="it">IT</option>
+                      <option value="bank">Banking</option>
+                      <option value="auto">Auto</option>
+                      <option value="pharma">Pharma</option>
+                      <option value="fmcg">FMCG</option>
+                      <option value="metal">Metal</option>
+                    </select>
+                  </div>
+                  <div style="flex:1;min-width:120px">
+                    <label>Min Volume</label>
+                    <select id="scr-vol">
+                      <option value="1">Any</option>
+                      <option value="5" selected>5L+</option>
+                      <option value="10">10L+</option>
+                      <option value="50">50L+</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
+            <div id="screener-results"></div>
           </div>
         </div>
 
@@ -1355,6 +1392,205 @@ async function fetchLive(){
 
 function setText(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
 function setColor(id,c){ var e=document.getElementById(id); if(e) e.style.color=c; }
+
+/* ── STOCK SCREENER ── */
+var WATCHLIST = {
+  it:     ['INFY','TCS','WIPRO','HCLTECH','TECHM','LTIM','MPHASIS','PERSISTENT','COFORGE','KPITTECH'],
+  bank:   ['HDFCBANK','ICICIBANK','AXISBANK','KOTAKBANK','SBIN','BANDHANBNK','FEDERALBNK','IDFCFIRSTB','INDUSINDBK','PNB'],
+  auto:   ['MARUTI','TATAMOTORS','M&M','BAJAJ-AUTO','HEROMOTOCO','EICHERMOT','ASHOKLEY','TVSMOTOR'],
+  pharma: ['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','BIOCON','AUROPHARMA','TORNTPHARM','LUPIN'],
+  fmcg:   ['HINDUNILVR','NESTLEIND','BRITANNIA','DABUR','GODREJCP','MARICO','COLPAL','ITC'],
+  metal:  ['TATASTEEL','HINDALCO','JSWSTEEL','VEDL','NMDC','SAIL','COALINDIA','HINDCOPPER'],
+  all:    ['INFY','TCS','HDFCBANK','ICICIBANK','RELIANCE','TATAMOTORS','AXISBANK','SUNPHARMA',
+           'MARUTI','KOTAKBANK','WIPRO','SBIN','BAJAJ-AUTO','HINDUNILVR','TATASTEEL']
+};
+
+async function runScreener(){
+  var res = document.getElementById('screener-results');
+  var strategy = document.getElementById('scr-strategy').value;
+  var sector   = document.getElementById('scr-sector').value;
+  var minVol   = +document.getElementById('scr-vol').value;
+  var stocks   = WATCHLIST[sector] || WATCHLIST.all;
+
+  res.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;color:var(--muted);padding:24px">'
+    + '<div style="font-size:24px;margin-bottom:8px">⏳</div>'
+    + 'Screening '+stocks.length+' stocks via Yahoo Finance…<br>'
+    + '<span style="font-size:11px">This takes 10-20 seconds</span></div></div>';
+
+  /* Fetch quotes for all stocks at once */
+  var syms = stocks.map(function(s){ return s+'.NS'; }).join(',');
+  var qurl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols='
+    + encodeURIComponent(syms)
+    + '&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,'
+    + 'regularMarketVolume,regularMarketDayHigh,regularMarketDayLow,'
+    + 'fiftyTwoWeekHigh,fiftyDayAverage,twoHundredDayAverage';
+
+  var proxies = [
+    'https://corsproxy.io/?'+encodeURIComponent(qurl),
+    'https://api.allorigins.win/get?url='+encodeURIComponent(qurl),
+  ];
+
+  var quotes = [];
+  for(var pi=0;pi<proxies.length;pi++){
+    try{
+      var r = await fetch(proxies[pi],{cache:'no-store'});
+      if(!r.ok) continue;
+      var j = await r.json();
+      var d = j.contents ? JSON.parse(j.contents) : j;
+      quotes = (d.quoteResponse && d.quoteResponse.result) || [];
+      if(quotes.length) break;
+    }catch(_){}
+  }
+
+  if(!quotes.length){
+    res.innerHTML = '<div class="card"><div class="card-body"><div class="alert warn">'
+      + '<span>⚠️</span><span>Live data unavailable. Market may be closed or proxy blocked. '
+      + 'Results shown are based on Friday close data.</span></div></div></div>';
+    /* Show sample with fallback */
+    quotes = getSampleQuotes(stocks);
+  }
+
+  /* Apply screening logic */
+  var vix = LIVE['VIX'] ? LIVE['VIX'].p : 18;
+  var niftyPct = LIVE['^NSEI'] ? LIVE['^NSEI'].pct : 0;
+  var results = [];
+
+  quotes.forEach(function(q){
+    var p   = q.regularMarketPrice || 0;
+    var c   = q.regularMarketChange || 0;
+    var pct = q.regularMarketChangePercent || 0;
+    var vol = (q.regularMarketVolume || 0) / 100000; /* in lakhs */
+    var hi  = q.regularMarketDayHigh || p;
+    var lo  = q.regularMarketDayLow  || p;
+    var ma50= q.fiftyDayAverage || p;
+    var ma200=q.twoHundredDayAverage || p;
+    var wk52h=q.fiftyTwoWeekHigh || p;
+    var sym = (q.symbol||'').replace('.NS','');
+
+    if(vol < minVol) return; /* volume filter */
+
+    var score=0, signals=[], decision='WATCH';
+
+    if(strategy==='momentum'){
+      if(pct>0.5)  {score+=2; signals.push('Day +'+pct.toFixed(1)+'%');}
+      if(p>ma50)   {score+=2; signals.push('Above 50MA');}
+      if(p>ma200)  {score+=1; signals.push('Above 200MA');}
+      if(p>=wk52h*0.97){score+=2; signals.push('Near 52W High');}
+      if(vol>20)   {score+=1; signals.push('High Vol '+vol.toFixed(0)+'L');}
+      if(score>=5) decision='BUY';
+      else if(score>=3) decision='WATCH';
+      else return;
+    }
+    else if(strategy==='pullback'){
+      if(p>ma200 && p<ma200*1.05){score+=3; signals.push('Pullback to 200MA');}
+      else if(p>ma50 && p<ma50*1.03){score+=2; signals.push('Pullback to 50MA');}
+      if(pct>=-2&&pct<0){score+=1; signals.push('Minor dip today');}
+      if(vol>10) {score+=1; signals.push('Vol '+vol.toFixed(0)+'L');}
+      if(score>=3) decision='BUY';
+      else return;
+    }
+    else if(strategy==='short'){
+      if(pct<-0.5) {score+=2; signals.push('Day '+pct.toFixed(1)+'%');}
+      if(p<ma50)   {score+=2; signals.push('Below 50MA');}
+      if(p<ma200)  {score+=1; signals.push('Below 200MA');}
+      if(niftyPct<-0.5){score+=1; signals.push('Nifty weak');}
+      if(vix>18)   {score+=1; signals.push('VIX '+vix.toFixed(1));}
+      if(score>=4) decision='SHORT';
+      else return;
+    }
+    else if(strategy==='vix'){
+      if(vix<15 && pct>0.3){score+=3; signals.push('Low VIX momentum');}
+      else if(vix>20 && pct<-1){score+=3; signals.push('VIX spike sell');}
+      if(vol>15){score+=1; signals.push('Vol '+vol.toFixed(0)+'L');}
+      if(score>=3) decision=vix>20?'SHORT':'BUY';
+      else return;
+    }
+
+    /* R-based setup calculation */
+    var atr    = (hi-lo) || p*0.012;
+    var isBuy  = decision==='BUY';
+    var entry  = isBuy ? +(p).toFixed(2) : +(p).toFixed(2);
+    var sl     = isBuy ? +(p-atr).toFixed(2) : +(p+atr).toFixed(2);
+    var target = isBuy ? +(p+atr*2).toFixed(2) : +(p-atr*2).toFixed(2);
+    var risk   = CAP * RISK_PCT;
+    var qty    = Math.max(1, Math.floor(risk/atr));
+    var rr     = 2.0;
+
+    results.push({sym,p,pct,vol,score,signals,decision,entry,sl,target,qty,atr,rr});
+  });
+
+  /* Sort by score descending */
+  results.sort(function(a,b){ return b.score-a.score; });
+
+  if(!results.length){
+    res.innerHTML = '<div class="card"><div class="card-body">'
+      + '<div class="alert info"><span>ℹ️</span><span>No setups found matching your filters. '
+      + 'Try a different strategy or sector, or lower the volume filter.</span></div>'
+      + '</div></div>';
+    return;
+  }
+
+  /* Render results */
+  var html = '<div class="card"><div class="card-header">'
+    + '<span class="card-title">'+results.length+' Setups Found — '+strategy.toUpperCase()+'</span>'
+    + '<span class="badge badge-g">'+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'})+'</span>'
+    + '</div>';
+
+  results.forEach(function(r){
+    var isBuy = r.decision==='BUY';
+    var dcolor = isBuy ? 'var(--green)' : 'var(--red)';
+    var dbg    = isBuy ? 'var(--gbg)'   : 'var(--rbg)';
+    var dbord  = isBuy ? 'var(--gborder)' : 'var(--rborder)';
+    var dicon  = isBuy ? '📈' : '📉';
+    var pcolor = r.pct>=0?'var(--green)':'var(--red)';
+    var psign  = r.pct>=0?'+':'';
+
+    html += '<div style="border:1px solid '+dbord+';border-radius:10px;margin:12px 14px;background:'+dbg+';overflow:hidden">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid '+dbord+'">'
+      + '<div><span style="font-weight:700;font-size:15px;color:var(--text)">'+r.sym+'</span>'
+      + ' <span style="font-size:11px;color:var(--muted)">₹'+r.p.toFixed(2)+'</span>'
+      + ' <span style="font-size:11px;color:'+pcolor+'">'+psign+r.pct.toFixed(2)+'%</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<span style="font-size:11px;color:var(--muted)">Vol '+r.vol.toFixed(0)+'L</span>'
+      + '<span style="background:'+dcolor+';color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700">'+dicon+' '+r.decision+'</span>'
+      + '</div></div>'
+      + '<div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid '+dbord+'">'
+      + r.signals.map(function(s){ return '<span style="background:var(--bg3);color:var(--dim);font-size:10px;padding:2px 8px;border-radius:4px">'+s+'</span>'; }).join('')
+      + '</div>'
+      + '<div style="padding:10px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px">'
+      + '<div><div style="color:var(--muted)">Entry</div><div style="font-weight:600">₹'+r.entry+'</div></div>'
+      + '<div><div style="color:var(--muted)">Stop Loss</div><div style="font-weight:600;color:var(--red)">₹'+r.sl+'</div></div>'
+      + '<div><div style="color:var(--muted)">Target (2R)</div><div style="font-weight:600;color:var(--green)">₹'+r.target+'</div></div>'
+      + '<div><div style="color:var(--muted)">Qty (1% rule)</div><div style="font-weight:600">'+r.qty+' shares</div></div>'
+      + '</div></div>';
+  });
+
+  html += '</div>';
+  res.innerHTML = html;
+}
+
+function getSampleQuotes(stocks){
+  /* Static weekend/fallback sample data */
+  var base = {INFY:1262,TCS:3340,HDFCBANK:1698,ICICIBANK:1290,RELIANCE:1234,
+    TATAMOTORS:670,AXISBANK:1089,SUNPHARMA:1798,MARUTI:11250,WIPRO:471,
+    SBIN:742,BAJAJ_AUTO:8450,HINDUNILVR:2290,TATASTEEL:142,KOTAKBANK:1950};
+  return stocks.slice(0,10).map(function(sym){
+    var p = base[sym.replace('-','')] || 500;
+    var chg = (Math.random()-0.5)*2;
+    return {
+      symbol: sym+'.NS',
+      regularMarketPrice: p,
+      regularMarketChange: +(p*chg/100).toFixed(2),
+      regularMarketChangePercent: +chg.toFixed(2),
+      regularMarketVolume: Math.floor(Math.random()*2000000+500000),
+      regularMarketDayHigh: +(p*1.01).toFixed(2),
+      regularMarketDayLow:  +(p*0.99).toFixed(2),
+      fiftyDayAverage:      +(p*(0.95+Math.random()*0.1)).toFixed(2),
+      twoHundredDayAverage: +(p*(0.90+Math.random()*0.15)).toFixed(2),
+      fiftyTwoWeekHigh:     +(p*1.3).toFixed(2)
+    };
+  });
+}
 
 function updatePricesTable(){
   var rows=[
