@@ -885,10 +885,56 @@ function logout(){
   document.getElementById('gate-err').textContent='Locked. Enter PIN to access.';
 }
 async function forgotPin(){
-  var subj='Prism Analytics — PIN Reset Request';
-  var body='Someone requested a PIN reset at '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+'.\n\nTo reset, go to the app gate screen and tap "Reset to 1234".';
-  var ok=await sendEmail(subj, body);
-  document.getElementById('gate-err').textContent=ok?'Reset email sent to '+OWNER_EMAIL+'. Tap Reset to 1234 below.':'Tap "Reset to 1234" below to reset to default PIN.';
+  var errEl = document.getElementById('gate-err');
+  errEl.textContent = '⏳ Sending reset email…';
+  var now  = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  var subj = 'Prism Analytics — PIN Reset Requested';
+  var body = 'A PIN reset was requested at ' + now + ' IST.\n\n'
+    + 'To reset your PIN:\n'
+    + '1. On the login screen, tap "Reset to 1234"\n'
+    + '2. Enter 1234 to unlock\n'
+    + '3. Go to Vault → Change PIN to set a new PIN\n\n'
+    + 'If you did not request this, your PIN is unchanged.\n\n'
+    + '— Prism Analytics Intelligence Engine';
+  /* Direct EmailJS REST API — works before app init, no SDK needed */
+  try{
+    var resp = await fetch('https://api.emailjs.com/api/v1.0/email/send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        service_id:  'service_eole8dd',
+        template_id: 'template_c9wj7rm',
+        user_id:     'Qd_kEkb7HUiYi6j_M',
+        template_params:{
+          to_email: 'suri7588sh1@gmail.com',
+          from_name:'Prism Analytics',
+          subject:  subj,
+          message:  body,
+          content:  body
+        }
+      })
+    });
+    if(resp.ok){
+      errEl.style.color='var(--green)';
+      errEl.textContent='✅ Reset email sent to suri7588sh1@gmail.com. Check inbox, then tap Reset to 1234.';
+      return;
+    }
+  }catch(_){}
+  /* Fallback: open Gmail compose with recipient pre-filled */
+  try{
+    window.open(
+      'https://mail.google.com/mail/?view=cm&fs=1'
+      + '&to=suri7588sh1%40gmail.com'
+      + '&su=' + encodeURIComponent(subj)
+      + '&body=' + encodeURIComponent(body),
+      '_blank','noopener,noreferrer'
+    );
+    errEl.style.color='var(--amber)';
+    errEl.textContent='📧 Gmail opened. Send that email to yourself, then tap Reset to 1234.';
+  }catch(_){
+    errEl.style.color='var(--amber)';
+    errEl.textContent='Tap "Reset to 1234" below to reset your PIN to the default.';
+  }
 }
 
 function checkSession(){
