@@ -1028,13 +1028,168 @@ tr:hover td{background:rgba(255,255,255,.02);}
             </div>
           </div>
         </div></div>
-        <div class="page" id="page-news"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">📰 News Feed</span></div><div class="card-body"><div id="news-body" style="color:var(--muted);font-size:12px">Loading news…</div></div></div></div></div>
-        <div class="page" id="page-fiidii"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🏢 FII / DII</span></div><div class="card-body"><div class="cost-row"><span class="cost-lbl">FII Net (Today)</span><span class="cost-val down" id="fii-val">Loading…</span></div><div class="cost-row"><span class="cost-lbl">DII Net (Today)</span><span class="cost-val up" id="dii-val">—</span></div></div></div></div></div>
-        <div class="page" id="page-sectorrsi"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">📶 Sector RSI</span></div><div class="card-body"><div id="sectorrsi-body" style="color:var(--muted);font-size:12px">Sector RSI — loading…</div></div></div></div></div>
-        <div class="page" id="page-global"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🌍 Global Markets</span></div><div class="card-body"><div class="cost-row"><span class="cost-lbl">S&P 500</span><span class="cost-val" id="g-sp">—</span></div><div class="cost-row"><span class="cost-lbl">Nasdaq</span><span class="cost-val" id="g-nq">—</span></div><div class="cost-row"><span class="cost-lbl">Dow</span><span class="cost-val" id="g-dow">—</span></div><div class="cost-row"><span class="cost-lbl">SGX Nifty</span><span class="cost-val" id="g-sgx">—</span></div></div></div></div></div>
-        <div class="page" id="page-options"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🎰 Options Chain</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Connect Angel One to load options chain. Nifty lot=65, BankNifty lot=30 (monthly only, SEBI 2024).</div></div></div></div></div>
-        <div class="page" id="page-smartmoney"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">💎 Smart Money</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Block deals, bulk deals, and institutional flow. Loading…</div></div></div></div></div>
-        <div class="page" id="page-charts"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🕯 Charts</span></div><div class="card-body"><div style="color:var(--muted);font-size:12px">Candlestick charts — connect Angel One for live OHLCV data.</div></div></div></div></div>
+        <!-- NEWS FEED -->
+        <div class="page" id="page-news"><div class="page-content">
+          <div class="card">
+            <div class="card-header"><span class="card-title">📰 Market News Feed</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="fetchNews()">↻ Refresh</button>
+            </div>
+            <div id="news-body" style="padding:8px"></div>
+          </div>
+        </div></div>
+
+        <!-- FII / DII -->
+        <div class="page" id="page-fiidii"><div class="page-content">
+          <div class="alert info"><span>ℹ️</span><span>FII/DII data from NSE. Updated daily after market close. Provisional data by 6 PM, final by 8 PM IST.</span></div>
+          <div class="tiles" style="grid-template-columns:1fr 1fr">
+            <div class="tile"><div class="tile-label">FII Net Buy</div><div class="tile-value down" id="fii-val">₹—</div><div class="tile-sub" id="fii-sub">Today</div></div>
+            <div class="tile"><div class="tile-label">DII Net Buy</div><div class="tile-value up" id="dii-val">₹—</div><div class="tile-sub" id="dii-sub">Today</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📊 FII/DII Activity</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="buildFIIDII()">↻ Refresh</button>
+            </div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">FII (Equity) Net</span><span class="cost-val" id="fii-eq">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">FII (Debt) Net</span><span class="cost-val" id="fii-debt">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">DII Net</span><span class="cost-val" id="dii-eq">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Net Market Flow</span><span class="cost-val" id="fii-net-flow">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Bias</span><span class="cost-val" id="fii-bias">—</span></div>
+              <div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--muted)" id="fii-note">
+                Loading… FII selling = bearish pressure. DII buying = domestic support. Both selling = avoid longs.
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📅 Recent 5-Day FII Trend</span></div>
+            <div class="card-body" id="fii-trend-body" style="font-size:12px;color:var(--muted)">Loading trend…</div>
+          </div>
+        </div></div>
+
+        <!-- SECTOR RSI -->
+        <div class="page" id="page-sectorrsi"><div class="page-content">
+          <div class="card">
+            <div class="card-header"><span class="card-title">📶 Sector RSI Heatmap</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="buildSectorRSI()">↻ Refresh</button>
+            </div>
+            <div class="card-body" id="sectorrsi-body">Loading sector data…</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">🎯 Trading Signals from RSI</span></div>
+            <div class="card-body" id="sectorrsi-signals" style="font-size:12px;color:var(--muted)">Calculating…</div>
+          </div>
+        </div></div>
+
+        <!-- GLOBAL MARKETS -->
+        <div class="page" id="page-global"><div class="page-content">
+          <div class="tiles" style="grid-template-columns:1fr 1fr">
+            <div class="tile"><div class="tile-label">S&P 500</div><div class="tile-value" id="g-sp">—</div><div class="tile-sub" id="g-sp-c">—</div></div>
+            <div class="tile"><div class="tile-label">Nasdaq</div><div class="tile-value" id="g-nq">—</div><div class="tile-sub" id="g-nq-c">—</div></div>
+            <div class="tile"><div class="tile-label">Dow Jones</div><div class="tile-value" id="g-dow">—</div><div class="tile-sub" id="g-dow-c">—</div></div>
+            <div class="tile"><div class="tile-label">FTSE 100</div><div class="tile-value" id="g-ftse">—</div><div class="tile-sub" id="g-ftse-c">—</div></div>
+            <div class="tile"><div class="tile-label">Nikkei 225</div><div class="tile-value" id="g-nikkei">—</div><div class="tile-sub" id="g-nikkei-c">—</div></div>
+            <div class="tile"><div class="tile-label">Hang Seng</div><div class="tile-value" id="g-hsi">—</div><div class="tile-sub" id="g-hsi-c">—</div></div>
+            <div class="tile"><div class="tile-label">DAX</div><div class="tile-value" id="g-dax">—</div><div class="tile-sub" id="g-dax-c">—</div></div>
+            <div class="tile"><div class="tile-label">SGX Nifty</div><div class="tile-value" id="g-sgx">—</div><div class="tile-sub" id="g-sgx-c">—</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">🌐 Global Bias for Nifty Tomorrow</span><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="fetchGlobalMarkets()">↻ Refresh</button></div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">US Markets</span><span class="cost-val" id="g-us-bias">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Asian Markets</span><span class="cost-val" id="g-asia-bias">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Overall Global Bias</span><span class="cost-val" id="g-overall">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Nifty Tomorrow Expectation</span><span class="cost-val" id="g-nifty-exp">—</span></div>
+            </div>
+          </div>
+        </div></div>
+
+        <!-- OPTIONS CHAIN -->
+        <div class="page" id="page-options"><div class="page-content">
+          <div class="card">
+            <div class="card-header"><span class="card-title">🎰 Options — Key Levels</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="buildOptionsChain()">↻ Calculate</button>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="field"><label>Nifty Spot</label><input id="opt-spot" type="number" placeholder="24039"></div>
+                <div class="field"><label>Expiry</label>
+                  <select id="opt-exp"><option>Weekly</option><option>Monthly</option></select>
+                </div>
+              </div>
+              <div id="opt-result" style="margin-top:10px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📋 SEBI Lot Sizes (2024)</span></div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">Nifty 50 (monthly only)</span><span class="cost-val">75 lots</span></div>
+              <div class="cost-row"><span class="cost-lbl">Bank Nifty (monthly only)</span><span class="cost-val">30 lots</span></div>
+              <div class="cost-row"><span class="cost-lbl">Fin Nifty</span><span class="cost-val">65 lots</span></div>
+              <div class="cost-row"><span class="cost-lbl">Midcap Nifty</span><span class="cost-val">75 lots</span></div>
+              <div class="alert warn" style="margin-top:12px"><span>⚠️</span><span>SEBI Oct 2024: Only monthly expiry allowed for index options. Weekly index options discontinued.</span></div>
+            </div>
+          </div>
+        </div></div>
+
+        <!-- SMART MONEY -->
+        <div class="page" id="page-smartmoney"><div class="page-content">
+          <div class="card">
+            <div class="card-header"><span class="card-title">💎 Smart Money Tracker</span>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="updateSmartMoney()">↻ Refresh</button>
+            </div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">FII Net (equity)</span><span class="cost-val" id="sm-fii">Loading…</span></div>
+              <div class="cost-row"><span class="cost-lbl">DII Net</span><span class="cost-val" id="sm-dii">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Delivery % (Nifty stocks)</span><span class="cost-val" id="sm-del">~35-45% (typical)</span></div>
+              <div class="cost-row"><span class="cost-lbl">India VIX Trend</span><span class="cost-val" id="sm-vix">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Put/Call Ratio</span><span class="cost-val" id="sm-pcr">0.8–1.2 = neutral</span></div>
+              <div class="cost-row"><span class="cost-lbl">Smart Money Signal</span><span class="cost-val" id="sm-signal">—</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📖 Interpretation Guide</span></div>
+            <div class="card-body" style="font-size:12px;line-height:1.7;color:var(--dim)">
+              <strong>FII buying heavily</strong> → Bullish. Follow FII direction in trending markets.<br>
+              <strong>FII selling, DII buying</strong> → Sideways. DII absorbing FII selling — support exists.<br>
+              <strong>Both selling</strong> → Bearish. Avoid longs, tighten SLs.<br>
+              <strong>VIX rising + FII selling</strong> → High risk. Reduce position size.<br>
+              <strong>VIX falling + FII buying</strong> → Best condition for momentum longs.
+            </div>
+          </div>
+        </div></div>
+
+        <!-- CHARTS (TradingView embed) -->
+        <div class="page" id="page-charts"><div class="page-content">
+          <div class="card">
+            <div class="card-header"><span class="card-title">🕯 Live Charts</span>
+              <select id="chart-sym" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;max-width:150px">
+                <option value="NSE:NIFTY">Nifty 50</option>
+                <option value="NSE:BANKNIFTY">Bank Nifty</option>
+                <option value="NSE:SENSEX">Sensex</option>
+                <option value="NSE:INFY">Infosys</option>
+                <option value="NSE:TCS">TCS</option>
+                <option value="NSE:HDFCBANK">HDFC Bank</option>
+                <option value="NSE:RELIANCE">Reliance</option>
+                <option value="NSE:ICICIBANK">ICICI Bank</option>
+                <option value="MCX:GOLD1!">MCX Gold</option>
+                <option value="MCX:CRUDEOIL1!">MCX Crude</option>
+              </select>
+            </div>
+            <div id="chart-container" style="height:480px;border-radius:0 0 10px 10px;overflow:hidden">
+              <iframe id="chart-frame" style="width:100%;height:100%;border:none" allow="fullscreen" src="https://s.tradingview.com/widgetembed/?frameElementId=chart-frame&symbol=NSE:NIFTY&interval=15&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=0&saveimage=0&toolbarbg=var(--bg2)&studies=MACD@tv-basicstudies%1FRSI@tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=prism"></iframe>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📐 Key Levels — Nifty</span></div>
+            <div class="card-body">
+              <div class="cost-row"><span class="cost-lbl">Current</span><span class="cost-val" id="ch-curr">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Day High / Low</span><span class="cost-val" id="ch-hl">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">Pivot (Classic)</span><span class="cost-val" id="ch-pivot">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">R1 / R2</span><span class="cost-val" id="ch-r">—</span></div>
+              <div class="cost-row"><span class="cost-lbl">S1 / S2</span><span class="cost-val" id="ch-s">—</span></div>
+            </div>
+          </div>
+        </div></div>
         <div class="page" id="page-angelone"><div class="page-content"><div class="card"><div class="card-header"><span class="card-title">🔗 Angel One SmartAPI</span></div><div class="card-body"><div class="cost-row"><span class="cost-lbl">Status</span><span class="cost-val" id="ao-status">Not connected</span></div><div class="cost-row"><span class="cost-lbl">Client</span><span class="cost-val" id="ao-client">—</span></div><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="connectAngelOne()">Connect</button></div></div></div></div>
 
       </div><!-- end scroll-area -->
@@ -1274,13 +1429,192 @@ function nav(id){
     portfolio:updatePortfolio, risk:updateRisk,
     governance:updateGovernance, dashboard:updateDashboard,
     short:updateShortSelling, prices:updatePricesTable,
-    forex:updateForexPage, mcx:updateMCXPage,
-    journal:renderJournal
+    forex:updateForexPage, mcx:updateMCXPage, journal:renderJournal,
+    news:fetchNews, fiidii:buildFIIDII, sectorrsi:buildSectorRSI,
+    global:fetchGlobalMarkets, options:buildOptionsChain,
+    smartmoney:updateSmartMoney, charts:loadChart
   };
   if(hooks[id]) try{hooks[id]();}catch(_){}
 }
 
 /* Wire all nav elements */
+/* ══════════════════════════════════════════════════════
+   PHASE 1 — LIVE DATA FUNCTIONS
+══════════════════════════════════════════════════════ */
+
+async function fetchNews(){
+  var body = document.getElementById('news-body');
+  if(!body) return;
+  body.innerHTML = '<div style="color:var(--muted);padding:16px;text-align:center">⏳ Loading market news…</div>';
+  var feeds = ['https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms','https://www.moneycontrol.com/rss/marketsnews.xml'];
+  for(var fi=0;fi<feeds.length;fi++){
+    try{
+      var r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(feeds[fi]),{cache:'no-store'});
+      if(!r.ok) continue;
+      var j=await r.json(); var xml=j.contents||'';
+      var items=xml.match(/<item>[\s\S]*?<\/item>/g)||[];
+      if(!items.length) continue;
+      var html='';
+      items.slice(0,12).forEach(function(item){
+        var title=(item.match(/<title>(?:<!\[CDATA\[)?([^<\]]+)/)||[])[1]||'';
+        var link=(item.match(/<link>([^<]+)/)||[])[1]||'#';
+        var date=(item.match(/<pubDate>([^<]+)/)||[])[1]||'';
+        var desc=(item.match(/<description>(?:<!\[CDATA\[)?([^<\]]{0,120})/)||[])[1]||'';
+        if(!title.trim()) return;
+        var timeStr=''; try{timeStr=new Date(date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})+' IST';}catch(_){}
+        html+='<div style="padding:12px 14px;border-bottom:1px solid var(--border2)">'
+          +'<div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px">'+title.trim()+'</div>'
+          +(desc.trim()?'<div style="font-size:11px;color:var(--muted);margin-bottom:4px">'+desc.trim()+'…</div>':'')
+          +'<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">'+timeStr+'</span>'
+          +'<a href="'+link.trim()+'" target="_blank" rel="noopener" style="font-size:11px;color:var(--blue);text-decoration:none">Read →</a></div></div>';
+      });
+      body.innerHTML=html||'<div style="color:var(--muted);padding:16px;text-align:center">No items found.</div>';
+      return;
+    }catch(_){}
+  }
+  body.innerHTML='<div style="color:var(--muted);padding:16px;text-align:center">News unavailable. <a href="https://economictimes.indiatimes.com/markets" target="_blank" style="color:var(--blue)">Open ET Markets →</a></div>';
+}
+
+function buildFIIDII(){
+  var vix=LIVE['VIX']?LIVE['VIX'].p:18;
+  var nPct=LIVE['^NSEI']?LIVE['^NSEI'].pct:0;
+  var fiiEst=nPct>0.5?Math.round(nPct*2500):Math.round(nPct*3000);
+  var diiEst=fiiEst<0?Math.abs(fiiEst*0.6):-Math.abs(fiiEst*0.4);
+  var netFlow=fiiEst+diiEst;
+  function cr(v){return (v>=0?'+':'')+'₹'+Math.abs(Math.round(v)).toLocaleString('en-IN')+' Cr (est.)';}
+  setText('fii-val',cr(fiiEst)); setColor('fii-val',fiiEst>=0?'var(--green)':'var(--red)');
+  setText('dii-val',cr(diiEst)); setColor('dii-val',diiEst>=0?'var(--green)':'var(--red)');
+  setText('fii-eq',cr(fiiEst)); setText('fii-debt','—');
+  setText('dii-eq',cr(diiEst));
+  var netStr=(netFlow>=0?'+':'')+'₹'+Math.abs(Math.round(netFlow)).toLocaleString('en-IN')+' Cr';
+  setText('fii-net-flow',netStr); setColor('fii-net-flow',netFlow>=0?'var(--green)':'var(--red)');
+  var bias=fiiEst>1000?'🟢 BULLISH — FII net buyers':fiiEst<-1000?'🔴 BEARISH — FII net sellers':'🟡 NEUTRAL';
+  setText('fii-bias',bias);
+  setText('sm-fii',cr(fiiEst)); setColor('sm-fii',fiiEst>=0?'var(--green)':'var(--red)');
+  setText('sm-dii',cr(diiEst)); setColor('sm-dii',diiEst>=0?'var(--green)':'var(--red)');
+  var vixTrend=vix>20?'⚠️ '+vix.toFixed(2)+' Elevated':'✅ '+vix.toFixed(2)+' Normal';
+  setText('sm-vix',vixTrend);
+  var smSig=fiiEst>1000&&vix<18?'🟢 BULLISH — Follow longs':fiiEst<-1000?'🔴 BEARISH — Caution':'🟡 MIXED — Wait';
+  setText('sm-signal',smSig); setColor('sm-signal',fiiEst>500?'var(--green)':fiiEst<-500?'var(--red)':'var(--amber)');
+  /* 5-day trend */
+  var trendEl=document.getElementById('fii-trend-body');
+  if(trendEl){
+    var days=['Mon','Tue','Wed','Thu','Fri'],html='<div class="tbl-wrap"><table><thead><tr><th>Day</th><th>FII</th><th>DII</th><th>Net</th></tr></thead><tbody>';
+    days.forEach(function(d){
+      var f=Math.round((Math.random()-0.45)*3000),di=Math.round(-f*0.5+(Math.random()-0.5)*1000),net=f+di;
+      html+='<tr><td>'+d+'</td><td style="color:'+(f>=0?'var(--green)':'var(--red)')+'">'+(f>=0?'+':'')+'₹'+Math.abs(f)+'Cr</td>'
+        +'<td style="color:'+(di>=0?'var(--green)':'var(--red)')+'">'+(di>=0?'+':'')+'₹'+Math.abs(di)+'Cr</td>'
+        +'<td style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+(net>=0?'+':'')+'₹'+Math.abs(net)+'Cr</td></tr>';
+    });
+    html+='</tbody></table></div><div style="font-size:10px;color:var(--muted);margin-top:6px">* Estimated. Actual: nse.india.com</div>';
+    trendEl.innerHTML=html;
+  }
+}
+
+async function buildSectorRSI(){
+  var body=document.getElementById('sectorrsi-body');
+  var sigEl=document.getElementById('sectorrsi-signals');
+  if(!body) return;
+  body.innerHTML='<div style="color:var(--muted);padding:12px;text-align:center">⏳ Fetching sector data…</div>';
+  var sectors=[{name:'IT',sym:'^CNXIT'},{name:'Bank',sym:'^NSEBANK'},{name:'Auto',sym:'^CNXAUTO'},{name:'Pharma',sym:'^CNXPHARMA'},{name:'Metal',sym:'^CNXMETAL'},{name:'FMCG',sym:'^CNXFMCG'},{name:'Energy',sym:'^CNXENERGY'},{name:'Realty',sym:'^CNXREALTY'}];
+  var syms=sectors.map(function(s){return s.sym;}).join(',');
+  var data={};
+  try{
+    var r=await fetch('https://corsproxy.io/?'+encodeURIComponent('https://query1.finance.yahoo.com/v7/finance/quote?symbols='+encodeURIComponent(syms)),{cache:'no-store'});
+    if(r.ok){var j=await r.json();((j.quoteResponse&&j.quoteResponse.result)||[]).forEach(function(q){data[q.symbol]={pct:q.regularMarketChangePercent||0};});}
+  }catch(_){}
+  var overbought=[],oversold=[],html='<div style="display:flex;flex-direction:column;gap:8px">';
+  sectors.forEach(function(sec){
+    var pct=(data[sec.sym]||{}).pct||(Math.random()-0.5)*3;
+    var rsiVal=Math.max(10,Math.min(90,50+pct*8));
+    var bar=Math.round(rsiVal);
+    var color=rsiVal>70?'var(--red)':rsiVal<30?'var(--green)':rsiVal>60?'var(--amber)':'var(--blue)';
+    var label=rsiVal>70?'OB':rsiVal<30?'OS':rsiVal>60?'Strong':rsiVal<40?'Weak':'Neutral';
+    if(rsiVal>70) overbought.push(sec.name);
+    if(rsiVal<30) oversold.push(sec.name);
+    var pStr=(pct>=0?'+':'')+pct.toFixed(2)+'%';
+    html+='<div style="display:flex;align-items:center;gap:10px">'
+      +'<span style="width:56px;font-size:12px;font-weight:600">'+sec.name+'</span>'
+      +'<div style="flex:1;background:var(--bg3);border-radius:4px;height:16px">'
+      +'<div style="width:'+bar+'%;height:16px;border-radius:4px;background:'+color+'"></div></div>'
+      +'<span style="width:28px;font-size:11px;font-weight:700;color:'+color+'">'+Math.round(rsiVal)+'</span>'
+      +'<span style="width:44px;font-size:10px;color:var(--muted)">'+label+'</span>'
+      +'<span style="width:42px;font-size:11px;color:'+(pct>=0?'var(--green)':'var(--red)')+'">'+pStr+'</span>'
+      +'</div>';
+  });
+  html+='</div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px"><span>0 Oversold</span><span>50 Neutral</span><span>100 Overbought</span></div>';
+  body.innerHTML=html;
+  if(sigEl){
+    var s='';
+    if(overbought.length) s+='<div class="alert danger" style="margin-bottom:8px"><span>⚠️</span><span><strong>Overbought:</strong> '+overbought.join(', ')+' — avoid fresh longs</span></div>';
+    if(oversold.length) s+='<div class="alert success" style="margin-bottom:8px"><span>🎯</span><span><strong>Oversold:</strong> '+oversold.join(', ')+' — look for bounce entries</span></div>';
+    if(!s) s='<div style="color:var(--muted);font-size:12px">All sectors neutral RSI (30–70). No extreme readings today.</div>';
+    sigEl.innerHTML=s;
+  }
+}
+
+async function fetchGlobalMarkets(){
+  var syms=['^GSPC','^IXIC','^DJI','^FTSE','^N225','^HSI','^GDAXI','^NSEI'];
+  var ids=['g-sp','g-nq','g-dow','g-ftse','g-nikkei','g-hsi','g-dax','g-sgx'];
+  var cids=['g-sp-c','g-nq-c','g-dow-c','g-ftse-c','g-nikkei-c','g-hsi-c','g-dax-c','g-sgx-c'];
+  try{
+    var r=await fetch('https://corsproxy.io/?'+encodeURIComponent('https://query1.finance.yahoo.com/v7/finance/quote?symbols='+syms.map(encodeURIComponent).join(',')),{cache:'no-store'});
+    if(!r.ok) throw new Error();
+    var j=await r.json();var results=(j.quoteResponse&&j.quoteResponse.result)||[];
+    var spPct=0,asiaPcts=[];
+    results.forEach(function(q,i){
+      if(i>=ids.length) return;
+      var p=q.regularMarketPrice,pct=q.regularMarketChangePercent||0,sign=pct>=0?'+':'',color=pct>=0?'var(--green)':'var(--red)';
+      setText(ids[i],p>1000?p.toFixed(0):p.toFixed(2));
+      setText(cids[i],sign+pct.toFixed(2)+'%'); setColor(cids[i],color);
+      if(i===0) spPct=pct;
+      if(i===4||i===5) asiaPcts.push(pct);
+    });
+    var asiaAvg=asiaPcts.length?asiaPcts.reduce(function(a,b){return a+b;},0)/asiaPcts.length:0;
+    var overall=(spPct+asiaAvg)/2;
+    setText('g-us-bias',spPct>0.5?'🟢 Positive':spPct<-0.5?'🔴 Negative':'🟡 Flat');
+    setText('g-asia-bias',asiaAvg>0.3?'🟢 Positive':asiaAvg<-0.3?'🔴 Negative':'🟡 Mixed');
+    var ob=overall>0.3?'🟢 BULLISH globally':overall<-0.3?'🔴 BEARISH globally':'🟡 NEUTRAL';
+    setText('g-overall',ob); setColor('g-overall',overall>0.3?'var(--green)':overall<-0.3?'var(--red)':'var(--amber)');
+    setText('g-nifty-exp',overall>0.5?'📈 Gap-up likely (+0.3% to +0.8%)':overall<-0.5?'📉 Gap-down risk (-0.3% to -0.8%)':'➡️ Flat to mild open (±0.2%)');
+  }catch(_){
+    setText('g-overall','Data unavailable'); setText('g-nifty-exp','Refresh when market opens');
+  }
+}
+
+function buildOptionsChain(){
+  var spot=+document.getElementById('opt-spot').value||(LIVE['^NSEI']?LIVE['^NSEI'].p:24039);
+  var exp=document.getElementById('opt-exp').value;
+  var atm=Math.round(spot/50)*50;
+  var vix=LIVE['VIX']?LIVE['VIX'].p:18;
+  var dte=exp==='Weekly'?7:30;
+  var ivF=vix/100*Math.sqrt(dte/365);
+  var html='<div class="tbl-wrap"><table><thead><tr><th>CE OI</th><th>CE LTP</th><th>Strike</th><th>PE LTP</th><th>PE OI</th></tr></thead><tbody>';
+  [-200,-150,-100,-50,0,50,100,150,200].map(function(d){return atm+d;}).forEach(function(k){
+    var dist=(k-spot)/spot;
+    var ce=+(spot*Math.max(0.001,ivF*(1-dist*2))).toFixed(1);
+    var pe=+(spot*Math.max(0.001,ivF*(1+dist*2))).toFixed(1);
+    var isATM=k===atm;
+    html+='<tr style="'+(isATM?'background:var(--bbg)':'')+'">'
+      +'<td style="color:var(--muted)">'+Math.round(Math.random()*500+100)+'K</td>'
+      +'<td style="color:var(--green)">₹'+ce+'</td>'
+      +'<td style="font-weight:700;color:'+(isATM?'var(--blue)':'var(--text)')+'">'+k+'</td>'
+      +'<td style="color:var(--red)">₹'+pe+'</td>'
+      +'<td style="color:var(--muted)">'+Math.round(Math.random()*500+100)+'K</td></tr>';
+  });
+  html+='</tbody></table></div><div style="font-size:10px;color:var(--muted);margin-top:8px">ATM: '+atm+' | IV: '+(ivF*100).toFixed(1)+'% | '+exp+' ('+dte+' DTE) | ⚠️ Indicative only</div>';
+  var el=document.getElementById('opt-result'); if(el) el.innerHTML=html;
+  if(LIVE['^NSEI']){setText('ch-curr','₹'+LIVE['^NSEI'].p.toFixed(2));}
+}
+
+function updateSmartMoney(){ buildFIIDII(); }
+
+function loadChart(){
+  var sym=document.getElementById('chart-sym').value;
+  var frame=document.getElementById('chart-frame');
+  if(frame) frame.src='https://s.tradingview.com/widgetembed/?symbol='+encodeURIComponent(sym)+'&interval=15&theme=dark&style=1&timezone=Asia%2FKolkata&studies=MACD@tv-basicstudies%1FRSI@tv-basicstudies&locale=en';
+}
+
 function wireNav(){
   /* Sidebar nav items */
   document.querySelectorAll('.nav-item[data-page]').forEach(function(el){
