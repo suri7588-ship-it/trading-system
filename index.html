@@ -252,9 +252,26 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <div class="pin-key" onclick="pinBackspace()" style="font-size:13px;">⌫</div>
     </div>
     <div class="gate-err" id="gate-err"></div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:12px;" onclick="resetPin()">Reset to 1234</button>
     <div class="gate-note">Private &amp; local — data never leaves device<br>Not SEBI-registered · Not investment advice</div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:11px;color:var(--muted);border-color:var(--border2)" onclick="forgotPin()">🔑 Forgot PIN? Reset via Email</button>
+    <!-- OTP Reset Flow -->
+    <div id="otp-section" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:14px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;text-align:center" id="otp-info">Enter the 6-digit code sent to your email</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input id="otp-input" type="number" inputmode="numeric" maxlength="6" placeholder="6-digit code"
+          style="text-align:center;font-size:20px;font-family:var(--mono);letter-spacing:6px;flex:1"
+          oninput="if(this.value.length>6)this.value=this.value.slice(0,6)">
+      </div>
+      <div id="new-pin-section" style="display:none">
+        <input id="new-pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)"
+          style="text-align:center;font-size:18px;font-family:var(--mono);margin-bottom:8px">
+        <button class="btn btn-primary" style="width:100%" onclick="setNewPin()">✅ Set New PIN</button>
+      </div>
+      <div id="otp-verify-btn" style="">
+        <button class="btn btn-primary" style="width:100%" onclick="verifyOtp()">Verify Code</button>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:11px" onclick="cancelOtpReset()">Cancel</button>
+    </div>
+    <button class="btn btn-ghost" id="forgot-pin-btn" style="width:100%;margin-top:10px;font-size:12px;color:var(--muted);border-color:var(--border2)" onclick="initForgotPin()">🔑 Forgot PIN? Reset via Email</button>
   </div>
 </div>
 
@@ -696,9 +713,10 @@ tr:hover td{background:rgba(255,255,255,.02);}
               <div class="card-body">
                 <div class="field"><label>Bot Token</label><input id="tg-token" placeholder="7123456789:ABCdef..." type="password"></div>
                 <div class="field"><label>Chat ID</label><input id="tg-chatid" placeholder="785808467"></div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:6px" id="tg-load-status"></div>
                 <div class="row">
-                  <button class="btn btn-primary" onclick="saveTg()">Save</button>
-                  <button class="btn btn-ghost" onclick="testTg()">Test</button>
+                  <button class="btn btn-primary" onclick="saveTg()">💾 Save</button>
+                  <button class="btn btn-ghost" onclick="testTg()">📨 Test</button>
                 </div>
                 <div style="height:12px"></div>
                 <button class="btn btn-success" style="width:100%" onclick="sendPnLReport()">📊 Send P&L Report Now</button>
@@ -856,11 +874,10 @@ async function verifyPin(){
     pinBuffer=''; updatePinDots();
   }
 }
+/* resetPin hidden from UI — OTP flow used instead */
 async function resetPin(){
   var h = await sha256('1234');
   localStorage.setItem(PIN_KEY, h);
-  pinBuffer=''; updatePinDots();
-  document.getElementById('gate-err').textContent='PIN reset to 1234. Enter 1234 to unlock.';
 }
 async function changePin(){
   var np = document.getElementById('v-pin').value.trim();
@@ -884,58 +901,105 @@ function logout(){
   pinBuffer=''; updatePinDots();
   document.getElementById('gate-err').textContent='Locked. Enter PIN to access.';
 }
-async function forgotPin(){
-  var errEl = document.getElementById('gate-err');
-  errEl.textContent = '⏳ Sending reset email…';
-  var now  = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  var subj = 'Prism Analytics — PIN Reset Requested';
-  var body = 'A PIN reset was requested at ' + now + ' IST.\n\n'
-    + 'To reset your PIN:\n'
-    + '1. On the login screen, tap "Reset to 1234"\n'
-    + '2. Enter 1234 to unlock\n'
-    + '3. Go to Vault → Change PIN to set a new PIN\n\n'
-    + 'If you did not request this, your PIN is unchanged.\n\n'
-    + '— Prism Analytics Intelligence Engine';
-  /* Direct EmailJS REST API — works before app init, no SDK needed */
+/* ── SECURE OTP PIN RESET ── */
+var _otp=null, _otpExpiry=0;
+
+function initForgotPin(){
+  var errEl=document.getElementById('gate-err');
+  var fpBtn=document.getElementById('forgot-pin-btn');
+  errEl.style.color='var(--muted)'; errEl.textContent='⏳ Sending OTP…';
+  fpBtn.disabled=true; fpBtn.textContent='⏳ Sending…';
+  sendOtpSilent().then(function(sent){
+    fpBtn.disabled=false; fpBtn.textContent='🔑 Forgot PIN? Reset via Email';
+    if(sent){
+      document.getElementById('otp-section').style.display='block';
+      fpBtn.style.display='none';
+      errEl.textContent='';
+      document.getElementById('otp-input').focus();
+    } else {
+      errEl.textContent='❌ Could not send OTP — check internet connection.';
+      errEl.style.color='var(--red)';
+    }
+  });
+}
+
+async function sendOtpSilent(){
+  _otp=String(Math.floor(100000+Math.random()*900000));
+  _otpExpiry=Date.now()+15*60*1000;
+  var now=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  var msg='Your Prism Analytics PIN reset code is: '+_otp
+    +'\n\nThis code expires in 15 minutes.'
+    +'\nRequested at: '+now+' IST'
+    +'\n\nDo NOT share this code with anyone.'
+    +'\nIf you did not request this, your PIN is unchanged.';
   try{
-    var resp = await fetch('https://api.emailjs.com/api/v1.0/email/send',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        service_id:  'service_eole8dd',
-        template_id: 'template_c9wj7rm',
-        user_id:     'Qd_kEkb7HUiYi6j_M',
+    var r=await fetch('https://api.emailjs.com/api/v1.0/email/send',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        service_id:'service_eole8dd', template_id:'template_c9wj7rm',
+        user_id:'Qd_kEkb7HUiYi6j_M',
         template_params:{
-          to_email: 'suri7588sh1@gmail.com',
-          from_name:'Prism Analytics',
-          subject:  subj,
-          message:  body,
-          content:  body
+          to_email:'suri7588sh1@gmail.com', from_name:'Prism Analytics',
+          subject:'Prism Analytics — PIN Reset Code',
+          message:msg, content:msg
         }
       })
     });
-    if(resp.ok){
-      errEl.style.color='var(--green)';
-      errEl.textContent='✅ Reset email sent to suri7588sh1@gmail.com. Check inbox, then tap Reset to 1234.';
-      return;
+    if(r.ok){
+      document.getElementById('otp-info').textContent='✅ OTP sent discreetly to suri7588sh1@gmail.com';
+      return true;
     }
-  }catch(_){}
-  /* Fallback: open Gmail compose with recipient pre-filled */
-  try{
-    window.open(
-      'https://mail.google.com/mail/?view=cm&fs=1'
-      + '&to=suri7588sh1%40gmail.com'
-      + '&su=' + encodeURIComponent(subj)
-      + '&body=' + encodeURIComponent(body),
-      '_blank','noopener,noreferrer'
-    );
-    errEl.style.color='var(--amber)';
-    errEl.textContent='📧 Gmail opened. Send that email to yourself, then tap Reset to 1234.';
-  }catch(_){
-    errEl.style.color='var(--amber)';
-    errEl.textContent='Tap "Reset to 1234" below to reset your PIN to the default.';
-  }
+    console.warn('[OTP] status:',r.status);
+  }catch(e){ console.warn('[OTP]',e.message); }
+  /* NEVER open a tab or compose window — security requirement */
+  return false;
 }
+
+function verifyOtp(){
+  var entered=(document.getElementById('otp-input').value||'').trim();
+  var errEl=document.getElementById('gate-err');
+  if(!_otp||Date.now()>_otpExpiry){
+    errEl.textContent='⏰ OTP expired. Request a new one.'; errEl.style.color='var(--red)';
+    cancelOtpReset(); return;
+  }
+  if(entered!==_otp){
+    errEl.textContent='❌ Wrong code. Check your email and try again.'; errEl.style.color='var(--red)';
+    document.getElementById('otp-input').value=''; document.getElementById('otp-input').focus(); return;
+  }
+  errEl.textContent='';
+  document.getElementById('otp-info').textContent='✅ Code verified! Enter your new PIN.';
+  document.getElementById('otp-info').style.color='var(--green)';
+  document.getElementById('otp-verify-btn').style.display='none';
+  document.getElementById('new-pin-section').style.display='block';
+  document.getElementById('new-pin-input').focus();
+}
+
+async function setNewPin(){
+  var np=(document.getElementById('new-pin-input').value||'').trim();
+  var errEl=document.getElementById('gate-err');
+  if(!np||np.length<4||!/^\d+$/.test(np)){
+    errEl.textContent='PIN must be at least 4 digits.'; errEl.style.color='var(--red)'; return;
+  }
+  var h=await sha256(np);
+  localStorage.setItem(PIN_KEY,h);
+  _otp=null; _otpExpiry=0;
+  cancelOtpReset();
+  errEl.textContent='✅ New PIN set. Please log in with your new PIN.';
+  errEl.style.color='var(--green)';
+}
+
+function cancelOtpReset(){
+  document.getElementById('otp-section').style.display='none';
+  document.getElementById('forgot-pin-btn').style.display='block';
+  document.getElementById('otp-input').value='';
+  document.getElementById('new-pin-input').value='';
+  document.getElementById('otp-verify-btn').style.display='block';
+  document.getElementById('new-pin-section').style.display='none';
+  document.getElementById('otp-info').textContent='Enter the 6-digit code sent to your email';
+  document.getElementById('otp-info').style.color='';
+  _otp=null; _otpExpiry=0;
+}
+
 
 function checkSession(){
   try{
@@ -1492,59 +1556,140 @@ async function runAI(){
 
 /* ── TELEGRAM ── */
 function saveTg(){
-  TG.token=document.getElementById('tg-token').value.trim();
-  TG.chatId=document.getElementById('tg-chatid').value.trim();
+  var tok=document.getElementById('tg-token').value.trim();
+  var cid=document.getElementById('tg-chatid').value.trim();
+  if(!tok){toast('Enter your Bot Token first',false);return;}
+  if(!cid){toast('Enter your Chat ID first',false);return;}
+  TG.token=tok; TG.chatId=cid;
   localStorage.setItem(TG_KEY,JSON.stringify(TG));
-  toast('✅ Telegram saved',true);
+  localStorage.setItem('prism-tg',JSON.stringify(TG));
+  loadTg(); toast('✅ Telegram credentials saved',true);
 }
 function loadTg(){
+  /* Migrate from old storage keys if new key is empty */
+  if(!TG.token){
+    try{
+      var oldTg=JSON.parse(localStorage.getItem('prism-tg')||'{}');
+      if(oldTg.token){ TG.token=oldTg.token; TG.chatId=oldTg.chatId||TG.chatId; localStorage.setItem(TG_KEY,JSON.stringify(TG)); }
+    }catch(_){}
+  }
   if(TG.token) document.getElementById('tg-token').value=TG.token;
   if(TG.chatId) document.getElementById('tg-chatid').value=TG.chatId;
+  /* Show status */
+  var st=document.getElementById('tg-load-status');
+  if(st) st.textContent=TG.token?'✅ Token loaded ('+TG.token.slice(0,8)+'…)':'⚠️ No token saved — enter below';
 }
 async function sendTg(msg){
   if(!TG.token||!TG.chatId) return false;
   try{
-    var r=await fetch('https://api.telegram.org/bot'+TG.token+'/sendMessage',
-      {method:'POST',headers:{'Content-Type':'application/json'},
-       body:JSON.stringify({chat_id:TG.chatId,text:msg,parse_mode:'Markdown'})});
-    return r.ok;
-  }catch(_){return false;}
+    var r=await fetch('https://api.telegram.org/bot'+TG.token+'/sendMessage',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG.chatId,text:msg,parse_mode:'Markdown'})
+    });
+    var d=await r.json().catch(function(){return{};});
+    if(!r.ok||!d.ok){ console.warn('[TG]',d.description||r.status); return false; }
+    return true;
+  }catch(e){ console.warn('[TG] network:',e.message); return false; }
 }
 async function testTg(){
-  var ok=await sendTg('✅ Prism Analytics v3.0 — Telegram connected!\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}));
-  setText('tg-status',ok?'✅ Sent':'❌ Failed — check token/chatId');
+  var st=document.getElementById('tg-status');
+  if(st){st.textContent='⏳ Sending…';st.style.color='var(--muted)';}
+  if(!TG.token||!TG.chatId){
+    if(st){st.textContent='❌ Save token + Chat ID first, then test';st.style.color='var(--red)';}
+    return;
+  }
+  var ok=await sendTg('✅ *Prism Analytics — Test*\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST\nCapital: ₹'+CAP.toFixed(2));
+  if(st){
+    st.textContent=ok?'✅ Message delivered to your bot!':'❌ Failed — check token & Chat ID';
+    st.style.color=ok?'var(--green)':'var(--red)';
+  }
 }
 async function sendPnLReport(){
-  setText('tg-status','⏳ Sending…');
+  var st=document.getElementById('tg-status');
+  if(st){st.textContent='⏳ Sending to Telegram + Email…';st.style.color='var(--muted)';}
   var now=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
   var ret=((CAP-BASE_CAP)/BASE_CAP*100).toFixed(2);
-  var msg='*PRISM P&L REPORT*\n'+now+'\n\nCapital: ₹'+CAP.toFixed(2)+'\nReturn: '+ret+'%\nMonth P&L: ₹'+(MONTHLY.pnl||0).toFixed(2)+'\nWithdrawn: ₹'+(MONTHLY.totalWithdrawn||0).toFixed(2);
+  var tw=MONTHLY.totalWithdrawn||0;
+  var msg='*PRISM ANALYTICS — P&L REPORT*\n'
+    +'Date: '+now+' IST\n'
+    +'━━━━━━━━━━━━━━━━━━━━━\n'
+    +'Capital: ₹'+CAP.toFixed(2)+'\n'
+    +'Total Return: '+(ret>=0?'+':'')+ret+'%\n'
+    +'Month P&L: ₹'+(MONTHLY.pnl||0).toFixed(2)+'\n'
+    +'Transferred to SB: ₹'+tw.toFixed(2)+'\n'
+    +'━━━━━━━━━━━━━━━━━━━━━\n'
+    +'Not investment advice | Private AMC';
   var tgOk=await sendTg(msg);
-  var emailOk=await sendEmail('Prism P&L | '+new Date().toDateString(),'Capital: ₹'+CAP.toFixed(2)+'\nReturn: '+ret+'%\nMonth P&L: ₹'+(MONTHLY.pnl||0).toFixed(2));
-  setText('tg-status',(tgOk?'✅ TG':'❌ TG')+' | '+(emailOk?'✅ Email':'❌ Email'));
+  var subj='Prism Analytics P&L | '+new Date().toDateString();
+  var emailBody='PRISM ANALYTICS — P&L REPORT\n'
+    +'Date: '+now+'\n'
+    +'Capital: ₹'+CAP.toFixed(2)+'\n'
+    +'Total Return: '+ret+'%\n'
+    +'Month P&L: ₹'+(MONTHLY.pnl||0).toFixed(2)+'\n'
+    +'SB Transfers: ₹'+tw.toFixed(2);
+  var eRes=await sendEmail(subj,emailBody);
+  var eOk=eRes&&eRes.ok;
+  var eMethod=eRes&&eRes.method;
+  var tgMsg=tgOk?'✅ Telegram':'❌ TG (check token)';
+  var eMsg=eOk?(eMethod==='emailjs'?'✅ Email':'📧 Gmail (click Send)'):'❌ Email';
+  if(st){
+    st.textContent=tgMsg+' | '+eMsg;
+    st.style.color=tgOk&&eOk?'var(--green)':tgOk||eOk?'var(--amber)':'var(--red)';
+  }
 }
 
 /* ── EMAIL ── */
 async function sendEmail(subject, body){
+  /* Method 1: EmailJS REST API — all credentials hardcoded */
   try{
+    var payload={
+      service_id:  'service_eole8dd',
+      template_id: 'template_c9wj7rm',
+      user_id:     'Qd_kEkb7HUiYi6j_M',
+      template_params:{
+        to_email:   'suri7588sh1@gmail.com',
+        from_name:  'Prism Analytics',
+        to_name:    'Prism Owner',
+        reply_to:   'suri7588sh1@gmail.com',
+        subject:    subject,
+        message:    body,
+        content:    body,
+        body:       body,
+        html_body:  body.replace(/\n/g,'<br>')
+      }
+    };
     var r=await fetch('https://api.emailjs.com/api/v1.0/email/send',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({service_id:EJS.svc,template_id:EJS.tpl,user_id:EJS.pub,
-        template_params:{to_email:OWNER_EMAIL,from_name:'Prism Analytics',
-          subject:subject,message:body,content:body}})
+      method:'POST',
+      headers:{'Content-Type':'application/json','origin':'https://suri7588-ship-it.github.io'},
+      body:JSON.stringify(payload)
     });
-    return r.ok;
-  }catch(_){
-    try{
-      window.open('https://mail.google.com/mail/?view=cm&fs=1&to=suri7588sh1%40gmail.com&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body.slice(0,1500)),'_blank','noopener');
-      return true;
-    }catch(_){return false;}
-  }
+    if(r.ok||r.status===200) return {ok:true,method:'emailjs'};
+    console.warn('[Email] EmailJS returned:',r.status,await r.text().catch(()=>''));
+  }catch(e){ console.warn('[Email] EmailJS error:',e.message); }
+
+  /* Method 2: Gmail compose with everything pre-filled */
+  try{
+    var gurl='https://mail.google.com/mail/?view=cm&fs=1'
+      +'&to=suri7588sh1%40gmail.com'
+      +'&su='+encodeURIComponent(subject)
+      +'&body='+encodeURIComponent(body.slice(0,1800));
+    window.open(gurl,'_blank','noopener,noreferrer');
+    return {ok:true,method:'gmail'};
+  }catch(_){}
+
+  return {ok:false};
 }
 async function testEmail(){
-  setText('email-status','⏳ Sending…');
-  var ok=await sendEmail('Prism Analytics Test','EmailJS working. Time: '+new Date().toLocaleString());
-  setText('email-status',ok?'✅ Sent to '+OWNER_EMAIL:'❌ Failed — Gmail compose opened as fallback');
+  var st=document.getElementById('email-status');
+  if(st){st.textContent='⏳ Sending to suri7588sh1@gmail.com…';st.style.color='var(--muted)';}
+  var subj='Prism Analytics — Email Test';
+  var body='Email system test from Prism Analytics Intelligence Engine.\n\nTime: '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST\nCapital: ₹'+CAP.toFixed(2)+'\n\nIf you see this, email is working correctly.';
+  var res=await sendEmail(subj, body);
+  if(st){
+    if(!res||!res.ok){st.textContent='❌ Failed';st.style.color='var(--red)';}
+    else if(res.method==='emailjs'){st.textContent='✅ Sent directly to suri7588sh1@gmail.com';st.style.color='var(--green)';}
+    else{st.textContent='📧 Gmail compose opened — click Send to deliver';st.style.color='var(--amber)';}
+  }
 }
 
 /* ── VAULT ── */
