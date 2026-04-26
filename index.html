@@ -368,6 +368,59 @@ tr:hover td{background:rgba(255,255,255,.02);}
               </div>
             </div>
             <div class="card">
+              <div class="card-header"><span class="card-title">📈 Compounding Engine</span><span class="badge badge-b" id="cagr-badge">LIVE</span></div>
+              <div class="card-body">
+                <!-- CAGR Section -->
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:8px">Growth Rates (annualised from Jan 1 2026)</div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Yearly CAGR</span>
+                  <span style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+                    <span class="cost-val" id="cagr-yearly">—</span>
+                    <span style="font-size:10px;color:var(--muted)" id="cagr-yearly-rs">₹— / yr at this rate</span>
+                  </span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Monthly CAGR</span>
+                  <span style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+                    <span class="cost-val" id="cagr-monthly">—</span>
+                    <span style="font-size:10px;color:var(--muted)" id="cagr-monthly-rs">₹— / month at this rate</span>
+                  </span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Daily CAGR</span>
+                  <span style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+                    <span class="cost-val" id="cagr-daily">—</span>
+                    <span style="font-size:10px;color:var(--muted)" id="cagr-daily-rs">₹— / day at this rate</span>
+                  </span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Net Wealth Growth</span>
+                  <span class="cost-val up" id="cagr-nw">—</span>
+                </div>
+                <!-- SB Account Transfers -->
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin:14px 0 8px">Savings Bank Account</div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Total Transferred to SB</span>
+                  <span class="cost-val warn" id="sb-total">₹0.00</span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-lbl">This Month Transfer</span>
+                  <span class="cost-val warn" id="sb-month">₹0.00</span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Next Withdrawal Available</span>
+                  <span class="cost-val" id="sb-next">₹0 (no profit yet)</span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-lbl">Withdrawal Rule</span>
+                  <span class="cost-val" style="font-size:11px">20% of monthly profit</span>
+                </div>
+                <div style="margin-top:10px;padding:8px 10px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--muted)">
+                  💡 Withdrawal suspended if drawdown &gt;3%. Execute from Portfolio page.
+                </div>
+              </div>
+            </div>
+            <div class="card">
               <div class="card-header"><span class="card-title">🛡 Governance Status</span><span class="badge badge-g" id="gov-badge">READY</span></div>
               <div class="card-body">
                 <div class="cost-row"><span class="cost-lbl">Risk / Trade (1%)</span><span class="cost-val" id="gov-risk">₹100.00</span></div>
@@ -1163,6 +1216,64 @@ function updateGovernance(){
 }
 
 /* ── DASHBOARD ── */
+/* ── CAGR + SB TRANSFER ENGINE ── */
+function updateCAGR(){
+  var startDate = new Date('2026-01-01T00:00:00+05:30');
+  var now = new Date();
+  var msElapsed = now - startDate;
+  var daysElapsed = msElapsed / 86400000;
+  var yearsElapsed = daysElapsed / 365.25;
+
+  if(yearsElapsed < 0.001 || CAP <= 0){ return; }
+
+  /* Core CAGR = (current/base)^(1/years) - 1 */
+  var cagrYearly = (Math.pow(CAP / BASE_CAP, 1 / yearsElapsed) - 1) * 100;
+  var cagrMonthly = (Math.pow(CAP / BASE_CAP, 1 / (yearsElapsed * 12)) - 1) * 100;
+  var cagrDaily = (Math.pow(CAP / BASE_CAP, 1 / daysElapsed) - 1) * 100;
+
+  /* Rupee equivalents — what this rate means in money terms on current capital */
+  var rsPerYear  = CAP * (cagrYearly / 100);
+  var rsPerMonth = CAP * (cagrMonthly / 100);
+  var rsPerDay   = CAP * (cagrDaily / 100);
+
+  /* Net wealth = capital + total withdrawn */
+  var tw = MONTHLY.totalWithdrawn || 0;
+  var nwGrowth = ((CAP + tw) / BASE_CAP - 1) * 100;
+
+  function fmt(n){ return (n>=0?'+':'')+n.toFixed(2)+'%'; }
+  function rs(n){ return (n>=0?'+₹':'-₹')+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  var yColor = cagrYearly>=0?'var(--green)':'var(--red)';
+  var mColor = cagrMonthly>=0?'var(--green)':'var(--red)';
+  var dColor = cagrDaily>=0?'var(--green)':'var(--red)';
+
+  setText('cagr-yearly', fmt(cagrYearly)); setColor('cagr-yearly', yColor);
+  setText('cagr-yearly-rs', rs(rsPerYear)+' / year at this rate');
+  setText('cagr-monthly', fmt(cagrMonthly)); setColor('cagr-monthly', mColor);
+  setText('cagr-monthly-rs', rs(rsPerMonth)+' / month at this rate');
+  setText('cagr-daily', fmt(cagrDaily)); setColor('cagr-daily', dColor);
+  setText('cagr-daily-rs', rs(rsPerDay)+' / day at this rate');
+  setText('cagr-nw', (nwGrowth>=0?'+':'')+nwGrowth.toFixed(2)+'% (capital + SB transfers)');
+  setColor('cagr-nw', nwGrowth>=0?'var(--green)':'var(--red)');
+
+  /* SB Account */
+  var monthWithdrawn = MONTHLY.withdrawn || 0;
+  var nextAvail = MONTHLY.pnl > 0 ? MONTHLY.pnl * 0.2 : 0;
+  var dd = CAP < BASE_CAP ? (BASE_CAP - CAP) / BASE_CAP * 100 : 0;
+
+  setText('sb-total', '₹'+tw.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setText('sb-month', '₹'+monthWithdrawn.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setText('sb-next', dd>3?'Suspended (drawdown >3%)':(nextAvail>0?'₹'+nextAvail.toFixed(2)+' available':'₹0 (no profit yet)'));
+  setColor('sb-next', dd>3?'var(--red)':nextAvail>0?'var(--green)':'var(--muted)');
+
+  /* Badge colour */
+  var badge = document.getElementById('cagr-badge');
+  if(badge){
+    badge.textContent = cagrYearly >= 20 ? '🚀 >20% CAGR' : cagrYearly >= 10 ? 'GROWING' : cagrYearly >= 0 ? 'LIVE' : '⚠️ LOSS';
+    badge.className = 'badge ' + (cagrYearly >= 20 ? 'badge-g' : cagrYearly >= 0 ? 'badge-b' : 'badge-r');
+  }
+}
+
 function updateDashboard(){
   setText('d-cap','₹'+CAP.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}));
   var ret=(CAP-BASE_CAP)/BASE_CAP*100;
@@ -1172,6 +1283,7 @@ function updateDashboard(){
   setText('d-pnl','₹'+(MONTHLY.pnl||0).toFixed(2));
   setColor('d-pnl',(MONTHLY.pnl||0)>=0?'var(--green)':'var(--red)');
   updateGovernance();
+  updateCAGR();
 }
 
 /* ── PORTFOLIO ── */
