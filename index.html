@@ -1148,10 +1148,11 @@ function applyQuote(sym, p, c, pct){
     setText('mcx-gold-c',sign+pct.toFixed(2)+'%'); setColor('mcx-gold-c',color);
   }
   if(sym==='USDINR'||sym==='USD/INR'){
-    setText('t-usdinr','₹'+p.toFixed(2)); setColor('t-usdinr',color);
+    var fmtUSD='₹'+p.toFixed(2);
+    setText('t-usdinr',fmtUSD); setColor('t-usdinr',color);
     setText('t-usdinr-c',sign+pct.toFixed(2)+'%'); setColor('t-usdinr-c',color);
-    setText('d-usdinr','₹'+p.toFixed(2)); setColor('d-usdinr',color);
-    setText('fx-usdinr','₹'+p.toFixed(2)); setColor('fx-usdinr',color);
+    setText('d-usdinr',fmtUSD); setColor('d-usdinr',color);
+    setText('fx-usdinr',fmtUSD); setColor('fx-usdinr',color);
   }
   if(sym==='VIX'||sym==='^VIX'||sym==='INDIAVIX'){
     setText('t-vix',p.toFixed(2)); setColor('t-vix',color);
@@ -1176,38 +1177,63 @@ function applyQuote(sym, p, c, pct){
   }
 }
 
-/* SOURCE 1: corsproxy.io → Yahoo Finance */
+
+/* SOURCE 1: Yahoo Finance via proxies — fetches each symbol group */
 async function fetchYahoo(){
-  var syms=['^NSEI','^BSESN','^NSEBANK','^INDIAVIX','USDINR=X','GC=F'];
-  var base='https://query1.finance.yahoo.com/v8/finance/spark?symbols=';
-  /* Use v8 spark for price only, then get quote details */
+  /* Fetch indices + USDINR + GOLDBEES in one call */
+  var syms=['^NSEI','^BSESN','^NSEBANK','^INDIAVIX','USDINR=X','GOLDBEES.NS'];
   var qurl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+
-    syms.map(encodeURIComponent).join(',');
-  /* Try direct with no-cors first, then proxy */
+    syms.map(encodeURIComponent).join(',')+'&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent';
+
   var proxies=[
     'https://corsproxy.io/?'+encodeURIComponent(qurl),
     'https://api.allorigins.win/get?url='+encodeURIComponent(qurl),
     'https://thingproxy.freeboard.io/fetch/'+qurl,
   ];
+
+  var got=false;
   for(var i=0;i<proxies.length;i++){
     try{
-      var raw = await fetch(proxies[i],{cache:'no-store'});
+      var raw=await fetch(proxies[i],{cache:'no-store'});
       if(!raw.ok) continue;
-      var json = await raw.json();
-      /* allorigins wraps in {contents:'...'} */
-      var d = json.contents ? JSON.parse(json.contents) : json;
-      var q = (d.quoteResponse&&d.quoteResponse.result)||[];
+      var json=await raw.json();
+      var d=json.contents?JSON.parse(json.contents):json;
+      var q=(d.quoteResponse&&d.quoteResponse.result)||[];
       if(!q.length) continue;
       q.forEach(function(s){
-        var sym=s.symbol, p=s.regularMarketPrice, c=s.regularMarketChange||0, pct=s.regularMarketChangePercent||0;
+        var p=s.regularMarketPrice,c=s.regularMarketChange||0,pct=s.regularMarketChangePercent||0;
         var map={'^NSEI':'^NSEI','^BSESN':'^BSESN','^NSEBANK':'^NSEBANK',
-          '^INDIAVIX':'VIX','USDINR=X':'USDINR','GC=F':'GOLD_USD'};
-        if(map[sym]) applyQuote(map[sym],p,c,pct);
+          '^INDIAVIX':'VIX','USDINR=X':'USDINR','GOLDBEES.NS':'GOLD'};
+        if(map[s.symbol]){
+          /* GOLDBEES.NS → convert to MCX gold equivalent (×100 ≈ price per 10g) */
+          var adjP = s.symbol==='GOLDBEES.NS' ? p*100 : p;
+          var adjC = s.symbol==='GOLDBEES.NS' ? c*100 : c;
+          applyQuote(map[s.symbol], adjP, adjC, pct);
+          got=true;
+        }
       });
-      return true;
+      if(got) break;
     }catch(_){}
   }
-  return false;
+
+  /* Separate fetch for USDINR if still missing */
+  if(!LIVE['USDINR']){
+    try{
+      var uurl='https://query1.finance.yahoo.com/v7/finance/quote?symbols=USDINR%3DX';
+      var proxiedU='https://corsproxy.io/?'+encodeURIComponent(uurl);
+      var ru=await fetch(proxiedU,{cache:'no-store'});
+      if(ru.ok){
+        var du=await ru.json();
+        var qu=(du.quoteResponse&&du.quoteResponse.result)||[];
+        if(qu.length){
+          var fx=qu[0];
+          applyQuote('USDINR',fx.regularMarketPrice,fx.regularMarketChange||0,fx.regularMarketChangePercent||0);
+          got=true;
+        }
+      }
+    }catch(_){}
+  }
+  return got;
 }
 
 /* SOURCE 2: Groww unofficial API */
@@ -1278,9 +1304,11 @@ function setColor(id,c){ var e=document.getElementById(id); if(e) e.style.color=
 
 function updatePricesTable(){
   var rows=[
-    {sym:'NIFTY 50',key:'^NSEI'},{sym:'SENSEX',key:'^BSESN'},
-    {sym:'BANK NIFTY',key:'^NSEBANK'},{sym:'GOLD BEES',key:'GOLDBEES.NS'},
-    {sym:'USD/INR',key:'USDINR=X'}
+    {sym:'NIFTY 50',    key:'^NSEI'},
+    {sym:'SENSEX',      key:'^BSESN'},
+    {sym:'BANK NIFTY',  key:'^NSEBANK'},
+    {sym:'GOLD (MCX est.)', key:'GOLD'},
+    {sym:'USD/INR',     key:'USDINR'}
   ];
   var tbody=document.getElementById('prices-body');
   if(!tbody) return;
