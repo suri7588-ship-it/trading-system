@@ -1242,8 +1242,10 @@ tr:hover td{background:rgba(255,255,255,.02);}
                 <option value="MCX:CRUDEOIL1!">MCX Crude</option>
               </select>
             </div>
-            <div id="chart-container" style="height:480px;border-radius:0 0 10px 10px;overflow:hidden;background:var(--bg3)">
-              <div id="tradingview-widget" style="width:100%;height:100%"></div>
+            <div id="chart-container" style="height:480px;border-radius:0 0 10px 10px;overflow:hidden">
+              <iframe id="chart-frame" style="width:100%;height:100%;border:none" allow="fullscreen"
+                src="https://www.tradingview.com/widgetembed/?symbol=NSE%3ANIFTY&interval=15&theme=dark&style=1&timezone=Asia%2FKolkata&studies=MACD%40tv-basicstudies%1FRSI%40tv-basicstudies&locale=en&hide_top_toolbar=0&hide_side_toolbar=0&allow_symbol_change=0&save_image=0">
+              </iframe>
             </div>
           </div>
           <div class="card">
@@ -1429,7 +1431,10 @@ async function sha256(str){
     return s+s+s+s+s+s+s+s; /* 64 chars */
   }
 }
-/* pin functions defined above */
+function pinKey(n){ if(pinBuffer.length>=4) return; pinBuffer+=n; updPinDots(); if(pinBuffer.length===4) setTimeout(verifyPin,80); }
+function pinBackspace(){ pinBuffer=pinBuffer.slice(0,-1); updPinDots(); }
+function pinClear(){ pinBuffer=''; updPinDots(); clrErr(); }
+function updatePinDots(){ updPinDots(); } /* alias for backward compat */
 function updPinDots(){
   for(var i=0;i<4;i++){
     var d=document.getElementById('d'+i);
@@ -1728,60 +1733,15 @@ function buildOptionsChain(){
 
 function updateSmartMoney(){ buildFIIDII(); }
 
-var _tvWidget = null;
 function loadChart(){
   var sym = document.getElementById('chart-sym').value || 'NSE:NIFTY';
-  var container = document.getElementById('tradingview-widget');
-  if(!container) return;
-  /* Clear previous widget */
-  container.innerHTML = '';
-  /* Use TradingView official Advanced Chart widget — free, no login required */
-  var script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/tv.js';
-  script.onload = function(){
-    try{
-      new TradingView.widget({
-        container_id: 'tradingview-widget',
-        width: '100%',
-        height: 480,
-        symbol: sym,
-        interval: '15',
-        timezone: 'Asia/Kolkata',
-        theme: document.documentElement.getAttribute('data-theme')==='light'?'light':'dark',
-        style: '1',
-        locale: 'en',
-        toolbar_bg: '#0d1421',
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        hide_legend: false,
-        save_image: false,
-        studies: ['MACD@tv-basicstudies','RSI@tv-basicstudies'],
-        show_popup_button: false,
-        popup_width: '1000',
-        popup_height: '650',
-      });
-    }catch(e){
-      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;gap:12px">'
-        +'<div style="font-size:32px">📈</div>'
-        +'<div>Chart loading... if it doesn't appear, open TradingView directly:</div>'
-        +'<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym)+'" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;font-weight:600">Open '+sym+' on TradingView →</a>'
-        +'</div>';
-    }
-  };
-  script.onerror = function(){
-    /* Fallback: direct TradingView link */
-    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;gap:12px">'
-      +'<div style="font-size:32px">📈</div>'
-      +'<div style="font-weight:600;color:var(--text)">'+sym+'</div>'
-      +'<div>Click below to view live chart on TradingView:</div>'
-      +'<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym)+'" target="_blank" rel="noopener" style="color:var(--blue);font-size:14px;font-weight:700;padding:10px 24px;border:1px solid var(--bbord);border-radius:8px;text-decoration:none;background:var(--bbg)">📊 Open '+sym+' Chart →</a>'
-      +'<div style="font-size:11px;color:var(--muted)">NSE live charts · MACD · RSI · All timeframes</div>'
-      +'</div>';
-  };
-  /* Remove any existing tv.js to force reload with new symbol */
-  var existing = document.querySelector('script[src*="s3.tradingview.com/tv.js"]');
-  if(existing) existing.remove();
-  document.head.appendChild(script);
+  var frame = document.getElementById('chart-frame');
+  if(frame){
+    frame.src = 'https://www.tradingview.com/widgetembed/?symbol='+encodeURIComponent(sym)
+      +'&interval=15&theme=dark&style=1&timezone=Asia%2FKolkata'
+      +'&studies=MACD%40tv-basicstudies%1FRSI%40tv-basicstudies&locale=en'
+      +'&hide_top_toolbar=0&save_image=0&allow_symbol_change=0';
+  }
 }
 
 function wireNav(){
