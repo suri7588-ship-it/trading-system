@@ -691,7 +691,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
                 <div class="cost-row"><span class="cost-lbl">Month P&L</span><span class="cost-val" id="pf-mpnl">₹0.00</span></div>
                 <div class="cost-row"><span class="cost-lbl">Withdrawal (20% of profit)</span><span class="cost-val warn" id="pf-wamt">₹0 available</span></div>
                 <div class="cost-row"><span class="cost-lbl">Risk/Trade (1%)</span><span class="cost-val" id="pf-risk">₹100</span></div>
-                <button class="btn btn-success" style="width:100%;margin-top:12px" onclick="execWithdrawal()">💸 Execute Monthly Withdrawal</button>
+                <button class="btn btn-success" style="width:100%;margin-top:12px" onclick="execWithdrawal()">💸 Manual Withdrawal (auto runs on 1st working day)</button>
               </div>
             </div>
             <div class="card">
@@ -1302,7 +1302,7 @@ var EJS = { pub:'SEdEZwj0I7JRYBBOq', svc:'service_eole8dd', tpl:'template_c9wj7r
 
 /* ══ CAPITAL STATE ══ */
 var CAP     = +(localStorage.getItem(CAP_KEY)||BASE_CAP);
-var MONTHLY = JSON.parse(localStorage.getItem(MONTHLY_KEY)||'{"pnl":0,"withdrawn":0,"totalWithdrawn":0,"trades":0}');
+var MONTHLY = JSON.parse(localStorage.getItem(MONTHLY_KEY)||'{"pnl":0,"withdrawn":0,"totalWithdrawn":0,"trades":0,"month":"","autoWithdrawn":false}');
 var CONSEC  = +(localStorage.getItem('prism-consec-v3')||0);
 var BHAV_LOCKED = localStorage.getItem('prism-bhav-v3') === '1';
 var _tgSaved = JSON.parse(localStorage.getItem(TG_KEY)||'{}');
@@ -3060,17 +3060,67 @@ function updatePortfolio(){
   var nw=((CAP+tw)/BASE_CAP-1)*100;
   setText('pf-nw',nw.toFixed(1)+'%');
 }
+/* ── AUTO-COMPOUNDING + AUTO-WITHDRAWAL ENGINE ── */
+function isFirstWorkingDay(){
+  var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  var d=ist.getDate(),dow=ist.getDay();
+  if(d===1&&dow!==0&&dow!==6) return true;
+  if(d===2&&dow===1) return true; /* Mon when 1st was Sun */
+  if(d===3&&dow===1) return true; /* Mon when 1st and 2nd were weekend */
+  return false;
+}
+function currentMonthKey(){
+  var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  return ist.getFullYear()+'-'+(ist.getMonth()+1<10?'0':'')+(ist.getMonth()+1);
+}
+function checkMonthRollover(){
+  var thisMonth=currentMonthKey();
+  if(MONTHLY.month && MONTHLY.month!==thisMonth){
+    /* Month changed — process last month's withdrawal */
+    var profit=MONTHLY.pnl||0;
+    if(profit>0 && !MONTHLY.autoWithdrawn){
+      var dd=CAP<10000?(10000-CAP)/10000*100:0;
+      if(dd<=3 && isFirstWorkingDay()){
+        var amt=+(profit*0.2).toFixed(2);
+        CAP=+(CAP-amt).toFixed(2);
+        MONTHLY.totalWithdrawn=+((MONTHLY.totalWithdrawn||0)+amt).toFixed(2);
+        MONTHLY.autoWithdrawn=true;
+        saveState();
+        sendTg('\ud83d\udcb8 AUTO WITHDRAWAL '+MONTHLY.month+'\n20% of Rs '+profit.toFixed(2)+' profit\nAmount: Rs '+amt+'\nTransfer to SB Account\nCapital: Rs '+CAP.toFixed(2));
+        setTimeout(function(){
+          toast('\ud83d\udcb8 Auto-withdrawal Rs '+amt+' — transfer to SB Account!',true,7000);
+          showWithdrawalBanner(amt,MONTHLY.month);
+        },1500);
+      } else if(dd>3){
+        sendTg('Auto-withdrawal skipped — drawdown '+dd.toFixed(2)+'% > 3%');
+      }
+    }
+    /* Reset for new month — capital compounds automatically (CAP already updated) */
+    MONTHLY={pnl:0,withdrawn:0,totalWithdrawn:MONTHLY.totalWithdrawn||0,trades:0,month:thisMonth,autoWithdrawn:false};
+    saveState();
+  } else if(!MONTHLY.month){
+    MONTHLY.month=thisMonth; saveState();
+  }
+}
+function showWithdrawalBanner(amt,label){
+  var b=document.createElement('div');
+  b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--green);color:#000;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;font-family:var(--font);font-weight:700;font-size:13px;';
+  b.innerHTML='<span>\ud83d\udcb8 AUTO SB TRANSFER: Rs '+amt+' (20% of '+label+' profit) — Please transfer to your SB Account</span>'
+    +'<button onclick="this.parentElement.remove()" style="background:rgba(0,0,0,.15);border:none;color:#000;padding:4px 12px;border-radius:6px;cursor:pointer;font-weight:700">OK</button>';
+  document.body.prepend(b);
+  setTimeout(function(){if(b.parentElement)b.remove();},30000);
+}
 function execWithdrawal(){
   if(MONTHLY.pnl<=0){toast('No profit this month',false);return;}
-  var dd=CAP<BASE_CAP?(BASE_CAP-CAP)/BASE_CAP*100:0;
+  var dd=CAP<10000?(10000-CAP)/10000*100:0;
   if(dd>3){toast('Withdrawal suspended — drawdown >3%',false);return;}
   var amt=+(MONTHLY.pnl*0.2).toFixed(2);
   CAP=+(CAP-amt).toFixed(2);
-  MONTHLY.withdrawn=(MONTHLY.withdrawn||0)+amt;
-  MONTHLY.totalWithdrawn=(MONTHLY.totalWithdrawn||0)+amt;
+  MONTHLY.withdrawn=+((MONTHLY.withdrawn||0)+amt).toFixed(2);
+  MONTHLY.totalWithdrawn=+((MONTHLY.totalWithdrawn||0)+amt).toFixed(2);
   saveState(); updatePortfolio(); updateDashboard();
-  toast('✅ Withdrew ₹'+amt,true);
-  sendTg('💸 WITHDRAWAL\nAmount: ₹'+amt+'\nCapital: ₹'+CAP);
+  toast('\u2705 Withdrew Rs '+amt+' — transfer to SB Account',true);
+  sendTg('\ud83d\udcb8 Manual Withdrawal\nAmount: Rs '+amt+'\nCapital: Rs '+CAP.toFixed(2));
 }
 
 /* ── RISK ── */
@@ -3434,6 +3484,7 @@ async function onAppStart(){
   loadTheme();
   loadTg();
   loadVault();
+  checkMonthRollover(); /* auto-compound + auto-withdraw check */
   updateDashboard();
   wireNav();
   /* Show dashboard */
