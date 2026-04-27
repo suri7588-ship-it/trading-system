@@ -250,7 +250,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       try{
         await setDoc(window._doc, data, {merge:true});
         var ind = document.getElementById('fb-sync-ind');
-        if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; }
+        if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; ind.title='Firebase synced ✅'; }
         return true;
       }catch(e){
         console.warn('[FB] save failed:',e.message);
@@ -266,7 +266,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
         var snap = await getDoc(window._doc);
         if(snap.exists()){
           var ind = document.getElementById('fb-sync-ind');
-          if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; }
+          if(ind){ ind.textContent='☁️'; ind.style.color='var(--green)'; ind.title='Firebase synced ✅'; }
           return snap.data();
         }
         return null;
@@ -1228,21 +1228,22 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="page" id="page-charts"><div class="page-content">
           <div class="card">
             <div class="card-header"><span class="card-title">🕯 Live Charts</span>
-              <select id="chart-sym" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;max-width:150px">
+              <select id="chart-sym" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;max-width:160px">
                 <option value="NSE:NIFTY">Nifty 50</option>
                 <option value="NSE:BANKNIFTY">Bank Nifty</option>
-                <option value="NSE:SENSEX">Sensex</option>
+                <option value="BSE:SENSEX">Sensex</option>
                 <option value="NSE:INFY">Infosys</option>
                 <option value="NSE:TCS">TCS</option>
                 <option value="NSE:HDFCBANK">HDFC Bank</option>
                 <option value="NSE:RELIANCE">Reliance</option>
                 <option value="NSE:ICICIBANK">ICICI Bank</option>
+                <option value="NSE:SBIN">SBI</option>
                 <option value="MCX:GOLD1!">MCX Gold</option>
                 <option value="MCX:CRUDEOIL1!">MCX Crude</option>
               </select>
             </div>
-            <div id="chart-container" style="height:480px;border-radius:0 0 10px 10px;overflow:hidden">
-              <iframe id="chart-frame" style="width:100%;height:100%;border:none" allow="fullscreen" src="https://s.tradingview.com/widgetembed/?frameElementId=chart-frame&symbol=NSE:NIFTY&interval=15&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=0&saveimage=0&toolbarbg=var(--bg2)&studies=MACD@tv-basicstudies%1FRSI@tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=prism"></iframe>
+            <div id="chart-container" style="height:480px;border-radius:0 0 10px 10px;overflow:hidden;background:var(--bg3)">
+              <div id="tradingview-widget" style="width:100%;height:100%"></div>
             </div>
           </div>
           <div class="card">
@@ -1729,10 +1730,60 @@ function buildOptionsChain(){
 
 function updateSmartMoney(){ buildFIIDII(); }
 
+var _tvWidget = null;
 function loadChart(){
-  var sym=document.getElementById('chart-sym').value;
-  var frame=document.getElementById('chart-frame');
-  if(frame) frame.src='https://s.tradingview.com/widgetembed/?symbol='+encodeURIComponent(sym)+'&interval=15&theme=dark&style=1&timezone=Asia%2FKolkata&studies=MACD@tv-basicstudies%1FRSI@tv-basicstudies&locale=en';
+  var sym = document.getElementById('chart-sym').value || 'NSE:NIFTY';
+  var container = document.getElementById('tradingview-widget');
+  if(!container) return;
+  /* Clear previous widget */
+  container.innerHTML = '';
+  /* Use TradingView official Advanced Chart widget — free, no login required */
+  var script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/tv.js';
+  script.onload = function(){
+    try{
+      new TradingView.widget({
+        container_id: 'tradingview-widget',
+        width: '100%',
+        height: 480,
+        symbol: sym,
+        interval: '15',
+        timezone: 'Asia/Kolkata',
+        theme: document.documentElement.getAttribute('data-theme')==='light'?'light':'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#0d1421',
+        enable_publishing: false,
+        hide_top_toolbar: false,
+        hide_legend: false,
+        save_image: false,
+        studies: ['MACD@tv-basicstudies','RSI@tv-basicstudies'],
+        show_popup_button: false,
+        popup_width: '1000',
+        popup_height: '650',
+      });
+    }catch(e){
+      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;gap:12px">'
+        +'<div style="font-size:32px">📈</div>'
+        +'<div>Chart loading... if it doesn't appear, open TradingView directly:</div>'
+        +'<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym)+'" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;font-weight:600">Open '+sym+' on TradingView →</a>'
+        +'</div>';
+    }
+  };
+  script.onerror = function(){
+    /* Fallback: direct TradingView link */
+    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;gap:12px">'
+      +'<div style="font-size:32px">📈</div>'
+      +'<div style="font-weight:600;color:var(--text)">'+sym+'</div>'
+      +'<div>Click below to view live chart on TradingView:</div>'
+      +'<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym)+'" target="_blank" rel="noopener" style="color:var(--blue);font-size:14px;font-weight:700;padding:10px 24px;border:1px solid var(--bbord);border-radius:8px;text-decoration:none;background:var(--bbg)">📊 Open '+sym+' Chart →</a>'
+      +'<div style="font-size:11px;color:var(--muted)">NSE live charts · MACD · RSI · All timeframes</div>'
+      +'</div>';
+  };
+  /* Remove any existing tv.js to force reload with new symbol */
+  var existing = document.querySelector('script[src*="s3.tradingview.com/tv.js"]');
+  if(existing) existing.remove();
+  document.head.appendChild(script);
 }
 
 function wireNav(){
@@ -3452,7 +3503,7 @@ async function onAppStart(){
   }
   /* Load from Firebase cloud first — syncs across devices */
   var ind = document.getElementById('fb-sync-ind');
-  if(ind){ ind.textContent='⏳'; ind.style.color='var(--muted)'; }
+  if(ind){ ind.textContent='⏳'; ind.style.color='var(--muted)'; ind.title='Syncing with Firebase…'; }
   if(window.fbLoad){
     try{
       var fbData = await window.fbLoad();
