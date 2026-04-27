@@ -1429,10 +1429,8 @@ async function sha256(str){
     return s+s+s+s+s+s+s+s; /* 64 chars */
   }
 }
-function pinKey(n){ if(pinBuffer.length>=4) return; pinBuffer+=n; updatePinDots(); if(pinBuffer.length===4) setTimeout(verifyPin,80); }
-function pinBackspace(){ pinBuffer=pinBuffer.slice(0,-1); updatePinDots(); }
-function pinClear(){ pinBuffer=''; updatePinDots(); document.getElementById('gate-err').textContent=''; }
-function updatePinDots(){
+/* pin functions defined above */
+function updPinDots(){
   for(var i=0;i<4;i++){
     var d=document.getElementById('d'+i);
     if(d) d.classList.toggle('filled', i<pinBuffer.length);
@@ -1445,7 +1443,7 @@ function logout(){
   localStorage.removeItem(SESSION_KEY);
   document.getElementById('app').style.display='none';
   document.getElementById('gate').style.display='flex';
-  pinBuffer=''; updatePinDots();
+  pinBuffer=''; updPinDots();
   document.getElementById('gate-err').textContent='Locked. Enter PIN to access.';
 }
 /* ── SIMPLE PIN RESET (no OTP — single-user system) ── */
