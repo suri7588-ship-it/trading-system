@@ -471,78 +471,42 @@ console.log('[Prism] Firebase ready ✅');
 <div class="page" id="page-charts">
   <div class="card">
     <div class="card-header">
-      <span class="card-title">🕯 Price Chart</span>
+      <span class="card-title">🕯 Live Chart — TradingView</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <select id="chart-sym" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
-          <option value="^NSEI">Nifty 50</option>
-          <option value="^NSEBANK">Bank Nifty</option>
-          <option value="^BSESN">Sensex</option>
-          <option value="INFY.NS">Infosys</option>
-          <option value="TCS.NS">TCS</option>
-          <option value="HDFCBANK.NS">HDFC Bank</option>
-          <option value="RELIANCE.NS">Reliance</option>
-          <option value="ICICIBANK.NS">ICICI Bank</option>
-          <option value="SBIN.NS">SBI</option>
-          <option value="TATAMOTORS.NS">Tata Motors</option>
-          <option value="BAJAJ-AUTO.NS">Bajaj Auto</option>
-          <option value="WIPRO.NS">Wipro</option>
+        <select id="chart-sym" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
+          <option value="NSE:NIFTY">Nifty 50</option>
+          <option value="NSE:BANKNIFTY">Bank Nifty</option>
+          <option value="BSE:SENSEX">Sensex</option>
+          <option value="NSE:INFY">Infosys</option>
+          <option value="NSE:TCS">TCS</option>
+          <option value="NSE:HDFCBANK">HDFC Bank</option>
+          <option value="NSE:RELIANCE">Reliance</option>
+          <option value="NSE:ICICIBANK">ICICI Bank</option>
+          <option value="NSE:SBIN">SBI</option>
+          <option value="NSE:TATAMOTORS">Tata Motors</option>
+          <option value="NSE:BAJAJ-AUTO">Bajaj Auto</option>
+          <option value="NSE:WIPRO">Wipro</option>
+          <option value="MCX:GOLD1!">MCX Gold</option>
+          <option value="MCX:CRUDEOIL1!">MCX Crude</option>
         </select>
-        <select id="chart-period" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
-          <option value="5d">5 Days</option>
-          <option value="1mo" selected>1 Month</option>
-          <option value="3mo">3 Months</option>
-          <option value="6mo">6 Months</option>
-          <option value="1y">1 Year</option>
+        <select id="chart-tf" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
+          <option value="1">1m</option>
+          <option value="5">5m</option>
+          <option value="15" selected>15m</option>
+          <option value="60">1h</option>
+          <option value="D">1D</option>
+          <option value="W">1W</option>
         </select>
-        <button class="btn btn-ghost btn-sm" onclick="loadChart()">↻ Load</button>
       </div>
     </div>
-    <div id="chart-area" style="padding:14px;min-height:420px">
-      <div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--dim);font-size:13px">Select a symbol and click Load →</div>
-    </div>
-  </div>
-  <!-- Quick links to TradingView -->
-  <div class="card">
-    <div class="card-header"><span class="card-title">📊 Open on TradingView (full features)</span></div>
-    <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px">
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:NIFTY" target="_blank" class="btn btn-ghost btn-sm">Nifty 50</a>
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:BANKNIFTY" target="_blank" class="btn btn-ghost btn-sm">Bank Nifty</a>
-      <a href="https://www.tradingview.com/chart/?symbol=BSE:SENSEX" target="_blank" class="btn btn-ghost btn-sm">Sensex</a>
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:INFY" target="_blank" class="btn btn-ghost btn-sm">Infosys</a>
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:TCS" target="_blank" class="btn btn-ghost btn-sm">TCS</a>
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:HDFCBANK" target="_blank" class="btn btn-ghost btn-sm">HDFC Bank</a>
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:RELIANCE" target="_blank" class="btn btn-ghost btn-sm">Reliance</a>
-      <a href="https://www.tradingview.com/chart/?symbol=NSE:SBIN" target="_blank" class="btn btn-ghost btn-sm">SBI</a>
-      <a href="https://www.tradingview.com/chart/?symbol=MCX:GOLD1!" target="_blank" class="btn btn-ghost btn-sm">MCX Gold</a>
-      <a href="https://www.tradingview.com/chart/?symbol=MCX:CRUDEOIL1!" target="_blank" class="btn btn-ghost btn-sm">MCX Crude</a>
+    <div id="tv-chart-container" style="height:500px;background:var(--bg3)"></div>
+    <div style="padding:8px 16px;display:flex;justify-content:space-between;border-top:1px solid var(--border2);font-size:11px;color:var(--muted)">
+      <span>TradingView · MACD + RSI · Must be logged into TradingView</span>
+      <a id="tv-ext-link" href="https://www.tradingview.com/chart/?symbol=NSE:NIFTY" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">Open full chart ↗</a>
     </div>
   </div>
 </div>
 
-<!-- GOVERNANCE -->
-<div class="page" id="page-governance">
-  <div class="card"><div class="card-header"><span class="card-title">🛡 Trade Governance</span><span class="gov-badge badge-g" id="gov-badge2">✅ READY</span></div><div class="card-body" id="gov-detail">
-    <div class="cost-row"><span class="cost-lbl">1. Capital Floor (>₹8,000)</span><span class="cost-val" id="gv1">✅ OK</span></div>
-    <div class="cost-row"><span class="cost-lbl">2. Max Drawdown (<3%)</span><span class="cost-val" id="gv2">0.00%</span></div>
-    <div class="cost-row"><span class="cost-lbl">3. Consecutive Losses (<3)</span><span class="cost-val" id="gv3">0</span></div>
-    <div class="cost-row"><span class="cost-lbl">4. Monthly P&L (>-₹1,000)</span><span class="cost-val" id="gv4">₹0</span></div>
-    <div class="cost-row"><span class="cost-lbl">5. Bhav Lock</span><span class="cost-val" id="gv5">Unlocked</span></div>
-    <div class="cost-row"><span class="cost-lbl">6. VIX Normal (<25)</span><span class="cost-val" id="gv6">17.96</span></div>
-  </div></div>
-</div>
-
-<!-- TRADE ENGINE -->
-<div class="page" id="page-engine">
-  <div class="card"><div class="card-header"><span class="card-title">⚡ Position Sizer — 1% Rule</span></div><div class="card-body">
-    <div class="row"><div class="field"><label>Symbol</label><input id="te-sym" placeholder="INFY"></div><div class="field"><label>Type</label><select id="te-type"><option>Equity MIS</option><option>Equity CNC</option><option>F&O</option><option>MCX Crude</option><option>MCX Gold Mini</option><option>Currency</option></select></div></div>
-    <div class="row3"><div class="field"><label>Entry ₹</label><input id="te-entry" type="number" oninput="calcEngine()"></div><div class="field"><label>Stop Loss ₹</label><input id="te-sl" type="number" oninput="calcEngine()"></div><div class="field"><label>Direction</label><select id="te-dir" onchange="calcEngine()"><option>LONG</option><option>SHORT</option></select></div></div>
-    <div id="te-result" style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;font-size:12px">
-      <div style="color:var(--dim);text-align:center">Fill entry and SL to calculate</div>
-    </div>
-  </div></div>
-</div>
-
-<!-- SCREENER -->
 <div class="page" id="page-screener">
   <div class="card"><div class="card-header"><span class="card-title">🔍 Stock Screener</span><button class="btn btn-primary btn-sm" onclick="runScreener()">▶ Screen Now</button></div><div class="card-body">
     <div class="row"><div class="field"><label>Strategy</label><select id="scr-strat"><option value="momentum">Momentum Breakout</option><option value="pullback">Bullish Pullback</option><option value="short">Short Setup</option><option value="vix">VIX Play</option></select></div><div class="field"><label>Sector</label><select id="scr-sector"><option value="all">All Sectors</option><option value="it">IT</option><option value="bank">Banking</option><option value="auto">Auto</option><option value="pharma">Pharma</option><option value="fmcg">FMCG</option><option value="metal">Metal</option></select></div></div>
@@ -1470,7 +1434,154 @@ function buildOptions(){
   Q('opt-result').innerHTML=html;
 }
 
-/* ══ CHARTS — Self-hosted from Yahoo Finance OHLCV ══ */
+/* ══ CHARTS — TradingView Advanced Chart (requires TV account for NSE) ══ */
+function loadChart(){
+  var sym = (Q('chart-sym')||{value:'NSE:NIFTY'}).value || 'NSE:NIFTY';
+  var tf  = (Q('chart-tf') ||{value:'15'}).value || '15';
+  var container = Q('tv-chart-container');
+  var extLink   = Q('tv-ext-link');
+  if(!container) return;
+
+  /* Update external link */
+  if(extLink){
+    extLink.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym);
+    extLink.textContent = 'Open ' + sym + ' ↗';
+  }
+
+  /* Clear container */
+  container.innerHTML = '';
+
+  /* Load tv.js and create widget */
+  function buildWidget(){
+    if(typeof TradingView === 'undefined') return;
+    try {
+      new TradingView.widget({
+        autosize:           true,
+        symbol:             sym,
+        interval:           tf,
+        timezone:           'Asia/Kolkata',
+        theme:              'dark',
+        style:              '1',
+        locale:             'en',
+        toolbar_bg:         '#0d1220',
+        enable_publishing:  false,
+        withdateranges:     true,
+        hide_side_toolbar:  false,
+        allow_symbol_change: false,
+        save_image:         false,
+        studies:            ['MACD@tv-basicstudies', 'RSI@tv-basicstudies'],
+        container_id:       'tv-chart-container',
+        hide_volume:        false,
+      });
+    } catch(e) {
+      showFallback(sym, container);
+    }
+  }
+
+  /* Remove stale tv.js to reload cleanly */
+  var old = document.getElementById('tv-js-script');
+  if(old) old.remove();
+
+  if(typeof TradingView !== 'undefined'){
+    buildWidget();
+  } else {
+    var s = document.createElement('script');
+    s.id  = 'tv-js-script';
+    s.src = 'https://s3.tradingview.com/tv.js';
+    s.async = true;
+    s.onload = buildWidget;
+    s.onerror = function(){ showFallback(sym, container); };
+    document.head.appendChild(s);
+  }
+}
+
+function showFallback(sym, container){
+  container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px">'
+    + '<div style="font-size:40px">📊</div>'
+    + '<div style="font-size:14px;color:var(--dim);text-align:center">Chart requires a TradingView account<br>and being logged in at tradingview.com</div>'
+    + '<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym)+'" target="_blank" rel="noopener" '
+    + 'style="color:var(--blue);font-size:14px;font-weight:600;padding:12px 28px;border:1px solid var(--bborder);border-radius:8px;background:var(--bbg);text-decoration:none">'
+    + '📈 Open ' + sym + ' on TradingView →</a>'
+    + '<div style="font-size:11px;color:var(--muted)">Free account at tradingview.com works</div>'
+    + '</div>';
+}
+
+/* ══ TRADE ENGINE ══ */
+function calcEngine(){
+  var entryEl = Q('te-entry'), slEl = Q('te-sl');
+  var entry = entryEl ? +entryEl.value : 0;
+  var sl    = slEl    ? +slEl.value    : 0;
+  var res   = Q('te-result');
+  if(!res) return;
+
+  if(!entry || !sl || entry === sl){
+    res.innerHTML = '<div style="color:var(--dim);text-align:center;font-size:12px;padding:10px">Enter Entry price and Stop Loss to calculate</div>';
+    return;
+  }
+
+  var dir    = (Q('te-dir')||{value:'LONG'}).value;
+  var type   = (Q('te-type')||{value:'equity'}).value;
+  var risk   = CAP * RISK_PCT;
+  var oneR   = Math.abs(entry - sl);
+  var isCrude = type === 'crude';
+  var isGold  = type === 'gold';
+  var isFO    = type === 'fo';
+  var isCurr  = type === 'currency';
+
+  var qty, tgtMult;
+  if(isCrude){ qty=1; tgtMult=3; }
+  else if(isGold){ qty=1; tgtMult=3; }
+  else if(isFO){ qty=Math.max(1,Math.floor(risk/oneR)); tgtMult=2; }
+  else if(isCurr){ qty=Math.max(1,Math.floor(risk/oneR)); tgtMult=2; }
+  else { qty=Math.max(1,Math.floor(risk/oneR)); tgtMult=2; }
+
+  var tgt = dir==='LONG' ? +(entry + oneR*tgtMult).toFixed(2) : +(entry - oneR*tgtMult).toFixed(2);
+
+  /* Charges */
+  var charges;
+  if(isCrude||isGold) charges = 38 + 0.013*entry;
+  else if(isFO) charges = 40 + qty*entry*0.0005 + 7.2;
+  else if(isCurr) charges = 20 + qty*entry*0.0002;
+  else charges = 40 + qty*entry*0.00034 + 7.2;
+  charges = +charges.toFixed(2);
+
+  var vix = LIVE['VIX'] ? LIVE['VIX'].p : 18;
+  var sizeAdj = vix>25?'50% ⚠️':vix>20?'75%':'100% ✅';
+  var maxloss  = +(qty*oneR + charges).toFixed(2);
+  var netProfit= +(qty*oneR*tgtMult - charges).toFixed(2);
+  var rr = (qty*oneR*tgtMult/charges).toFixed(1);
+  var col = dir==='LONG'?'var(--green)':'var(--red)';
+
+  res.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;margin-bottom:12px">'
+    +'<div style="background:var(--bg2);border-radius:8px;padding:12px"><div class="tile-label">Qty</div><div style="font-size:22px;font-weight:700;font-family:var(--mono)">'+qty+(isCrude||isGold?' lot':'')+'</div></div>'
+    +'<div style="background:var(--bg2);border-radius:8px;padding:12px"><div class="tile-label">SL</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--red)">₹'+sl+'</div></div>'
+    +'<div style="background:var(--bg2);border-radius:8px;padding:12px"><div class="tile-label">'+tgtMult+'R Target</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)">₹'+tgt+'</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-size:12px">'
+    +'<div><div class="tile-label">Risk (1R)</div><div style="font-weight:600;font-family:var(--mono)">₹'+risk.toFixed(0)+'</div></div>'
+    +'<div><div class="tile-label">Max Loss</div><div style="font-weight:600;font-family:var(--mono);color:var(--red)">₹'+maxloss+'</div></div>'
+    +'<div><div class="tile-label">Brokerage</div><div style="font-weight:600;font-family:var(--mono)">₹'+charges+'</div></div>'
+    +'<div><div class="tile-label">VIX Size</div><div style="font-weight:600">'+sizeAdj+'</div></div>'
+    +'</div>'
+    +'<div style="margin-top:10px;padding:10px;background:var(--bbg);border:1px solid var(--bborder);border-radius:8px;font-size:12px;display:flex;justify-content:space-between">'
+    +'<span style="color:var(--dim)">Direction: <strong style="color:'+col+'">'+dir+'</strong></span>'
+    +'<span style="color:var(--dim)">R:R = <strong style="color:var(--green)">1 : '+tgtMult+'</strong></span>'
+    +'<span style="color:var(--dim)">If target hit: <strong style="color:var(--green)">+₹'+netProfit+'</strong></span>'
+    +'</span>'
+    +'</div>';
+
+  /* Update R-monitor */
+  var rm = Q('te-rmonitor');
+  if(rm){
+    rm.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">'
+      +'<div class="cost-row"><span class="cost-lbl">Entry</span><span class="cost-val">₹'+entry+'</span></div>'
+      +'<div class="cost-row"><span class="cost-lbl">1R level</span><span class="cost-val" style="color:var(--amber)">₹'+tgt+'</span></div>'
+      +'<div class="cost-row"><span class="cost-lbl">2R level</span><span class="cost-val" style="color:var(--green)">₹'+(dir==='LONG'?+(entry+oneR*2).toFixed(2):+(entry-oneR*2).toFixed(2))+'</span></div>'
+      +'<div class="cost-row"><span class="cost-lbl">BE after 1R</span><span class="cost-val">Move SL to ₹'+entry+'</span></div>'
+      +'</div>';
+  }
+}
 async function loadChart(){
   var sym = (Q('chart-sym')||{value:'^NSEI'}).value || '^NSEI';
   var period = (Q('chart-period')||{value:'1mo'}).value || '1mo';
