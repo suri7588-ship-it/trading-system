@@ -471,39 +471,97 @@ console.log('[Prism] Firebase ready ✅');
 <div class="page" id="page-charts">
   <div class="card">
     <div class="card-header">
-      <span class="card-title">🕯 Live Chart — TradingView</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="chart-sym" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
-          <option value="NSE:NIFTY">Nifty 50</option>
-          <option value="NSE:BANKNIFTY">Bank Nifty</option>
-          <option value="BSE:SENSEX">Sensex</option>
-          <option value="NSE:INFY">Infosys</option>
-          <option value="NSE:TCS">TCS</option>
-          <option value="NSE:HDFCBANK">HDFC Bank</option>
-          <option value="NSE:RELIANCE">Reliance</option>
-          <option value="NSE:ICICIBANK">ICICI Bank</option>
-          <option value="NSE:SBIN">SBI</option>
-          <option value="NSE:TATAMOTORS">Tata Motors</option>
-          <option value="NSE:BAJAJ-AUTO">Bajaj Auto</option>
-          <option value="NSE:WIPRO">Wipro</option>
-          <option value="MCX:GOLD1!">MCX Gold</option>
-          <option value="MCX:CRUDEOIL1!">MCX Crude</option>
+      <span class="card-title">🕯 Price Chart — Live from Yahoo Finance</span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="chart-sym" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
+          <option value="^NSEI">Nifty 50</option>
+          <option value="^NSEBANK">Bank Nifty</option>
+          <option value="^BSESN">Sensex</option>
+          <option value="INFY.NS">Infosys</option>
+          <option value="TCS.NS">TCS</option>
+          <option value="HDFCBANK.NS">HDFC Bank</option>
+          <option value="RELIANCE.NS">Reliance</option>
+          <option value="ICICIBANK.NS">ICICI Bank</option>
+          <option value="SBIN.NS">SBI</option>
+          <option value="TATAMOTORS.NS">Tata Motors</option>
+          <option value="BAJAJ-AUTO.NS">Bajaj Auto</option>
+          <option value="WIPRO.NS">Wipro</option>
+          <option value="MARUTI.NS">Maruti</option>
+          <option value="SUNPHARMA.NS">Sun Pharma</option>
         </select>
-        <select id="chart-tf" onchange="loadChart()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
-          <option value="1">1m</option>
-          <option value="5">5m</option>
-          <option value="15" selected>15m</option>
-          <option value="60">1h</option>
-          <option value="D">1D</option>
-          <option value="W">1W</option>
+        <select id="chart-period" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
+          <option value="5d">5 Days</option>
+          <option value="1mo" selected>1 Month</option>
+          <option value="3mo">3 Months</option>
+          <option value="6mo">6 Months</option>
+          <option value="1y">1 Year</option>
         </select>
+        <button class="btn btn-primary btn-sm" onclick="loadChart()">▶ Load Chart</button>
       </div>
     </div>
-    <div id="tv-chart-container" style="height:500px;background:var(--bg3)"></div>
-    <div style="padding:8px 16px;display:flex;justify-content:space-between;border-top:1px solid var(--border2);font-size:11px;color:var(--muted)">
-      <span>TradingView · MACD + RSI · Must be logged into TradingView</span>
-      <a id="tv-ext-link" href="https://www.tradingview.com/chart/?symbol=NSE:NIFTY" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">Open full chart ↗</a>
+    <div id="chart-canvas-area" style="padding:14px;min-height:440px;overflow-x:auto">
+      <div style="display:flex;align-items:center;justify-content:center;height:400px;color:var(--dim);font-size:13px;flex-direction:column;gap:12px">
+        <div style="font-size:32px">📊</div>
+        <div>Select a symbol and click ▶ Load Chart</div>
+        <div style="font-size:11px;color:var(--muted)">Fetches OHLCV data from Yahoo Finance · Candlestick + MA20 + Volume</div>
+      </div>
     </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">🔗 Open on TradingView (Full Features)</span></div>
+    <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px">
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:NIFTY" target="_blank" class="btn btn-ghost btn-sm">Nifty 50</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:BANKNIFTY" target="_blank" class="btn btn-ghost btn-sm">Bank Nifty</a>
+      <a href="https://www.tradingview.com/chart/?symbol=BSE:SENSEX" target="_blank" class="btn btn-ghost btn-sm">Sensex</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:INFY" target="_blank" class="btn btn-ghost btn-sm">Infosys</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:TCS" target="_blank" class="btn btn-ghost btn-sm">TCS</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:RELIANCE" target="_blank" class="btn btn-ghost btn-sm">Reliance</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:HDFCBANK" target="_blank" class="btn btn-ghost btn-sm">HDFC Bank</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:SBIN" target="_blank" class="btn btn-ghost btn-sm">SBI</a>
+      <a href="https://www.tradingview.com/chart/?symbol=MCX:GOLD1!" target="_blank" class="btn btn-ghost btn-sm">MCX Gold</a>
+      <a href="https://www.tradingview.com/chart/?symbol=MCX:CRUDEOIL1!" target="_blank" class="btn btn-ghost btn-sm">MCX Crude</a>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-engine">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚡ Position Sizer — 1% Rule</span>
+      <button class="btn btn-primary btn-sm" onclick="calcEngine()">▶ Calculate</button>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field"><label>Symbol</label><input id="te-sym" placeholder="INFY" style="text-transform:uppercase"></div>
+        <div class="field"><label>Instrument</label>
+          <select id="te-type" onchange="calcEngine()">
+            <option value="equity">Equity MIS (Intraday)</option>
+            <option value="cnc">Equity CNC (Delivery)</option>
+            <option value="fo">F&amp;O (Futures)</option>
+            <option value="crude">MCX Crude Oil</option>
+            <option value="gold">MCX Gold Mini</option>
+            <option value="currency">Currency (CDS)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field"><label>Entry Price ₹</label><input id="te-entry" type="number" placeholder="1293.00" oninput="calcEngine()"></div>
+        <div class="field"><label>Stop Loss ₹</label><input id="te-sl" type="number" placeholder="1280.00" oninput="calcEngine()"></div>
+        <div class="field"><label>Direction</label>
+          <select id="te-dir" onchange="calcEngine()">
+            <option value="LONG">▲ LONG / BUY</option>
+            <option value="SHORT">▼ SHORT / SELL</option>
+          </select>
+        </div>
+      </div>
+      <div id="te-result" style="margin-top:8px;background:var(--bg3);border-radius:var(--radius-sm);padding:14px">
+        <div style="color:var(--dim);text-align:center;font-size:12px;padding:8px">Enter Entry + Stop Loss → Click ▶ Calculate</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="te-rmonitor-card" style="display:none">
+    <div class="card-header"><span class="card-title">📐 R-Level Monitor</span></div>
+    <div class="card-body" id="te-rmonitor"></div>
   </div>
 </div>
 
@@ -1104,8 +1162,39 @@ function updateDashboard() {
   setText('cc-tw', fmtInr((MONTHLY.totalWithdrawn||0).toFixed(2)));
   setText('cc-nw', fmtInr((CAP+(MONTHLY.totalWithdrawn||0)).toFixed(2)));
   setText('cc-trades', MONTHLY.trades||0);
+
+  /* ── CAGR calculations ── */
   var n = JOURNAL.length;
-  if(n>0){ var ret=(CAP-BASE_CAP)/BASE_CAP,daily=Math.pow(CAP/BASE_CAP,1/Math.max(1,n))-1,cagr=(Math.pow(1+daily,252)-1)*100; setText('cc-cagr',(cagr>=0?'+':'')+cagr.toFixed(1)+'%'); setColor('cc-cagr',up(cagr)); }
+  if(n > 0){
+    /* Daily: actual avg return per trade day */
+    var dailyRet = (CAP - BASE_CAP) / BASE_CAP / Math.max(1, n);
+    var dailyAmt = +(CAP * dailyRet).toFixed(2);
+
+    /* Monthly: 21 trading days */
+    var monthlyRet = Math.pow(1 + dailyRet, 21) - 1;
+    var monthlyAmt = +(CAP * monthlyRet).toFixed(2);
+
+    /* Yearly: 252 trading days */
+    var yearlyRet = Math.pow(1 + dailyRet, 252) - 1;
+    var yearlyAmt = +(CAP * yearlyRet).toFixed(2);
+
+    setText('cc-daily', (dailyRet>=0?'+':'')+( dailyRet*100).toFixed(3)+'%/trade');
+    setColor('cc-daily', up(dailyRet));
+    setText('cc-daily-amt', (dailyAmt>=0?'+₹':'-₹')+Math.abs(dailyAmt).toFixed(2)+' avg/trade');
+    setColor('cc-daily-amt', up(dailyAmt));
+
+    setText('cc-monthly', (monthlyRet>=0?'+':'')+(monthlyRet*100).toFixed(2)+'%');
+    setColor('cc-monthly', up(monthlyRet));
+    setText('cc-monthly-amt', (monthlyAmt>=0?'+₹':'-₹')+Math.abs(monthlyAmt).toFixed(0)+'/month');
+    setColor('cc-monthly-amt', up(monthlyAmt));
+
+    setText('cc-cagr', (yearlyRet>=0?'+':'')+(yearlyRet*100).toFixed(1)+'%');
+    setColor('cc-cagr', up(yearlyRet));
+    setText('cc-yearly-amt', (yearlyAmt>=0?'+₹':'-₹')+Math.abs(yearlyAmt).toFixed(0)+'/year');
+    setColor('cc-yearly-amt', up(yearlyAmt));
+  } else {
+    ['cc-daily','cc-daily-amt','cc-monthly','cc-monthly-amt','cc-cagr','cc-yearly-amt'].forEach(function(id){setText(id,'Log a trade to calculate');setColor(id,'var(--muted)');});
+  }
 }
 
 function getRegime() {
@@ -1434,160 +1523,14 @@ function buildOptions(){
   Q('opt-result').innerHTML=html;
 }
 
-/* ══ CHARTS — TradingView Advanced Chart (requires TV account for NSE) ══ */
-function loadChart(){
-  var sym = (Q('chart-sym')||{value:'NSE:NIFTY'}).value || 'NSE:NIFTY';
-  var tf  = (Q('chart-tf') ||{value:'15'}).value || '15';
-  var container = Q('tv-chart-container');
-  var extLink   = Q('tv-ext-link');
-  if(!container) return;
-
-  /* Update external link */
-  if(extLink){
-    extLink.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym);
-    extLink.textContent = 'Open ' + sym + ' ↗';
-  }
-
-  /* Clear container */
-  container.innerHTML = '';
-
-  /* Load tv.js and create widget */
-  function buildWidget(){
-    if(typeof TradingView === 'undefined') return;
-    try {
-      new TradingView.widget({
-        autosize:           true,
-        symbol:             sym,
-        interval:           tf,
-        timezone:           'Asia/Kolkata',
-        theme:              'dark',
-        style:              '1',
-        locale:             'en',
-        toolbar_bg:         '#0d1220',
-        enable_publishing:  false,
-        withdateranges:     true,
-        hide_side_toolbar:  false,
-        allow_symbol_change: false,
-        save_image:         false,
-        studies:            ['MACD@tv-basicstudies', 'RSI@tv-basicstudies'],
-        container_id:       'tv-chart-container',
-        hide_volume:        false,
-      });
-    } catch(e) {
-      showFallback(sym, container);
-    }
-  }
-
-  /* Remove stale tv.js to reload cleanly */
-  var old = document.getElementById('tv-js-script');
-  if(old) old.remove();
-
-  if(typeof TradingView !== 'undefined'){
-    buildWidget();
-  } else {
-    var s = document.createElement('script');
-    s.id  = 'tv-js-script';
-    s.src = 'https://s3.tradingview.com/tv.js';
-    s.async = true;
-    s.onload = buildWidget;
-    s.onerror = function(){ showFallback(sym, container); };
-    document.head.appendChild(s);
-  }
-}
-
-function showFallback(sym, container){
-  container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px">'
-    + '<div style="font-size:40px">📊</div>'
-    + '<div style="font-size:14px;color:var(--dim);text-align:center">Chart requires a TradingView account<br>and being logged in at tradingview.com</div>'
-    + '<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym)+'" target="_blank" rel="noopener" '
-    + 'style="color:var(--blue);font-size:14px;font-weight:600;padding:12px 28px;border:1px solid var(--bborder);border-radius:8px;background:var(--bbg);text-decoration:none">'
-    + '📈 Open ' + sym + ' on TradingView →</a>'
-    + '<div style="font-size:11px;color:var(--muted)">Free account at tradingview.com works</div>'
-    + '</div>';
-}
-
-/* ══ TRADE ENGINE ══ */
-function calcEngine(){
-  var entryEl = Q('te-entry'), slEl = Q('te-sl');
-  var entry = entryEl ? +entryEl.value : 0;
-  var sl    = slEl    ? +slEl.value    : 0;
-  var res   = Q('te-result');
-  if(!res) return;
-
-  if(!entry || !sl || entry === sl){
-    res.innerHTML = '<div style="color:var(--dim);text-align:center;font-size:12px;padding:10px">Enter Entry price and Stop Loss to calculate</div>';
-    return;
-  }
-
-  var dir    = (Q('te-dir')||{value:'LONG'}).value;
-  var type   = (Q('te-type')||{value:'equity'}).value;
-  var risk   = CAP * RISK_PCT;
-  var oneR   = Math.abs(entry - sl);
-  var isCrude = type === 'crude';
-  var isGold  = type === 'gold';
-  var isFO    = type === 'fo';
-  var isCurr  = type === 'currency';
-
-  var qty, tgtMult;
-  if(isCrude){ qty=1; tgtMult=3; }
-  else if(isGold){ qty=1; tgtMult=3; }
-  else if(isFO){ qty=Math.max(1,Math.floor(risk/oneR)); tgtMult=2; }
-  else if(isCurr){ qty=Math.max(1,Math.floor(risk/oneR)); tgtMult=2; }
-  else { qty=Math.max(1,Math.floor(risk/oneR)); tgtMult=2; }
-
-  var tgt = dir==='LONG' ? +(entry + oneR*tgtMult).toFixed(2) : +(entry - oneR*tgtMult).toFixed(2);
-
-  /* Charges */
-  var charges;
-  if(isCrude||isGold) charges = 38 + 0.013*entry;
-  else if(isFO) charges = 40 + qty*entry*0.0005 + 7.2;
-  else if(isCurr) charges = 20 + qty*entry*0.0002;
-  else charges = 40 + qty*entry*0.00034 + 7.2;
-  charges = +charges.toFixed(2);
-
-  var vix = LIVE['VIX'] ? LIVE['VIX'].p : 18;
-  var sizeAdj = vix>25?'50% ⚠️':vix>20?'75%':'100% ✅';
-  var maxloss  = +(qty*oneR + charges).toFixed(2);
-  var netProfit= +(qty*oneR*tgtMult - charges).toFixed(2);
-  var rr = (qty*oneR*tgtMult/charges).toFixed(1);
-  var col = dir==='LONG'?'var(--green)':'var(--red)';
-
-  res.innerHTML =
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;margin-bottom:12px">'
-    +'<div style="background:var(--bg2);border-radius:8px;padding:12px"><div class="tile-label">Qty</div><div style="font-size:22px;font-weight:700;font-family:var(--mono)">'+qty+(isCrude||isGold?' lot':'')+'</div></div>'
-    +'<div style="background:var(--bg2);border-radius:8px;padding:12px"><div class="tile-label">SL</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--red)">₹'+sl+'</div></div>'
-    +'<div style="background:var(--bg2);border-radius:8px;padding:12px"><div class="tile-label">'+tgtMult+'R Target</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)">₹'+tgt+'</div></div>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-size:12px">'
-    +'<div><div class="tile-label">Risk (1R)</div><div style="font-weight:600;font-family:var(--mono)">₹'+risk.toFixed(0)+'</div></div>'
-    +'<div><div class="tile-label">Max Loss</div><div style="font-weight:600;font-family:var(--mono);color:var(--red)">₹'+maxloss+'</div></div>'
-    +'<div><div class="tile-label">Brokerage</div><div style="font-weight:600;font-family:var(--mono)">₹'+charges+'</div></div>'
-    +'<div><div class="tile-label">VIX Size</div><div style="font-weight:600">'+sizeAdj+'</div></div>'
-    +'</div>'
-    +'<div style="margin-top:10px;padding:10px;background:var(--bbg);border:1px solid var(--bborder);border-radius:8px;font-size:12px;display:flex;justify-content:space-between">'
-    +'<span style="color:var(--dim)">Direction: <strong style="color:'+col+'">'+dir+'</strong></span>'
-    +'<span style="color:var(--dim)">R:R = <strong style="color:var(--green)">1 : '+tgtMult+'</strong></span>'
-    +'<span style="color:var(--dim)">If target hit: <strong style="color:var(--green)">+₹'+netProfit+'</strong></span>'
-    +'</span>'
-    +'</div>';
-
-  /* Update R-monitor */
-  var rm = Q('te-rmonitor');
-  if(rm){
-    rm.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">'
-      +'<div class="cost-row"><span class="cost-lbl">Entry</span><span class="cost-val">₹'+entry+'</span></div>'
-      +'<div class="cost-row"><span class="cost-lbl">1R level</span><span class="cost-val" style="color:var(--amber)">₹'+tgt+'</span></div>'
-      +'<div class="cost-row"><span class="cost-lbl">2R level</span><span class="cost-val" style="color:var(--green)">₹'+(dir==='LONG'?+(entry+oneR*2).toFixed(2):+(entry-oneR*2).toFixed(2))+'</span></div>'
-      +'<div class="cost-row"><span class="cost-lbl">BE after 1R</span><span class="cost-val">Move SL to ₹'+entry+'</span></div>'
-      +'</div>';
-  }
-}
+/* ══ CHARTS — Yahoo Finance Candlestick (No external account needed) ══ */
 async function loadChart(){
-  var sym = (Q('chart-sym')||{value:'^NSEI'}).value || '^NSEI';
+  var sym    = (Q('chart-sym')||{value:'^NSEI'}).value || '^NSEI';
   var period = (Q('chart-period')||{value:'1mo'}).value || '1mo';
-  var area = Q('chart-area');
+  var area   = Q('chart-canvas-area');
   if(!area) return;
-  area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--dim);font-size:13px">⏳ Loading chart data…</div>';
+  var symName = Q('chart-sym') ? Q('chart-sym').options[Q('chart-sym').selectedIndex].text : sym;
+  area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:400px;color:var(--dim);font-size:13px;flex-direction:column;gap:10px"><div style="font-size:28px">⏳</div><div>Loading chart for '+symName+'…</div></div>';
 
   var url = 'https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?range='+period+'&interval=1d&includePrePost=false';
   var proxies = ['https://corsproxy.io/?'+encodeURIComponent(url),'https://api.allorigins.win/get?url='+encodeURIComponent(url)];
@@ -1599,224 +1542,55 @@ async function loadChart(){
       var j=await r.json(); var d=j.contents?JSON.parse(j.contents):j;
       var res=d.chart&&d.chart.result&&d.chart.result[0]; if(!res) continue;
       var ts=res.timestamp||[], q=res.indicators.quote[0];
-      var adjClose = (res.indicators.adjclose&&res.indicators.adjclose[0]&&res.indicators.adjclose[0].adjclose)||q.close;
-      bars=ts.map(function(t,i){return {
-        date:new Date(t*1000), o:q.open[i]||0, h:q.high[i]||0,
-        l:q.low[i]||0, c:q.close[i]||0, v:q.volume[i]||0
-      };}).filter(function(b){return b.c>0;});
+      bars=ts.map(function(t,i){return{date:new Date(t*1000),o:+(q.open[i]||0).toFixed(2),h:+(q.high[i]||0).toFixed(2),l:+(q.low[i]||0).toFixed(2),c:+(q.close[i]||0).toFixed(2),v:q.volume[i]||0};}).filter(function(b){return b.c>0;});
       if(bars.length) break;
     }catch(_){}
   }
-
   if(!bars||!bars.length){
-    area.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:380px;gap:14px">'
-      +'<div style="font-size:32px">📊</div>'
-      +'<div style="color:var(--dim);font-size:13px">Could not load chart data. Open on TradingView:</div>'
-      +'<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym.replace('.NS',''))+'" target="_blank" rel="noopener" '
-      +'style="color:var(--blue);font-size:14px;font-weight:600;padding:10px 22px;border:1px solid var(--bborder);border-radius:8px;background:var(--bbg);text-decoration:none">Open Chart →</a>'
-      +'</div>';
+    area.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;gap:14px"><div style="font-size:36px">📊</div><div style="color:var(--dim)">Could not load chart data. Try again or click a link below.</div></div>';
     return;
   }
-
-  /* Draw SVG candlestick chart */
-  var W=900, H=320, PAD={t:20,r:20,b:60,l:70};
-  var cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  var W=900,H=300,PL=68,PR=14,PT=16,PB=36,CW=W-PL-PR,CH=H-PT-PB;
   var n=bars.length;
   var minL=Math.min.apply(null,bars.map(function(b){return b.l;}));
   var maxH=Math.max.apply(null,bars.map(function(b){return b.h;}));
   var rng=maxH-minL||1;
-  var barW=Math.max(2,Math.floor(cw/n*0.7));
-  var lastC=bars[bars.length-1].c, firstC=bars[0].o||bars[0].c;
-  var isUp=lastC>=firstC;
-  var lineCol=isUp?'#05d97c':'#ff3d6b';
-
-  function px(i){ return PAD.l + i*(cw/n) + (cw/n)/2; }
-  function py(v){ return PAD.t + ch - ((v-minL)/rng)*ch; }
-  function fmtDate(d){ return (d.getDate())+'/'+(d.getMonth()+1); }
-  function fmtNum(v){ return v>1000?v.toFixed(0):v.toFixed(2); }
-
-  /* Candles */
-  var candleSVG='';
+  var bw=Math.max(2,Math.floor(CW/n*0.65));
+  function px(i){return PL+(i+0.5)*(CW/n);}
+  function py(v){return PT+CH-((v-minL)/rng)*CH;}
+  function fd(d){return d.getDate()+'/'+(d.getMonth()+1);}
+  function fn(v){return v>1000?Math.round(v).toLocaleString('en-IN'):''+v.toFixed(2);}
+  var candles='',ylab='',xlab='',vol='';
   bars.forEach(function(b,i){
-    var x=px(i), col=b.c>=b.o?'#05d97c':'#ff3d6b';
-    var bodyT=py(Math.max(b.o,b.c)), bodyB=py(Math.min(b.o,b.c));
-    var bodyH=Math.max(1,bodyB-bodyT);
-    candleSVG+='<line x1="'+x+'" y1="'+py(b.h)+'" x2="'+x+'" y2="'+py(b.l)+'" stroke="'+col+'" stroke-width="1" opacity="0.7"/>';
-    candleSVG+='<rect x="'+(x-barW/2)+'" y="'+bodyT+'" width="'+barW+'" height="'+bodyH+'" fill="'+col+'" rx="1"/>';
+    var x=px(i),col=b.c>=b.o?'#05d97c':'#ff3d6b';
+    var bt=py(Math.max(b.o,b.c)),bb=py(Math.min(b.o,b.c)),bh=Math.max(1,bb-bt);
+    candles+='<line x1="'+x+'" y1="'+py(b.h)+'" x2="'+x+'" y2="'+py(b.l)+'" stroke="'+col+'" stroke-width="1" opacity=".6"/>';
+    candles+='<rect x="'+(x-bw/2)+'" y="'+bt+'" width="'+bw+'" height="'+bh+'" fill="'+col+'"/>';
   });
-
-  /* Y axis labels */
-  var yLabels=''; var ySteps=5;
-  for(var yi=0;yi<=ySteps;yi++){
-    var val=minL+(rng/ySteps)*yi; var y=py(val);
-    yLabels+='<line x1="'+PAD.l+'" y1="'+y+'" x2="'+(W-PAD.r)+'" y2="'+y+'" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>';
-    yLabels+='<text x="'+(PAD.l-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="#4a5878" font-family="DM Mono,monospace">'+fmtNum(val)+'</text>';
-  }
-
-  /* X axis labels — every n/5 bars */
-  var xLabels=''; var step=Math.ceil(n/5);
-  for(var xi=0;xi<n;xi+=step){
-    var x=px(xi);
-    xLabels+='<text x="'+x+'" y="'+(H-PAD.b+16)+'" text-anchor="middle" font-size="10" fill="#4a5878" font-family="DM Mono,monospace">'+fmtDate(bars[xi].date)+'</text>';
-  }
-
-  /* MA20 line */
-  var ma20=''; var maPath='';
-  bars.forEach(function(b,i){
-    if(i<19) return;
-    var sum=0; for(var k=i-19;k<=i;k++) sum+=bars[k].c;
-    var mv=sum/20;
-    maPath+=(maPath?'L':'M')+px(i)+','+py(mv)+' ';
-  });
-  if(maPath) ma20='<path d="'+maPath+'" fill="none" stroke="#4096ff" stroke-width="1.5" opacity="0.7"/>';
-
-  /* Volume bars */
+  for(var yi=0;yi<=4;yi++){var v=minL+(rng/4)*yi,y=py(v);ylab+='<line x1="'+PL+'" y1="'+y+'" x2="'+(W-PR)+'" y2="'+y+'" stroke="rgba(255,255,255,.04)"/><text x="'+(PL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="#3d4f70" font-family="DM Mono,monospace">'+fn(v)+'</text>';}
+  var step=Math.ceil(n/6);
+  for(var xi=0;xi<n;xi+=step){xlab+='<text x="'+px(xi)+'" y="'+(H-4)+'" text-anchor="middle" font-size="10" fill="#3d4f70" font-family="DM Mono,monospace">'+fd(bars[xi].date)+'</text>';}
+  var ma20path='';bars.forEach(function(b,i){if(i<19)return;var s=0;for(var k=i-19;k<=i;k++)s+=bars[k].c;var mv=s/20;ma20path+=(ma20path?'L':'M')+px(i)+','+py(mv)+' ';});
   var maxV=Math.max.apply(null,bars.map(function(b){return b.v;}));
-  var volH=50; var volY=H-PAD.b+20;
-  var volSVG='';
-  bars.forEach(function(b,i){
-    var x=px(i), h=maxV>0?Math.floor((b.v/maxV)*volH):1, col=b.c>=b.o?'rgba(5,217,124,0.4)':'rgba(255,61,107,0.4)';
-    volSVG+='<rect x="'+(x-barW/2)+'" y="'+(volY+volH-h)+'" width="'+barW+'" height="'+h+'" fill="'+col+'"/>';
-  });
-
-  /* Price label */
-  var priceLbl='<text x="'+(W-PAD.r)+'" y="'+( py(lastC)+4)+'" text-anchor="end" font-size="11" fill="'+lineCol+'" font-weight="bold" font-family="DM Mono,monospace">₹'+fmtNum(lastC)+'</text>';
-  var priceLine='<line x1="'+PAD.l+'" y1="'+py(lastC)+'" x2="'+(W-PAD.r)+'" y2="'+py(lastC)+'" stroke="'+lineCol+'" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>';
-
-  /* Change info */
-  var chg=lastC-firstC, chgPct=(chg/firstC*100).toFixed(2);
-  var symName = Q('chart-sym').options[Q('chart-sym').selectedIndex].text;
-
-  var svg='<svg viewBox="0 0 '+W+' '+(H+volH+10)+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:480px">'
-    +'<rect width="'+W+'" height="'+(H+volH+10)+'" fill="var(--bg3)" rx="0"/>'
-    + yLabels + ma20 + priceLine + candleSVG + priceLbl + xLabels
-    +'<rect x="'+PAD.l+'" y="'+volY+'" width="'+cw+'" height="'+volH+'" fill="none"/>'
-    + volSVG
-    +'<text x="'+PAD.l+'" y="16" font-size="12" fill="var(--dim)" font-weight="600" font-family="DM Sans,sans-serif">'+symName+'</text>'
-    +'<text x="'+(PAD.l+120)+'" y="16" font-size="11" fill="'+lineCol+'" font-family="DM Mono,monospace">'+( chg>=0?'+':'')+fmtNum(chg)+' ('+( chg>=0?'+':'')+chgPct+'%) · '+period+'</text>'
-    +'<text x="'+(W-PAD.r)+'" y="16" font-size="10" fill="#3d4f70" text-anchor="end" font-family="DM Mono,monospace">MA20 — volume</text>'
-    +'<line x1="'+(W-PAD.r-55)+'" y1="11" x2="'+(W-PAD.r-80)+'" y2="11" stroke="#4096ff" stroke-width="2"/>'
+  var VH=40,VY=H+4;
+  bars.forEach(function(b,i){var x=px(i),h=maxV>0?Math.floor((b.v/maxV)*VH):1,col=b.c>=b.o?'rgba(5,217,124,.35)':'rgba(255,61,107,.35)';vol+='<rect x="'+(x-bw/2)+'" y="'+(VY+VH-h)+'" width="'+bw+'" height="'+h+'" fill="'+col+'"/>';});
+  var lastC=bars[bars.length-1].c,firstO=bars[0].o||bars[0].c,chg=lastC-firstO,chgPct=(chg/firstO*100).toFixed(2),isUp=chg>=0,lc=isUp?'#05d97c':'#ff3d6b';
+  var svg='<svg viewBox="0 0 '+W+' '+(H+VH+20)+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:500px">'
+    +'<rect width="'+W+'" height="'+(H+VH+20)+'" fill="var(--bg3)"/>'
+    +ylab
+    +(ma20path?'<path d="'+ma20path+'" fill="none" stroke="#4096ff" stroke-width="1.5" opacity=".7"/>':'')
+    +'<line x1="'+PL+'" y1="'+py(lastC)+'" x2="'+(W-PR)+'" y2="'+py(lastC)+'" stroke="'+lc+'" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>'
+    +candles+xlab
+    +'<rect x="0" y="'+VY+'" width="'+W+'" height="'+(VH+10)+'" fill="rgba(0,0,0,.2)"/>'
+    +vol
+    +'<text x="'+(PL+4)+'" y="14" font-size="12" font-weight="600" fill="var(--dim)" font-family="DM Sans,sans-serif">'+symName+'</text>'
+    +'<text x="'+(PL+4)+'" y="'+(H+VH+18)+'" font-size="10" fill="'+lc+'" font-family="DM Mono,monospace">'+(isUp?'+':'')+fn(chg)+' ('+( isUp?'+':'')+chgPct+'%) · '+period+'</text>'
+    +'<text x="'+(W-PR)+'" y="14" font-size="10" fill="#2a3a5c" text-anchor="end" font-family="DM Mono,sans-serif">1D · MA20 · Volume</text>'
+    +'<line x1="'+(W-PR-48)+'" y1="10" x2="'+(W-PR-62)+'" y2="10" stroke="#4096ff" stroke-width="2"/>'
+    +'<text x="'+(W-PR-33)+'" y="'+py(lastC)+'" font-size="10" fill="'+lc+'" font-weight="bold" font-family="DM Mono,monospace" text-anchor="end">₹'+fn(lastC)+'</text>'
     +'</svg>';
-
   area.innerHTML=svg;
 }
-
-/* ══ PHASE 5: ML ══ */
-function sigmoid(z){ return 1/(1+Math.exp(-z)); }
-function trainLR(X,y,lr,epochs){var n=X.length,m=X[0].length,w=new Array(m).fill(0);for(var e=0;e<epochs;e++){var g=new Array(m).fill(0);for(var i=0;i<n;i++){var z=0;for(var j=0;j<m;j++)z+=w[j]*X[i][j];var err=sigmoid(z)-y[i];for(var j=0;j<m;j++)g[j]+=err*X[i][j];}for(var j=0;j<m;j++)w[j]-=(lr/n)*g[j];}return w;}
-
-function trainML(){
-  var trades=JOURNAL.filter(function(t){return t.rMult!=null;});
-  if(trades.length<5){setText('ml-status','Need 5+ journal trades. Have '+trades.length+'.');return;}
-  var X=[],y=[];trades.forEach(function(t){var vix=18+(Math.random()-.5)*4,np=t.outcome==='WIN'?.5:-.5,reg=t.dir==='LONG'?1:-1,dow=new Date(t.date).getDay();X.push([1,vix/30,np/5,0,+reg,dow/4,reg]);y.push(t.outcome==='WIN'?1:0);});
-  var w=trainLR(X,y,.1,1000);var corr=0;X.forEach(function(xi,i){var z=0;for(var j=0;j<w.length;j++)z+=w[j]*xi[j];if((sigmoid(z)>=.5?1:0)===y[i])corr++;});
-  var acc=Math.round(corr/X.length*100),wr=Math.round(y.filter(function(v){return v===1;}).length/y.length*100);
-  mlModel={w,acc,wr,samples:trades.length,trained:new Date().toISOString()};
-  localStorage.setItem(ML_KEY,JSON.stringify(mlModel));
-  setText('ml-samples',trades.length);setText('ml-acc',acc+'%');setColor('ml-acc',acc>=60?'var(--green)':'var(--amber)');
-  setText('ml-status','Trained ✅ — '+acc+'% accuracy ('+trades.length+' samples)');
-  var names=['Bias','VIX','Nifty%','FII','Regime','DoW','Strat'];
-  var wHTML=names.map(function(n,i){var v=w[i]||0,bar=Math.min(100,Math.abs(v)*30);return '<div class="bar-row"><span class="bar-lbl" style="width:50px">'+n+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bar+'%;background:'+(v>=0?'var(--green)':'var(--red)')+'"></div></div><span class="bar-val" style="color:'+(v>=0?'var(--green)':'var(--red)')+'">'+v.toFixed(2)+'</span></div>';}).join('');
-  Q('ml-weights').innerHTML=wHTML;
-  showToast('✅ ML trained — '+acc+'% accuracy',true);refreshModelDash();
-}
-
-function mlPredict(){
-  if(!mlModel){showToast('Train model first (need 5+ trades)',false);trainML();return;}
-  var vix=+(Q('ml-vix').value)||(LIVE['VIX']?LIVE['VIX'].p:18),np=+(Q('ml-nifty').value)||(LIVE['^NSEI']?LIVE['^NSEI'].pct:0);
-  var reg=+(Q('ml-regime').value),strat=+(Q('ml-strat').value),dow=new Date().getDay();
-  var feat=[1,vix/30,np/5,0,+reg,dow/4,strat],z=0;
-  for(var j=0;j<mlModel.w.length;j++)z+=mlModel.w[j]*feat[j];
-  var prob=sigmoid(z),pct=Math.round(prob*100);
-  var signal=prob>=.75?'STRONG BUY':prob>=.60?'BUY':prob>=.40?'NEUTRAL':prob>=.25?'AVOID':'STRONG AVOID';
-  var col=prob>=.60?'var(--green)':prob>=.40?'var(--amber)':'var(--red)';
-  Q('ml-result').innerHTML='<div style="border:2px solid '+col+';border-radius:var(--radius-sm);padding:14px;background:var(--bg3);margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:24px;font-weight:700;color:'+col+'">'+pct+'%</span><span style="font-weight:700;color:'+col+'">'+signal+'</span></div><div style="background:var(--bg);border-radius:4px;height:8px"><div style="width:'+pct+'%;height:8px;border-radius:4px;background:'+col+'"></div></div><div style="font-size:11px;color:var(--dim);margin-top:6px">Based on '+mlModel.samples+' historical trades</div></div>';
-}
-
-async function fetchHistData(sym,period){var url='https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?range='+period+'&interval=1d';var proxies=['https://corsproxy.io/?'+encodeURIComponent(url),'https://api.allorigins.win/get?url='+encodeURIComponent(url)];for(var i=0;i<proxies.length;i++){try{var r=await fetch(proxies[i],{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)continue;var j=await r.json();var d=j.contents?JSON.parse(j.contents):j;var res=d.chart&&d.chart.result&&d.chart.result[0];if(!res)continue;var ts=res.timestamp||[],q=res.indicators.quote[0];return ts.map(function(t,i){return{date:new Date(t*1000).toISOString().split('T')[0],high:q.high[i],low:q.low[i],close:q.close[i]};}).filter(function(d){return d.close;});}catch(_){}}return null;}
-function smaCalc(closes,n){return closes.map(function(_,i){if(i<n-1)return null;var s=0;for(var k=i-n+1;k<=i;k++)s+=closes[k];return s/n;});}
-function rsiCalc(closes,n){return closes.map(function(_,i){if(i<n)return 50;var g=0,l=0;for(var k=i-n+1;k<=i;k++){var dd=closes[k]-closes[k-1];if(dd>0)g+=dd;else l+=-dd;}var rs=l===0?100:(g/n)/(l/n);return 100-(100/(1+rs));});}
-
-async function runBacktest(){
-  var sym=Q('bt-sym').value.trim()||'INFY.NS',period=Q('bt-period').value,strat=Q('bt-strat').value,risk=+Q('bt-risk').value,res=Q('bt-result');
-  if(res)res.innerHTML='<div class="card"><div class="card-body" style="text-align:center;padding:20px;color:var(--dim)">⏳ Fetching '+sym+'…</div></div>';
-  var data=await fetchHistData(sym,period);
-  if(!data||data.length<30){if(res)res.innerHTML='<div class="card"><div class="card-body"><div class="alert alert-warn"><span>⚠️</span><span>Could not fetch data. Try INFY.NS or TCS.NS</span></div></div></div>';return;}
-  var closes=data.map(function(d){return d.close;}),trades=[],equity=[BASE_CAP],cap=BASE_CAP,inT=false,entryP=0;
-  var m20=smaCalc(closes,20),m50=smaCalc(closes,50),rsi14=rsiCalc(closes,14),roc=closes.map(function(_,i){return i<10?0:(closes[i]-closes[i-10])/closes[i-10]*100;});
-  for(var i=50;i<data.length;i++){var p=closes[i],atr=(data[i].high-data[i].low)||p*.012,sig=0;
-    if(strat==='ma_cross'&&m20[i]&&m50[i]&&m20[i-1]&&m50[i-1])sig=m20[i]>m50[i]&&m20[i-1]<=m50[i-1]?1:m20[i]<m50[i]&&m20[i-1]>=m50[i-1]?-1:0;
-    else if(strat==='momentum')sig=roc[i]>2?1:roc[i]<-2?-1:0;
-    else if(strat==='mean_rev')sig=rsi14[i]<35?1:rsi14[i]>65?-1:0;
-    if(!inT&&sig!==0){inT=true;entryP=p;}
-    else if(inT){var pnl=p-entryP,rM=pnl/atr;if(rM>=2||rM<=-1||(i===data.length-1)){var qty=Math.max(1,Math.floor(cap*risk/Math.abs(atr)));var net=pnl*qty-40;cap=+(cap+net).toFixed(2);trades.push({date:data[i].date,entry:entryP,exit:p,rMult:+rM.toFixed(2),net:+net.toFixed(2)});inT=false;}}
-    equity.push(cap);
-  }
-  var wins=trades.filter(function(t){return t.net>=0;}),totPnl=trades.reduce(function(s,t){return s+t.net;},0),wr=trades.length?Math.round(wins.length/trades.length*100):0;
-  var ret=((cap-BASE_CAP)/BASE_CAP*100).toFixed(2),maxDD=0,peak=BASE_CAP;
-  equity.forEach(function(v){if(v>peak)peak=v;var dd=(peak-v)/peak*100;if(dd>maxDD)maxDD=dd;});
-  lastBT={sym,ret,trades:trades.length,wr,maxDD:maxDD.toFixed(2)};refreshModelDash();
-  var minE=Math.min.apply(null,equity),maxE=Math.max.apply(null,equity),pts=equity.filter(function(_,i){return i%Math.ceil(equity.length/80)===0;}).map(function(v,i,a){return (i/(a.length-1)*100).toFixed(1)+','+(80-((v-minE)/(maxE-minE||1))*70).toFixed(1);}).join(' ');
-  var retCol=+ret>=0?'var(--green)':'var(--red)';
-  if(res)res.innerHTML='<div class="card"><div class="card-header"><span class="card-title">📅 '+sym+' — '+strat.replace(/_/g,' ').toUpperCase()+'</span><span class="badge '+(+ret>=0?'badge-g':'badge-r')+'">'+(+ret>=0?'+':'')+ret+'%</span></div><div class="card-body"><svg viewBox="0 0 100 80" style="width:100%;height:60px;margin-bottom:12px" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" stroke="'+retCol+'" stroke-width="1.5"/></svg><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center"><div><div class="tile-label">Trades</div><div style="font-weight:700">'+trades.length+'</div></div><div><div class="tile-label">Win Rate</div><div style="font-weight:700;color:var(--green)">'+wr+'%</div></div><div><div class="tile-label">Net Return</div><div style="font-weight:700;color:'+retCol+'">'+ret+'%</div></div><div><div class="tile-label">Net P&L</div><div style="font-weight:700">₹'+totPnl.toFixed(0)+'</div></div><div><div class="tile-label">Max DD</div><div style="font-weight:700;color:var(--red)">'+maxDD+'%</div></div><div><div class="tile-label">Final Cap</div><div style="font-weight:700">₹'+cap.toFixed(0)+'</div></div></div></div></div>';
-}
-
-async function runWalkFwd(){
-  var sym=Q('wf-sym').value.trim()||'INFY.NS',period=Q('wf-period').value,trainW=+Q('wf-train').value,testW=+Q('wf-test').value,res=Q('wf-result');
-  if(res)res.innerHTML='<div class="card"><div class="card-body" style="text-align:center;padding:20px;color:var(--dim)">⏳ Running walk-forward…</div></div>';
-  var data=await fetchHistData(sym,period);
-  if(!data||data.length<trainW+testW){if(res)res.innerHTML='<div class="card"><div class="card-body"><div class="alert alert-warn"><span>⚠️</span><span>Not enough data.</span></div></div></div>';return;}
-  var closes=data.map(function(d){return d.close;}),windows=[],tot=0,idx=0;
-  for(var start=0;start+trainW+testW<=data.length;start+=testW){var trainEnd=start+trainW;var bestRet=-999,bestS='momentum';['ma_cross','momentum','mean_rev'].forEach(function(s){var tc=closes.slice(start,trainEnd),ret=(tc[tc.length-1]-tc[0])/tc[0]*100;var score=s==='momentum'?ret:s==='ma_cross'?ret*.8:ret*.6;if(score>bestRet){bestRet=score;bestS=s;}});var testEnd=Math.min(trainEnd+testW,data.length),tc=closes.slice(trainEnd,testEnd);if(tc.length<2)break;var testR=+((tc[tc.length-1]-tc[0])/tc[0]*100).toFixed(2);windows.push({w:++idx,tp:data[start].date+' to '+data[trainEnd-1].date,strat:bestS,pp:data[trainEnd].date+' to '+data[testEnd-1].date,ret:testR});tot+=testR;}
-  var avg=(tot/windows.length).toFixed(2);lastWF={windows:windows.length,avg};refreshModelDash();
-  var avgR=+avg;
-  if(res)res.innerHTML='<div class="card"><div class="card-header"><span class="card-title">➡️ Walk-Forward — '+sym+'</span><span class="badge '+(avgR>=0?'badge-g':'badge-r')+'">'+(avgR>=0?'+':'')+avg+'% avg</span></div><div class="card-body"><div class="tbl-wrap"><table><thead><tr><th>Win</th><th>Train</th><th>Strategy</th><th>Test</th><th>Return</th></tr></thead><tbody>'+windows.map(function(w){return '<tr><td>W'+w.w+'</td><td style="font-size:10px">'+w.tp+'</td><td style="font-weight:600;font-size:11px">'+w.strat.replace(/_/g,' ')+'</td><td style="font-size:10px">'+w.pp+'</td><td style="color:'+up(w.ret)+';font-weight:700">'+(w.ret>=0?'+':'')+w.ret+'%</td></tr>';}).join('')+'</tbody></table></div></div></div>';
-}
-
-function runRL(){
-  var ep=+Q('rl-ep').value,alpha=+Q('rl-lr').value,gamma=0.9,eps=0.3,res=Q('rl-result');
-  var Q_={};function gS(v,t){return Math.min(2,Math.floor(v/10))+'_'+(t>.5?'up':t<-.5?'dn':'flat');}function gQ(s,a){if(!Q_[s])Q_[s]=[0,0,0];return Q_[s][a];}function sQ(s,a,v){if(!Q_[s])Q_[s]=[0,0,0];Q_[s][a]=v;}function bA(s){if(!Q_[s])return 1;return Q_[s].indexOf(Math.max.apply(null,Q_[s]));}
-  var rH=[],best=-999;
-  for(var ep2=0;ep2<ep;ep2++){var v=15+Math.random()*15,t=(Math.random()-.5)*2,pos=0,epR=0;for(var step=0;step<20;step++){var st=gS(v,t),a=Math.random()<eps?Math.floor(Math.random()*3):bA(st),m=(Math.random()-.48)*1.5,rew=0;if(a===0&&pos===0){pos=1;rew=-.1;}else if(a===2&&pos===1){rew=m*100-40;pos=0;}else rew=pos?m*50:0;epR+=rew;v=Math.max(10,Math.min(30,v+(Math.random()-.5)*2));t=(Math.random()-.5)*2;var ns=gS(v,t),mq=Q_[ns]?Math.max.apply(null,Q_[ns]):0,oq=gQ(st,a);sQ(st,a,oq+alpha*(rew+gamma*mq-oq));}rH.push(+epR.toFixed(2));if(epR>best)best=epR;}
-  var avgR=(rH.reduce(function(s,v){return s+v;},0)/rH.length).toFixed(2),pos=rH.filter(function(v){return v>0;}).length;
-  lastRL={episodes:ep,avgReward:avgR,winRate:Math.round(pos/ep*100)};refreshModelDash();
-  var minR=Math.min.apply(null,rH),maxR=Math.max.apply(null,rH),pts=rH.filter(function(_,i){return i%Math.ceil(ep/100)===0;}).map(function(v,i,a){return (i/(a.length-1)*100).toFixed(1)+','+(80-((v-minR)/(maxR-minR||1))*70).toFixed(1);}).join(' ');
-  if(res)res.innerHTML='<div class="card"><div class="card-header"><span class="card-title">🎮 RL Agent Results</span><span class="badge badge-b">'+ep+' episodes</span></div><div class="card-body"><svg viewBox="0 0 100 80" style="width:100%;height:70px;margin-bottom:12px" preserveAspectRatio="none"><line x1="0" y1="40" x2="100" y2="40" stroke="var(--border)" stroke-width=".5" stroke-dasharray="2"/><polyline points="'+pts+'" fill="none" stroke="var(--blue)" stroke-width="1.5"/></svg><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center"><div><div class="tile-label">Episodes</div><div style="font-weight:700">'+ep+'</div></div><div><div class="tile-label">Avg Reward</div><div style="font-weight:700;color:var(--blue)">'+avgR+'</div></div><div><div class="tile-label">Best</div><div style="font-weight:700;color:var(--green)">'+best.toFixed(1)+'</div></div><div><div class="tile-label">Win Rate</div><div style="font-weight:700">'+lastRL.winRate+'%</div></div></div></div></div>';
-}
-
-function refreshModelDash(){
-  var n=JOURNAL.length;
-  setText('md-acc',mlModel?mlModel.acc+'%':'—');setText('md-samples',mlModel?mlModel.samples:n);
-  setText('md-bt',lastBT?lastBT.ret+'%':'—');setText('md-rl',lastRL?lastRL.avgReward:'—');
-  var items=[{l:'Log 5+ journal trades',d:n>=5},{l:'Train ML Model',d:!!mlModel},{l:'ML Accuracy ≥ 60%',d:mlModel&&mlModel.acc>=60},{l:'Run Historical Backtest',d:!!lastBT},{l:'Run Walk-Forward',d:!!lastWF},{l:'Train RL Agent',d:!!lastRL},{l:'RL Win Rate ≥ 55%',d:lastRL&&lastRL.winRate>=55}];
-  var cl=Q('md-checklist');if(cl)cl.innerHTML=items.map(function(it){return '<div class="cost-row"><span class="cost-lbl">'+it.l+'</span><span class="cost-val" style="color:'+(it.d?'var(--green)':'var(--muted)')+'">'+(it.d?'✅':'⬜')+'</span></div>';}).join('');
-}
-
-/* ══ TELEGRAM ══ */
-function loadTGSettings(){ var el=Q('tg-token'); if(el) el.value=TG.token||''; var el2=Q('tg-chatid'); if(el2) el2.value=TG.chatId||''; }
-function saveTG(){ TG={token:Q('tg-token').value.trim()||TG_TOKEN,chatId:Q('tg-chatid').value.trim()||TG_CHATID}; localStorage.setItem(TG_KEY,JSON.stringify(TG)); if(window.fbSave)window.fbSave({tg:TG}); showToast('✅ Telegram saved',true); }
-function testTG(){ sendTG('✅ Prism Analytics — Telegram test OK\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST'); showToast('Test sent!',true); }
-function sendPnLReport(){
-  var mp=MONTHLY.pnl||0,wins=JOURNAL.filter(function(t){return t.net>=0;});
-  var msg='📊 *Prism P&L Report*\n'+new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'})+'\nCapital: ₹'+CAP.toFixed(2)+'\nMonth P&L: '+(mp>=0?'+':'')+'₹'+mp.toFixed(2)+'\nTrades: '+JOURNAL.length+' | Wins: '+wins.length+'\nDD: '+(CAP<BASE_CAP?((BASE_CAP-CAP)/BASE_CAP*100).toFixed(2):0)+'%';
-  sendTG(msg); showToast('📊 Report sent to Telegram',true);
-  fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:EJS_SVC,template_id:EJS_TPL,user_id:EJS_PUB,template_params:{subject:'Prism P&L — '+new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}),message:msg.replace(/\*/g,'')}})}).then(function(){showToast('📧 Email sent too!',true,2000);}).catch(function(){});
-}
-function testEmail(){
-  var es=Q('email-status');if(es)es.textContent='Sending…';
-  fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:EJS_SVC,template_id:EJS_TPL,user_id:EJS_PUB,template_params:{subject:'Prism Test Email',message:'Test email from Prism Analytics at '+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST'}})}).then(function(r){return r.text();}).then(function(t){if(es)es.textContent='✅ Sent! Check '+EJS_EMAIL;}).catch(function(e){if(es)es.textContent='❌ Error: '+e.message;});
-}
-
-/* ══ VAULT ══ */
-function loadVaultUI(){ var v=JSON.parse(localStorage.getItem(VLT_KEY)||'{}'); ['clientid','apikey','totp','algoid'].forEach(function(k){var el=Q('v-'+k); if(el&&v[k])el.value=v[k];}); }
-function saveVault(){ var v={clientId:(Q('v-clientid')||{value:''}).value.trim(),apiKey:(Q('v-apikey')||{value:''}).value.trim(),totp:(Q('v-totp')||{value:''}).value.trim(),algoId:(Q('v-algoid')||{value:''}).value.trim()}; localStorage.setItem(VLT_KEY,JSON.stringify(v)); if(window.fbSave)window.fbSave({vault:v}); showToast('✅ Vault saved',true); }
-
-/* ══ SETTINGS ══ */
-function resetCap(){ if(!confirm('Reset capital to ₹10,000?'))return; CAP=BASE_CAP; saveState(); updateAll(); showToast('Capital reset to ₹10,000',true); }
-function clearAll(){ if(!confirm('Delete ALL data? This cannot be undone.'))return; localStorage.clear(); showToast('All data cleared',false); setTimeout(function(){location.reload();},1000); }
-
-/* ══ BOOT ══ */
-checkSession();
 </script>
 </body>
 </html>
