@@ -604,21 +604,101 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
 
 <!-- PORTFOLIO -->
 <div class="page" id="p-portfolio">
-  <div class="card"><div class="ch"><span class="ct">🛰 SATELLITE PORTFOLIO · ₹10,000 FULLY DEPLOYED</span></div><div class="cb">
-    <div class="cr"><span class="cl">Current Capital</span><span class="cv" id="pf-cap">₹10,000</span></div>
-    <div class="cr"><span class="cl">Month P&L</span><span class="cv" id="pf-mpnl">₹0</span></div>
-    <div class="cr"><span class="cl">Total Withdrawn</span><span class="cv" id="pf-tw">₹0</span></div>
-    <div class="cr"><span class="cl">Net Wealth</span><span class="cv" id="pf-nw">₹10,000</span></div>
-    <div class="cr"><span class="cl">Profit Transfer (20% monthly)</span><span class="cv" id="pf-next">₹0</span></div>
-    <div class="cr"><span class="cl">Auto-runs on</span><span class="cv">1st working day of month</span></div>
-    <div class="cr"><span class="cl">Win Rate</span><span class="cv" id="pf-wr">—</span></div>
-    <div class="cr"><span class="cl">Avg R-Multiple</span><span class="cv" id="pf-r">—</span></div>
-    <button class="btn btn-s" style="width:100%;margin-top:10px" onclick="withdraw()">💸 MANUAL WITHDRAWAL</button>
-  </div></div>
-  <div class="card"><div class="ch"><span class="ct">🛰 SATELLITE ALLOCATION · ALL-IN ACTIVE</span></div><div class="cb">
-    <div style="font-size:11px;color:var(--dim);margin-bottom:12px">Full ₹10,000 is active satellite capital. Safe assets (FD, Gold, Savings) are your core — held outside. This account: pure alpha generation.</div>
-    <div id="barbell-chart"></div>
-  </div></div>
+
+  <!-- HEADER SUMMARY ROW -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--blue);border-radius:var(--r);padding:12px 14px;text-align:center">
+      <div class="tl">TRADING CAPITAL</div>
+      <div style="font-family:var(--mono);font-weight:700;font-size:20px;color:var(--blue)" id="pf-cap">₹10,000</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">Angel One account</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--green);border-radius:var(--r);padding:12px 14px;text-align:center">
+      <div class="tl">MONTH P&L</div>
+      <div style="font-family:var(--mono);font-weight:700;font-size:20px" id="pf-mpnl">₹0.00</div>
+      <div style="font-family:var(--mono);font-size:9px;margin-top:3px" id="pf-mpnl-pct" style="color:var(--muted)">0.00%</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--amber);border-radius:var(--r);padding:12px 14px;text-align:center">
+      <div class="tl">WIN RATE</div>
+      <div style="font-family:var(--mono);font-weight:700;font-size:20px" id="pf-wr">—</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px" id="pf-trades">0 trades</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--red);border-radius:var(--r);padding:12px 14px;text-align:center">
+      <div class="tl">MAX DRAWDOWN</div>
+      <div style="font-family:var(--mono);font-weight:700;font-size:20px" id="pf-dd">0.00%</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">vs ₹10,000 start</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--green);border-radius:var(--r);padding:12px 14px;text-align:center">
+      <div class="tl">AVG R-MULTIPLE</div>
+      <div style="font-family:var(--mono);font-weight:700;font-size:20px" id="pf-r">—</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">expectancy</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--amber);border-radius:var(--r);padding:12px 14px;text-align:center">
+      <div class="tl">TOTAL WITHDRAWN</div>
+      <div style="font-family:var(--mono);font-weight:700;font-size:20px" id="pf-tw">₹0</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px">transferred to bank</div>
+    </div>
+  </div>
+
+  <!-- MULTI-ASSET ALLOCATION -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch">
+      <span class="ct">📊 MULTI-ASSET ALLOCATION · ₹10,000</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Pure trading account · Investment account separate</span>
+    </div>
+    <div class="cb">
+      <div id="asset-alloc"></div>
+    </div>
+  </div>
+
+  <!-- P&L BY ASSET CLASS -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch">
+      <span class="ct">📈 P&L BY ASSET CLASS</span>
+      <button class="btn btn-g btn-sm" onclick="updatePortfolio()">↻</button>
+    </div>
+    <div class="cb">
+      <div id="pf-asset-pnl"></div>
+    </div>
+  </div>
+
+  <!-- OPEN POSITIONS -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch">
+      <span class="ct">📋 POSITION TRACKER</span>
+      <button class="btn btn-p btn-sm" onclick="jopen();navTo('journal')">+ ADD TRADE</button>
+    </div>
+    <div class="cb" id="pf-positions">
+      <div style="text-align:center;padding:18px;color:var(--muted);font-family:var(--mono);font-size:10px">NO POSITIONS LOGGED · TRADES APPEAR HERE FROM JOURNAL</div>
+    </div>
+  </div>
+
+  <!-- RISK LIMITS PER ASSET -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><span class="ct">⚠ RISK LIMITS · PER ASSET CLASS</span></div>
+    <div class="cb">
+      <div class="cr"><span class="cl">NSE Equity MIS</span><span class="cv" id="rl-eq">Max ₹100/trade · 1% risk</span></div>
+      <div class="cr"><span class="cl">NSE Equity CNC</span><span class="cv" id="rl-cnc">Max ₹200/trade · 2% risk</span></div>
+      <div class="cr"><span class="cl">NSE F&O Futures</span><span class="cv">Max ₹150/trade · 1.5% risk</span></div>
+      <div class="cr"><span class="cl">MCX Gold Mini</span><span class="cv">1 lot · ₹14k margin · 1% risk</span></div>
+      <div class="cr"><span class="cl">MCX Crude Mini</span><span class="cv">1 lot · ₹12k margin · 1% risk</span></div>
+      <div class="cr"><span class="cl">MCX Silver Mini</span><span class="cv">1 lot · ₹18k margin · 1% risk</span></div>
+      <div class="cr"><span class="cl">Currency CDS (USD/INR)</span><span class="cv">1 lot · ₹2.5k margin · 0.5% risk</span></div>
+      <div class="cr"><span class="cl">Max simultaneous positions</span><span class="cv" style="color:var(--amber)">3 across all assets</span></div>
+      <div class="cr"><span class="cl">Max daily loss (stop trading)</span><span class="cv" style="color:var(--red)">₹300 (3% of capital)</span></div>
+    </div>
+  </div>
+
+  <!-- WITHDRAWAL -->
+  <div class="card">
+    <div class="ch"><span class="ct">💸 PROFIT TRANSFER</span></div>
+    <div class="cb">
+      <div class="cr"><span class="cl">Next transfer (20% of profit)</span><span class="cv" id="pf-next">₹0</span></div>
+      <div class="cr"><span class="cl">Auto-runs on</span><span class="cv">1st working day of month</span></div>
+      <div class="cr"><span class="cl">Transfer to</span><span class="cv">Savings / Investment account</span></div>
+      <div class="cr"><span class="cl">Net wealth (capital + withdrawn)</span><span class="cv" id="pf-nw">₹10,000</span></div>
+      <button class="btn btn-s" style="width:100%;margin-top:10px" onclick="withdraw()">💸 MANUAL WITHDRAWAL NOW</button>
+    </div>
+  </div>
 </div>
 
 <!-- ML ENGINE -->
@@ -996,7 +1076,7 @@ var NAV_HOOKS={dashboard:updateAll,prices:updatePricesPage,mcx:function(){},fore
   bswan:renderSwanMonitor,scenarios:renderScenarios,playbooks:renderPlaybooks,history:renderHistory,
   news:loadNews,fiidii:buildFIIDII,srsi:loadSRSI,global:loadGlobal,options:null,charts:null,
   governance:updateGov,engine:updateSwanSizing,screener:null,short:updateShort,journal:renderJournal,
-  portfolio:function(){updatePortfolio();renderBarbell();},risk:updateRisk,reports:updateReportPage,
+  portfolio:updatePortfolio,risk:updateRisk,reports:updateReportPage,
   ml:null,bt:null,wf:null,rl:null,modeldash:refreshMD,telegram:null,vault:loadVaultUI,settings:null};
 function navTo(id){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -1206,28 +1286,132 @@ function updateRisk(){
 
 function updatePortfolio(){
   var mp=MONTHLY.pnl||0,tw=MONTHLY.totalWithdrawn||0;
-  S('pf-cap',ri(CAP.toFixed(2)));
-  S('pf-mpnl',(mp>=0?'+':'')+'₹'+mp.toFixed(2));C('pf-mpnl',gc(mp));
-  S('pf-tw',ri(tw.toFixed(2)));S('pf-nw',ri((CAP+tw).toFixed(2)));
-  S('pf-next',mp>0?ri((mp*0.2).toFixed(2)):'₹0');
+  var dd=CAP<BASE_CAP?(BASE_CAP-CAP)/BASE_CAP*100:0;
   var wins=JOURNAL.filter(function(t){return t.net>=0;});
-  S('pf-wr',JOURNAL.length?Math.round(wins.length/JOURNAL.length*100)+'%':'—');
   var rv=JOURNAL.filter(function(t){return t.rMult!=null;}).map(function(t){return t.rMult;});
+
+  /* Summary cards */
+  var capEl=Q('pf-cap');if(capEl){capEl.textContent='₹'+CAP.toFixed(2);capEl.style.color='var(--blue)';}
+  var mpEl=Q('pf-mpnl');if(mpEl){mpEl.textContent=(mp>=0?'+':'')+'₹'+mp.toFixed(2);mpEl.style.color=mp>=0?'var(--green)':'var(--red)';}
+  var mpPEl=Q('pf-mpnl-pct');if(mpPEl){mpPEl.textContent=(mp>=0?'+':'')+(mp/BASE_CAP*100).toFixed(2)+'%';mpPEl.style.color=mp>=0?'var(--green)':'var(--red)';}
+  S('pf-trades',JOURNAL.length+' trade'+(JOURNAL.length!==1?'s':''));
+  S('pf-wr',JOURNAL.length?Math.round(wins.length/JOURNAL.length*100)+'%':'—');
+  var wrEl=Q('pf-wr');if(wrEl)wrEl.style.color=JOURNAL.length&&wins.length/JOURNAL.length>=0.6?'var(--green)':'var(--amber)';
+  S('pf-dd',dd.toFixed(2)+'%');var ddEl=Q('pf-dd');if(ddEl)ddEl.style.color=dd>5?'var(--red)':dd>2?'var(--amber)':'var(--green)';
   S('pf-r',rv.length?(rv.reduce(function(a,b){return a+b;},0)/rv.length).toFixed(2)+'R':'—');
+  S('pf-tw','₹'+tw.toFixed(2));
+  S('pf-next',mp>0?'₹'+(mp*0.2).toFixed(2):'₹0 (no profit yet)');
+  S('pf-nw','₹'+(CAP+tw).toFixed(2));
+
+  /* Risk limits (dynamic based on CAP) */
+  S('rl-eq','Max ₹'+(CAP*0.01).toFixed(0)+'/trade · 1% risk');
+  S('rl-cnc','Max ₹'+(CAP*0.02).toFixed(0)+'/trade · 2% risk');
+
+  /* Position tracker from recent journal entries */
+  var posEl=Q('pf-positions');
+  if(posEl){
+    var recent=JOURNAL.slice(0,8);
+    if(!recent.length){
+      posEl.innerHTML='<div style="text-align:center;padding:18px;color:var(--muted);font-family:var(--mono);font-size:10px">NO POSITIONS LOGGED · TRADES APPEAR HERE FROM JOURNAL</div>';
+    } else {
+      posEl.innerHTML='<div class="tbl"><table><thead><tr><th>Date</th><th>Symbol</th><th>Dir</th><th>Type</th><th>Entry</th><th>Exit</th><th>Net P&L</th><th>R</th><th>Result</th></tr></thead><tbody>'
+        +recent.map(function(t){var col=t.net>=0?'var(--green)':'var(--red)';return '<tr style="border-left:3px solid '+(t.net>=0?'var(--green)':'var(--red)')+'"><td>'+t.date+'</td><td style="font-weight:700">'+t.sym+'</td><td style="color:'+(t.dir==='LONG'?'var(--green)':'var(--red)')+'">'+t.dir+'</td><td style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+t.type+'</td><td>₹'+t.entry+'</td><td>₹'+t.exit+'</td><td style="color:'+col+';font-weight:700">'+(t.net>=0?'+':'')+'₹'+t.net.toFixed(2)+'</td><td style="color:'+col+'">'+(t.rMult?t.rMult+'R':'—')+'</td><td>'+(t.net>=0?'<span class="badge bg">WIN</span>':'<span class="badge br">LOSS</span>')+'</td></tr>';}).join('')
+        +'</tbody></table></div>';
+    }
+  }
+
+  /* P&L by asset class */
+  var pnlEl=Q('pf-asset-pnl');
+  if(pnlEl){
+    var byAsset={};
+    var assetMap={'MIS':'NSE Equity (MIS)','CNC':'NSE Equity (CNC)','NRML':'F&O Futures','MCX':'MCX Commodities','CURR':'Currency CDS'};
+    JOURNAL.forEach(function(t){
+      var key=assetMap[t.type]||'NSE Equity (MIS)';
+      if(!byAsset[key])byAsset[key]={pnl:0,trades:0,wins:0,col:'#4096ff'};
+      byAsset[key].pnl+=t.net;byAsset[key].trades++;if(t.net>=0)byAsset[key].wins++;
+    });
+    var cols={'NSE Equity (MIS)':'#4096ff','NSE Equity (CNC)':'#4096ff','F&O Futures':'#05d97c','MCX Commodities':'#ffaa00','Currency CDS':'#6b80a8'};
+    var assetEntries=Object.entries(byAsset);
+    if(!assetEntries.length){
+      pnlEl.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-family:var(--mono);font-size:10px">LOG TRADES TO SEE P&L BREAKDOWN BY ASSET CLASS</div>';
+    } else {
+      pnlEl.innerHTML=assetEntries.map(function(kv){
+        var name=kv[0],data=kv[1],col=cols[name]||'#4096ff',wr=Math.round(data.wins/data.trades*100);
+        var pnlCol=data.pnl>=0?'var(--green)':'var(--red)';
+        return '<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border2);flex-wrap:wrap">'
+          +'<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0"></div>'
+          +'<div style="flex:1;min-width:120px"><div style="font-size:12px;font-weight:600">'+name+'</div>'
+          +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+data.trades+' trades · '+wr+'% win rate</div></div>'
+          +'<div style="font-family:var(--mono);font-weight:700;font-size:14px;color:'+pnlCol+'">'+(data.pnl>=0?'+':'')+'₹'+data.pnl.toFixed(2)+'</div>'
+          +'</div>';
+      }).join('');
+    }
+  }
+  
+  /* Render asset allocation bars */
+  renderAssetAlloc();
 }
 
 function renderBarbell(){
-  var el=Q('barbell-chart');if(!el)return;
-  /* SATELLITE PORTFOLIO — Full ₹10,000 is active trading capital.
-     Core safe assets (FDs, Gold, Savings) exist OUTSIDE this account. */
-  var bars=[
-    {n:'High-Conviction Trades (40%)',pct:40,col:'#4096ff',desc:'Best setups only — 1% risk each — 2R minimum target'},
-    {n:'Momentum / Breakout (30%)',pct:30,col:'#05d97c',desc:'Intraday momentum — MIS — tight SL — ride the trend'},
-    {n:'MCX Metals & Hedges (20%)',pct:20,col:'#ffaa00',desc:'Gold Mini + Crude — Black Swan hedge + inflation play'},
-    {n:'Dry Powder / Buffer (10%)',pct:10,col:'#6b80a8',desc:'Reserved for crisis dips — deploy after -5% Nifty day'}
+  /* Renamed — calls renderAssetAlloc which handles multi-asset portfolio */
+  renderAssetAlloc();
+}
+
+function renderAssetAlloc(){
+  var el=Q('asset-alloc');if(!el)return;
+  /* Multi-asset trading account — ₹10,000 fully deployed across 4 asset classes */
+  var assets=[
+    {n:'NSE Equities (MIS + CNC)',pct:40,alloc:4000,col:'#4096ff',
+     inst:['HDFCBANK','INFY','TCS','SBIN','RELIANCE'],
+     note:'Intraday MIS + short-term CNC · 1% risk per trade',
+     margin:'No margin needed for CNC · 5x for MIS'},
+    {n:'MCX Commodities',pct:30,alloc:3000,col:'#ffaa00',
+     inst:['Gold Mini','Silver Mini','Crude Mini','Copper'],
+     note:'MCX metals + energy · Black Swan hedge + inflation play',
+     margin:'Gold Mini ₹14k · Crude Mini ₹12k · Use 1 lot at a time'},
+    {n:'NSE F&O (Futures)',pct:20,alloc:2000,col:'#05d97c',
+     inst:['Nifty Fut','Bank Nifty Fut','Stock Fut'],
+     note:'Index + stock futures · Monthly expiry · Trend following',
+     margin:'Nifty lot 75 · BN lot 30 · Use when capital > ₹25k'},
+    {n:'Currency CDS (NSE)',pct:10,alloc:1000,col:'#6b80a8',
+     inst:['USD/INR','EUR/INR','GBP/INR'],
+     note:'Currency futures on NSE · Low margin · Crisis hedge',
+     margin:'USD/INR lot 1000 · Margin ~₹2,500 per lot'}
   ];
-  el.innerHTML='<div style="background:var(--abg);border:1px solid var(--abord);border-radius:var(--rs);padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--amber)"><strong>🛰 SATELLITE MODE</strong> — Full ₹10,000 actively deployed. Core safe assets (FD, Gold, Savings) are held OUTSIDE this account.</div>'
-    +bars.map(function(b){return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:var(--text)">'+b.n+'</span><span style="font-family:var(--mono);font-weight:700;font-size:14px;color:'+b.col+'">₹'+(CAP*b.pct/100).toFixed(0)+'</span></div><div style="background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;margin-bottom:3px"><div style="width:'+b.pct+'%;height:8px;border-radius:4px;background:'+b.col+'"></div></div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">'+b.desc+'</div></div>';}).join('');
+  
+  // P&L by asset from journal
+  var assetPnL={eq:0,mcx:0,fo:0,curr:0};
+  JOURNAL.forEach(function(t){
+    var ty=t.type||'MIS';
+    if(ty==='MIS'||ty==='CNC')assetPnL.eq+=t.net;
+    else if(ty==='MCX')assetPnL.mcx+=t.net;
+    else if(ty==='NRML')assetPnL.fo+=t.net;
+    else if(ty==='CURR')assetPnL.curr+=t.net;
+    else assetPnL.eq+=t.net; // default
+  });
+  var assetPnLArr=[assetPnL.eq,assetPnL.mcx,assetPnL.fo,assetPnL.curr];
+  
+  el.innerHTML=assets.map(function(a,i){
+    var pnl=assetPnLArr[i],pnlCol=pnl>=0?'var(--green)':'var(--red)';
+    var actualAlloc=+(CAP*a.pct/100).toFixed(0);
+    return '<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+a.col+';border-radius:var(--r);padding:13px 14px;margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">'
+      +'<div><div style="font-weight:700;font-size:13px;margin-bottom:3px">'+a.n+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+a.inst.map(function(ins){return '<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;background:'+a.col+'15;border:1px solid '+a.col+'30;border-radius:3px;color:'+a.col+'">'+ins+'</span>';}).join('')+'</div></div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-family:var(--mono);font-weight:700;font-size:18px;color:'+a.col+'">₹'+actualAlloc.toLocaleString('en-IN')+'</div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+a.pct+'% of capital</div>'
+      +'</div></div>'
+      +'<div style="background:var(--bg);border-radius:3px;height:6px;overflow:hidden;margin-bottom:8px">'
+      +'<div style="width:'+a.pct+'%;height:6px;border-radius:3px;background:'+a.col+'"></div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+a.note+'</div>'
+      +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:'+pnlCol+'">'+(pnl!==0?(pnl>=0?'+':'')+'₹'+pnl.toFixed(2)+' P&L':'No trades yet')+'</div>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--muted)">📐 '+a.margin+'</div>'
+      +'</div>';
+  }).join('');
 }
 
 function withdraw(){
