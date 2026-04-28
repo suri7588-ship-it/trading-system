@@ -229,11 +229,7 @@ console.log('[Prism] Firebase ready ✅');
   <!-- STEP 1: SEND OTP -->
   <div id="g-step1">
     <div class="gate-step">Secure Login</div>
-    <div class="gate-info">
-      A 6-digit OTP will be sent to your<br>
-      <strong>Telegram bot</strong> (Chat: 785860467)<br>
-      Make sure you have sent <strong>/start</strong> to the bot.
-    </div>
+
     <button class="send-otp-btn" id="send-otp-btn" onclick="sendLoginOtp()">
       📨 Send OTP to Telegram
     </button>
@@ -475,33 +471,50 @@ console.log('[Prism] Firebase ready ✅');
 <div class="page" id="page-charts">
   <div class="card">
     <div class="card-header">
-      <span class="card-title">🕯 Live Charts — TradingView</span>
-      <select id="chart-sym" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
-        <option value="NSE:NIFTY">Nifty 50</option>
-        <option value="NSE:BANKNIFTY">Bank Nifty</option>
-        <option value="BSE:SENSEX">Sensex</option>
-        <option value="NSE:INFY">Infosys</option>
-        <option value="NSE:TCS">TCS</option>
-        <option value="NSE:HDFCBANK">HDFC Bank</option>
-        <option value="NSE:RELIANCE">Reliance</option>
-        <option value="NSE:ICICIBANK">ICICI Bank</option>
-        <option value="NSE:SBIN">SBI</option>
-        <option value="NSE:TATAMOTORS">Tata Motors</option>
-        <option value="MCX:GOLD1!">MCX Gold</option>
-        <option value="MCX:CRUDEOIL1!">MCX Crude</option>
-      </select>
+      <span class="card-title">🕯 Price Chart</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="chart-sym" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
+          <option value="^NSEI">Nifty 50</option>
+          <option value="^NSEBANK">Bank Nifty</option>
+          <option value="^BSESN">Sensex</option>
+          <option value="INFY.NS">Infosys</option>
+          <option value="TCS.NS">TCS</option>
+          <option value="HDFCBANK.NS">HDFC Bank</option>
+          <option value="RELIANCE.NS">Reliance</option>
+          <option value="ICICIBANK.NS">ICICI Bank</option>
+          <option value="SBIN.NS">SBI</option>
+          <option value="TATAMOTORS.NS">Tata Motors</option>
+          <option value="BAJAJ-AUTO.NS">Bajaj Auto</option>
+          <option value="WIPRO.NS">Wipro</option>
+        </select>
+        <select id="chart-period" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--font)">
+          <option value="5d">5 Days</option>
+          <option value="1mo" selected>1 Month</option>
+          <option value="3mo">3 Months</option>
+          <option value="6mo">6 Months</option>
+          <option value="1y">1 Year</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadChart()">↻ Load</button>
+      </div>
     </div>
-    <div id="tv-container" style="height:520px;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;background:var(--bg3)">
-      <iframe id="tv-iframe"
-        style="width:100%;height:100%;border:none;display:block"
-        src=""
-        allow="fullscreen"
-        loading="lazy">
-      </iframe>
+    <div id="chart-area" style="padding:14px;min-height:420px">
+      <div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--dim);font-size:13px">Select a symbol and click Load →</div>
     </div>
-    <div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border2)">
-      <span style="font-size:11px;color:var(--muted)">15m chart · MACD + RSI · Dark theme</span>
-      <a id="chart-ext-link" href="https://www.tradingview.com/chart/?symbol=NSE:NIFTY" target="_blank" rel="noopener" style="font-size:11px;color:var(--blue);text-decoration:none">Open full chart ↗</a>
+  </div>
+  <!-- Quick links to TradingView -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">📊 Open on TradingView (full features)</span></div>
+    <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px">
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:NIFTY" target="_blank" class="btn btn-ghost btn-sm">Nifty 50</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:BANKNIFTY" target="_blank" class="btn btn-ghost btn-sm">Bank Nifty</a>
+      <a href="https://www.tradingview.com/chart/?symbol=BSE:SENSEX" target="_blank" class="btn btn-ghost btn-sm">Sensex</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:INFY" target="_blank" class="btn btn-ghost btn-sm">Infosys</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:TCS" target="_blank" class="btn btn-ghost btn-sm">TCS</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:HDFCBANK" target="_blank" class="btn btn-ghost btn-sm">HDFC Bank</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:RELIANCE" target="_blank" class="btn btn-ghost btn-sm">Reliance</a>
+      <a href="https://www.tradingview.com/chart/?symbol=NSE:SBIN" target="_blank" class="btn btn-ghost btn-sm">SBI</a>
+      <a href="https://www.tradingview.com/chart/?symbol=MCX:GOLD1!" target="_blank" class="btn btn-ghost btn-sm">MCX Gold</a>
+      <a href="https://www.tradingview.com/chart/?symbol=MCX:CRUDEOIL1!" target="_blank" class="btn btn-ghost btn-sm">MCX Crude</a>
     </div>
   </div>
 </div>
@@ -1231,7 +1244,9 @@ function calcEngine(){
   var isCrude=type.indexOf('Crude')>=0; if(isCrude){ qty=1; tgt2R=dir==='LONG'?+(entry+oneR*3).toFixed(2):+(entry-oneR*3).toFixed(2); }
   var charges=isCrude?38+0.013*entry:40+qty*entry*0.00034+7.2;
   var vix=LIVE['VIX']?LIVE['VIX'].p:18; var sizeAdj=vix>25?'50%':vix>20?'75%':'100%';
-  res.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">'
+  var rrcol = (oneR>0&&qty>0) ? 'var(--green)' : 'var(--red)';
+  var maxloss = (qty*oneR+charges).toFixed(2);
+  res.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">'
     +'<div><div class="tile-label">Qty</div><div class="tile-value" style="font-size:18px">'+qty+(isCrude?' lot':'')+'</div></div>'
     +'<div><div class="tile-label">SL</div><div class="tile-value" style="font-size:18px;color:var(--red)">₹'+sl+'</div></div>'
     +'<div><div class="tile-label">'+(isCrude?'3R':'2R')+' Target</div><div class="tile-value" style="font-size:18px;color:var(--green)">₹'+tgt2R+'</div></div>'
@@ -1239,8 +1254,7 @@ function calcEngine(){
     +'<div><div class="tile-label">Charges</div><div class="tile-value" style="font-size:16px;color:var(--red)">₹'+charges.toFixed(2)+'</div></div>'
     +'<div><div class="tile-label">VIX Adj</div><div class="tile-value" style="font-size:16px;color:var(--amber)">'+sizeAdj+'</div></div>'
     +'</div>'
-    +'<div style="margin-top:10px;font-size:11px;color:'+(oneR>0&&qty>0?'var(--green)':'var(--red)');
-    res.innerHTML += '">R:R = '+(isCrude?3:2)+':1 · Max loss: ₹'+(qty*oneR+charges).toFixed(2)+'</div>';
+    +'<div style="margin-top:10px;font-size:11px;color:'+rrcol+'">R:R = '+(isCrude?3:2)+':1 · Max loss: ₹'+maxloss+'</div>';
 }
 
 /* ══ SHORT SELLING ══ */
@@ -1456,35 +1470,124 @@ function buildOptions(){
   Q('opt-result').innerHTML=html;
 }
 
-/* ══ CHARTS — iframe embed (works without TradingView login) ══ */
-function loadChart(){
-  var sel = Q('chart-sym');
-  var sym = sel ? sel.value : 'NSE:NIFTY';
-  var frame = Q('tv-iframe');
-  var extLink = Q('chart-ext-link');
+/* ══ CHARTS — Self-hosted from Yahoo Finance OHLCV ══ */
+async function loadChart(){
+  var sym = (Q('chart-sym')||{value:'^NSEI'}).value || '^NSEI';
+  var period = (Q('chart-period')||{value:'1mo'}).value || '1mo';
+  var area = Q('chart-area');
+  if(!area) return;
+  area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--dim);font-size:13px">⏳ Loading chart data…</div>';
 
-  /* Build TradingView embed URL — widgetembed works without login */
-  var url = 'https://s.tradingview.com/widgetembed/'
-    + '?frameElementId=tv-iframe'
-    + '&symbol=' + encodeURIComponent(sym)
-    + '&interval=15'
-    + '&hidesidetoolbar=0'
-    + '&hidetoptoolbar=0'
-    + '&theme=dark'
-    + '&style=1'
-    + '&timezone=Asia%2FKolkata'
-    + '&studies=MACD%40tv-basicstudies%1FRSI%40tv-basicstudies'
-    + '&locale=en'
-    + '&allow_symbol_change=0';
-
-  if(frame) frame.src = url;
-  if(extLink){
-    extLink.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym);
-    extLink.textContent = 'Open ' + sym + ' ↗';
+  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?range='+period+'&interval=1d&includePrePost=false';
+  var proxies = ['https://corsproxy.io/?'+encodeURIComponent(url),'https://api.allorigins.win/get?url='+encodeURIComponent(url)];
+  var bars = null;
+  for(var pi=0;pi<proxies.length;pi++){
+    try{
+      var r=await fetch(proxies[pi],{cache:'no-store',signal:AbortSignal.timeout(10000)});
+      if(!r.ok) continue;
+      var j=await r.json(); var d=j.contents?JSON.parse(j.contents):j;
+      var res=d.chart&&d.chart.result&&d.chart.result[0]; if(!res) continue;
+      var ts=res.timestamp||[], q=res.indicators.quote[0];
+      var adjClose = (res.indicators.adjclose&&res.indicators.adjclose[0]&&res.indicators.adjclose[0].adjclose)||q.close;
+      bars=ts.map(function(t,i){return {
+        date:new Date(t*1000), o:q.open[i]||0, h:q.high[i]||0,
+        l:q.low[i]||0, c:q.close[i]||0, v:q.volume[i]||0
+      };}).filter(function(b){return b.c>0;});
+      if(bars.length) break;
+    }catch(_){}
   }
 
-  /* Wire select change */
-  if(sel && !sel._wired){ sel._wired=true; sel.addEventListener('change', loadChart); }
+  if(!bars||!bars.length){
+    area.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:380px;gap:14px">'
+      +'<div style="font-size:32px">📊</div>'
+      +'<div style="color:var(--dim);font-size:13px">Could not load chart data. Open on TradingView:</div>'
+      +'<a href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(sym.replace('.NS',''))+'" target="_blank" rel="noopener" '
+      +'style="color:var(--blue);font-size:14px;font-weight:600;padding:10px 22px;border:1px solid var(--bborder);border-radius:8px;background:var(--bbg);text-decoration:none">Open Chart →</a>'
+      +'</div>';
+    return;
+  }
+
+  /* Draw SVG candlestick chart */
+  var W=900, H=320, PAD={t:20,r:20,b:60,l:70};
+  var cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  var n=bars.length;
+  var minL=Math.min.apply(null,bars.map(function(b){return b.l;}));
+  var maxH=Math.max.apply(null,bars.map(function(b){return b.h;}));
+  var rng=maxH-minL||1;
+  var barW=Math.max(2,Math.floor(cw/n*0.7));
+  var lastC=bars[bars.length-1].c, firstC=bars[0].o||bars[0].c;
+  var isUp=lastC>=firstC;
+  var lineCol=isUp?'#05d97c':'#ff3d6b';
+
+  function px(i){ return PAD.l + i*(cw/n) + (cw/n)/2; }
+  function py(v){ return PAD.t + ch - ((v-minL)/rng)*ch; }
+  function fmtDate(d){ return (d.getDate())+'/'+(d.getMonth()+1); }
+  function fmtNum(v){ return v>1000?v.toFixed(0):v.toFixed(2); }
+
+  /* Candles */
+  var candleSVG='';
+  bars.forEach(function(b,i){
+    var x=px(i), col=b.c>=b.o?'#05d97c':'#ff3d6b';
+    var bodyT=py(Math.max(b.o,b.c)), bodyB=py(Math.min(b.o,b.c));
+    var bodyH=Math.max(1,bodyB-bodyT);
+    candleSVG+='<line x1="'+x+'" y1="'+py(b.h)+'" x2="'+x+'" y2="'+py(b.l)+'" stroke="'+col+'" stroke-width="1" opacity="0.7"/>';
+    candleSVG+='<rect x="'+(x-barW/2)+'" y="'+bodyT+'" width="'+barW+'" height="'+bodyH+'" fill="'+col+'" rx="1"/>';
+  });
+
+  /* Y axis labels */
+  var yLabels=''; var ySteps=5;
+  for(var yi=0;yi<=ySteps;yi++){
+    var val=minL+(rng/ySteps)*yi; var y=py(val);
+    yLabels+='<line x1="'+PAD.l+'" y1="'+y+'" x2="'+(W-PAD.r)+'" y2="'+y+'" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>';
+    yLabels+='<text x="'+(PAD.l-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="#4a5878" font-family="DM Mono,monospace">'+fmtNum(val)+'</text>';
+  }
+
+  /* X axis labels — every n/5 bars */
+  var xLabels=''; var step=Math.ceil(n/5);
+  for(var xi=0;xi<n;xi+=step){
+    var x=px(xi);
+    xLabels+='<text x="'+x+'" y="'+(H-PAD.b+16)+'" text-anchor="middle" font-size="10" fill="#4a5878" font-family="DM Mono,monospace">'+fmtDate(bars[xi].date)+'</text>';
+  }
+
+  /* MA20 line */
+  var ma20=''; var maPath='';
+  bars.forEach(function(b,i){
+    if(i<19) return;
+    var sum=0; for(var k=i-19;k<=i;k++) sum+=bars[k].c;
+    var mv=sum/20;
+    maPath+=(maPath?'L':'M')+px(i)+','+py(mv)+' ';
+  });
+  if(maPath) ma20='<path d="'+maPath+'" fill="none" stroke="#4096ff" stroke-width="1.5" opacity="0.7"/>';
+
+  /* Volume bars */
+  var maxV=Math.max.apply(null,bars.map(function(b){return b.v;}));
+  var volH=50; var volY=H-PAD.b+20;
+  var volSVG='';
+  bars.forEach(function(b,i){
+    var x=px(i), h=maxV>0?Math.floor((b.v/maxV)*volH):1, col=b.c>=b.o?'rgba(5,217,124,0.4)':'rgba(255,61,107,0.4)';
+    volSVG+='<rect x="'+(x-barW/2)+'" y="'+(volY+volH-h)+'" width="'+barW+'" height="'+h+'" fill="'+col+'"/>';
+  });
+
+  /* Price label */
+  var priceLbl='<text x="'+(W-PAD.r)+'" y="'+( py(lastC)+4)+'" text-anchor="end" font-size="11" fill="'+lineCol+'" font-weight="bold" font-family="DM Mono,monospace">₹'+fmtNum(lastC)+'</text>';
+  var priceLine='<line x1="'+PAD.l+'" y1="'+py(lastC)+'" x2="'+(W-PAD.r)+'" y2="'+py(lastC)+'" stroke="'+lineCol+'" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>';
+
+  /* Change info */
+  var chg=lastC-firstC, chgPct=(chg/firstC*100).toFixed(2);
+  var symName = Q('chart-sym').options[Q('chart-sym').selectedIndex].text;
+
+  var svg='<svg viewBox="0 0 '+W+' '+(H+volH+10)+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:480px">'
+    +'<rect width="'+W+'" height="'+(H+volH+10)+'" fill="var(--bg3)" rx="0"/>'
+    + yLabels + ma20 + priceLine + candleSVG + priceLbl + xLabels
+    +'<rect x="'+PAD.l+'" y="'+volY+'" width="'+cw+'" height="'+volH+'" fill="none"/>'
+    + volSVG
+    +'<text x="'+PAD.l+'" y="16" font-size="12" fill="var(--dim)" font-weight="600" font-family="DM Sans,sans-serif">'+symName+'</text>'
+    +'<text x="'+(PAD.l+120)+'" y="16" font-size="11" fill="'+lineCol+'" font-family="DM Mono,monospace">'+( chg>=0?'+':'')+fmtNum(chg)+' ('+( chg>=0?'+':'')+chgPct+'%) · '+period+'</text>'
+    +'<text x="'+(W-PAD.r)+'" y="16" font-size="10" fill="#3d4f70" text-anchor="end" font-family="DM Mono,monospace">MA20 — volume</text>'
+    +'<line x1="'+(W-PAD.r-55)+'" y1="11" x2="'+(W-PAD.r-80)+'" y2="11" stroke="#4096ff" stroke-width="2"/>'
+    +'</svg>';
+
+  area.innerHTML=svg;
 }
 
 /* ══ PHASE 5: ML ══ */
