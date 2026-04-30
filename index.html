@@ -250,6 +250,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
       <div class="ni" data-p="options"><span class="ni-ico">🎯</span>Options Chain</div>
       <div class="ni" data-p="charts"><span class="ni-ico">🕯</span>Charts</div>
       <div class="nav-sec">TRADING</div>
+      <div class="ni" data-p="execute" style="background:rgba(5,217,124,.06);border:1px solid rgba(5,217,124,.15)"><span class="ni-ico">⚡</span><span style="color:#05d97c;font-weight:700">One-Tap Execute</span></div>
       <div class="ni" data-p="governance"><span class="ni-ico">🛡</span>Governance</div>
       <div class="ni" data-p="engine"><span class="ni-ico">⚡</span>Trade Engine</div>
       <div class="ni" data-p="screener"><span class="ni-ico">🔍</span>Screener</div>
@@ -487,6 +488,72 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
     <div class="cr"><span class="cl">Bank Nifty</span><span class="cv">30 (monthly only)</span></div>
     <div class="alert a-w" style="margin-top:8px"><span>⚠</span><span>SEBI Oct 2024: Weekly index options discontinued. Monthly expiry only.</span></div>
   </div></div>
+</div>
+
+<!-- ONE-TAP EXECUTE -->
+<div class="page" id="p-execute">
+  <div style="background:rgba(5,217,124,.06);border:1px solid rgba(5,217,124,.2);border-left:4px solid #05d97c;border-radius:var(--r);padding:13px 16px;margin-bottom:12px">
+    <div style="font-family:var(--mono);font-size:9px;color:#05d97c;letter-spacing:.8px;margin-bottom:5px">⚡ ONE-TAP EXECUTION · ANGEL ONE SMARTAPI</div>
+    <div style="font-size:12px;color:var(--dim)">Select a signal → review numbers → tap EXECUTE. Server places entry + SL order automatically, monitors price, and auto-exits at target.</div>
+  </div>
+  <!-- Server status -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><span class="ct">🖥 SERVER STATUS</span><button class="btn btn-g btn-sm" onclick="checkServer()">↻ CHECK</button></div>
+    <div class="cb">
+      <div class="cr"><span class="cl">DigitalOcean BLR1</span><span class="cv" id="srv-ip">143.110.183.26:5000</span></div>
+      <div class="cr"><span class="cl">Status</span><span class="cv" id="srv-status" style="color:var(--muted)">Checking…</span></div>
+      <div class="cr"><span class="cl">Session</span><span class="cv" id="srv-session">—</span></div>
+      <div class="cr"><span class="cl">Active positions</span><span class="cv" id="srv-pos">0</span></div>
+      <button class="btn btn-p btn-sm" onclick="serverLogin()" style="margin-top:8px">🔑 LOGIN TO ANGEL ONE</button>
+      <div style="font-family:var(--mono);font-size:10px;margin-top:6px" id="srv-login-st"></div>
+    </div>
+  </div>
+  <!-- Signal input -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><span class="ct">📊 TRADE SIGNAL</span><button class="btn btn-p btn-sm" onclick="autoFillSignal()">⚡ AUTO-FILL FROM SCREENER</button></div>
+    <div class="cb">
+      <div class="row">
+        <div class="field"><label>Symbol</label><input id="ex-sym" placeholder="HDFCBANK" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field"><label>Symbol Token</label><input id="ex-tok" placeholder="1333" type="number"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Exchange</label><select id="ex-exch"><option value="NSE">NSE</option><option value="BSE">BSE</option><option value="MCX">MCX</option><option value="CDS">CDS</option></select></div>
+        <div class="field"><label>Product</label><select id="ex-prod"><option value="MIS">MIS (Intraday)</option><option value="CNC">CNC (Delivery)</option><option value="NRML">NRML (F&O)</option></select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Direction</label><select id="ex-dir"><option value="LONG">▲ LONG (Buy)</option><option value="SHORT">▼ SHORT (Sell)</option></select></div>
+        <div class="field"><label>Qty</label><input id="ex-qty" type="number" placeholder="11" oninput="calcExRisk()"></div>
+      </div>
+      <div class="row3">
+        <div class="field"><label>Entry ₹</label><input id="ex-en" type="number" placeholder="1682.50" oninput="calcExRisk()"></div>
+        <div class="field"><label>Stop Loss ₹</label><input id="ex-sl" type="number" placeholder="1674.00" oninput="calcExRisk()"></div>
+        <div class="field"><label>Target ₹</label><input id="ex-tgt" type="number" placeholder="1699.00" oninput="calcExRisk()"></div>
+      </div>
+      <!-- Risk preview -->
+      <div id="ex-risk" style="background:var(--bg3);border-radius:var(--rs);padding:12px;margin-top:4px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+        <div><div class="tl">MAX RISK</div><div style="font-family:var(--mono);font-weight:700;color:var(--red)" id="exr-risk">₹—</div></div>
+        <div><div class="tl">POTENTIAL</div><div style="font-family:var(--mono);font-weight:700;color:var(--green)" id="exr-pot">₹—</div></div>
+        <div><div class="tl">R:R RATIO</div><div style="font-family:var(--mono);font-weight:700" id="exr-rr">—</div></div>
+        <div><div class="tl">VIX SIZE</div><div style="font-family:var(--mono);font-weight:700" id="exr-vix">100%</div></div>
+      </div>
+    </div>
+  </div>
+  <!-- EXECUTE BUTTON -->
+  <button id="ex-btn" onclick="executeTrade()" style="width:100%;padding:18px;background:var(--green);border:none;border-radius:var(--r);color:#000;font-family:var(--mono);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all .15s;margin-bottom:12px">
+    ⚡ EXECUTE TRADE ON ANGEL ONE
+  </button>
+  <div id="ex-status" style="font-family:var(--mono);font-size:11px;min-height:20px;text-align:center;margin-bottom:12px"></div>
+  <!-- Active positions -->
+  <div class="card">
+    <div class="ch"><span class="ct">📋 ACTIVE POSITIONS</span><button class="btn btn-g btn-sm" onclick="loadActivePositions()">↻ REFRESH</button></div>
+    <div class="cb" id="ex-positions">
+      <div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:10px;padding:16px">No active automated positions</div>
+    </div>
+  </div>
+  <!-- Emergency -->
+  <button onclick="emergencyExit()" style="width:100%;padding:13px;background:var(--rbg);border:1px solid var(--rbord);border-radius:var(--r);color:var(--red);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;margin-top:8px">
+    🚨 EMERGENCY — SQUARE OFF ALL POSITIONS
+  </button>
 </div>
 
 <!-- CHARTS -->
@@ -1105,7 +1172,7 @@ function wireNav(){
     });
   });
 }
-var NAV_HOOKS={dashboard:updateAll,prices:updatePricesPage,mcx:function(){},forex:updateForexPage,
+var NAV_HOOKS={execute:function(){checkServer();loadActivePositions();},dashboard:updateAll,prices:updatePricesPage,mcx:function(){},forex:updateForexPage,
   bswan:renderSwanMonitor,scenarios:renderScenarios,playbooks:renderPlaybooks,history:renderHistory,
   news:loadNews,fiidii:buildFIIDII,srsi:loadSRSI,global:loadGlobal,options:null,charts:null,
   governance:updateGov,engine:updateSwanSizing,screener:null,short:updateShort,journal:renderJournal,
@@ -2063,6 +2130,141 @@ function saveVault(){var v={clientId:(Q('v-cid')||{value:''}).value.trim(),apiKe
 /* ── SETTINGS ── */
 function resetCap(){if(!confirm('Reset capital to ₹10,000?'))return;CAP=BASE_CAP;save();updateAll();toast('Reset to ₹10,000',true);}
 function clearAll(){if(!confirm('Delete ALL data?'))return;localStorage.clear();toast('Cleared',false);setTimeout(function(){location.reload();},1000);}
+
+/* ── AUTOMATION ENGINE ── */
+
+async function checkServer(){
+  var st=Q('srv-status'),se=Q('srv-session'),sp=Q('srv-pos');
+  if(st)st.textContent='Checking…';
+  try{
+    var r=await fetch(SERVER_URL+'/status',{signal:AbortSignal.timeout(5000)});
+    var d=await r.json();
+    _serverOnline=true;
+    if(st){st.textContent='🟢 ONLINE';st.style.color='var(--green)';}
+    if(se)se.textContent=d.session_live?'Active ('+Math.floor(d.session_exp/60)+' min left)':'Expired — click LOGIN';
+    if(se)se.style.color=d.session_live?'var(--green)':'var(--red)';
+    if(sp)sp.textContent=d.active_pos;
+  }catch(e){
+    _serverOnline=false;
+    if(st){st.textContent='🔴 OFFLINE — Start server on DigitalOcean';st.style.color='var(--red)';}
+  }
+}
+
+async function serverLogin(){
+  var sl=Q('srv-login-st');
+  if(sl){sl.textContent='Logging in…';sl.style.color='var(--muted)';}
+  try{
+    var r=await fetch(SERVER_URL+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(15000)});
+    var d=await r.json();
+    if(sl){sl.textContent=d.success?'✅ '+d.message:'❌ '+d.message;sl.style.color=d.success?'var(--green)':'var(--red)';}
+    if(d.success){toast('✅ Angel One session active',true);checkServer();}
+  }catch(e){
+    if(sl){sl.textContent='❌ Server offline — start it on DigitalOcean';sl.style.color='var(--red)';}
+  }
+}
+
+function calcExRisk(){
+  var en=+(Q('ex-en').value||0),sl=+(Q('ex-sl').value||0),tgt=+(Q('ex-tgt').value||0),qty=+(Q('ex-qty').value||0);
+  if(!en||!sl||!qty)return;
+  var risk=+(Math.abs(en-sl)*qty).toFixed(2);
+  var pot=+(Math.abs(tgt-en)*qty).toFixed(2);
+  var rr=risk>0?(pot/risk).toFixed(2):'—';
+  var vix=LIVE['VIX']?LIVE['VIX'].p:18;
+  var vixAdj=vix>30?'25%':vix>25?'50%':vix>20?'75%':'100%';
+  S('exr-risk','₹'+risk);C('exr-risk','var(--red)');
+  S('exr-pot','₹'+pot);C('exr-pot','var(--green)');
+  S('exr-rr','1:'+rr);C('exr-rr',+rr>=2?'var(--green)':+rr>=1?'var(--amber)':'var(--red)');
+  S('exr-vix',vixAdj);C('exr-vix',vix>25?'var(--red)':vix>20?'var(--amber)':'var(--green)');
+}
+
+function autoFillSignal(){
+  /* Pull top screener result into execute form */
+  navTo('screener');
+  setTimeout(function(){
+    Q('sc-strat').value='mom';Q('sc-sec').value='all';
+    runScreener();
+    toast('Run screener → copy top signal into Execute form',false,4000);
+  },300);
+}
+
+async function executeTrade(){
+  if(!_serverOnline){toast('Server offline — start it on DigitalOcean first',false);return;}
+  var sym=Q('ex-sym').value.trim(),tok=Q('ex-tok').value.trim();
+  var exch=Q('ex-exch').value,prod=Q('ex-prod').value,dir=Q('ex-dir').value;
+  var qty=+(Q('ex-qty').value||0),en=+(Q('ex-en').value||0);
+  var sl=+(Q('ex-sl').value||0),tgt=+(Q('ex-tgt').value||0);
+  if(!sym||!tok||!qty||!en||!sl||!tgt){toast('Fill all fields',false);return;}
+  var risk=Math.abs(en-sl)*qty;
+  if(risk>300){toast('Risk ₹'+risk.toFixed(0)+' exceeds ₹300 daily limit. Reduce qty.',false);return;}
+  var btn=Q('ex-btn'),st=Q('ex-status');
+  if(btn){btn.disabled=true;btn.textContent='⏳ PLACING ORDER…';btn.style.background='var(--bg4)';}
+  if(st){st.textContent='Sending to server…';st.style.color='var(--amber)';}
+  try{
+    var r=await fetch(SERVER_URL+'/execute',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({symbol:sym,symbol_token:tok,exchange:exch,product:prod,direction:dir,qty:qty,entry:en,sl:sl,target:tgt}),
+      signal:AbortSignal.timeout(15000)
+    });
+    var d=await r.json();
+    if(d.success){
+      if(st){st.textContent='✅ ORDER PLACED · '+d.message;st.style.color='var(--green)';}
+      toast('✅ Order placed: '+sym+' '+dir,true,5000);
+      /* Auto-log in journal as pending */
+      var pending={id:Date.now(),date:new Date().toISOString().split('T')[0],sym:sym,dir:dir,type:prod,entry:en,exit:tgt,qty:qty,sl:sl,charges:45,gross:+(Math.abs(tgt-en)*qty*(dir==='LONG'?1:1)).toFixed(2),net:+(Math.abs(tgt-en)*qty-45).toFixed(2),rMult:+((Math.abs(tgt-en)/Math.abs(en-sl)).toFixed(2)),reason:'Auto: Server order '+d.order_id,outcome:'PENDING'};
+      /* Store trade_id for monitoring */
+      if(d.trade_id) localStorage.setItem('last_trade_id',d.trade_id);
+      setTimeout(loadActivePositions,2000);
+    }else{
+      if(st){st.textContent='❌ '+d.message;st.style.color='var(--red)';}
+      toast('❌ Order failed: '+d.message,false);
+    }
+  }catch(e){
+    if(st){st.textContent='❌ Server error: '+e.message;st.style.color='var(--red)';}
+  }
+  if(btn){btn.disabled=false;btn.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';btn.style.background='var(--green)';}
+}
+
+async function loadActivePositions(){
+  var el=Q('ex-positions');if(!el)return;
+  if(!_serverOnline){el.innerHTML='<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:10px;padding:16px">Server offline</div>';return;}
+  try{
+    var r=await fetch(SERVER_URL+'/positions',{signal:AbortSignal.timeout(5000)});
+    var d=await r.json();
+    var pos=Object.entries(d.positions||{});
+    if(!pos.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:10px;padding:16px">No active automated positions</div>';return;}
+    el.innerHTML=pos.map(function(kv){
+      var id=kv[0],p=kv[1];
+      var col=p.status==='TARGET_HIT'?'var(--green)':p.status==='SL_HIT'?'var(--red)':p.active?'var(--amber)':'var(--muted)';
+      return '<div style="border-left:3px solid '+col+';padding:10px 12px;border-bottom:1px solid var(--border2)">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-weight:700">'+p.symbol+'</span><span style="font-family:var(--mono);font-size:10px;color:'+col+'">'+p.status+'</span></div>'
+        +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">'+p.direction+' · Qty:'+p.qty+' · Entry:₹'+p.entry+' | SL:₹'+p.sl+' | Tgt:₹'+p.target+'</div>'
+        +(p.pnl!==null?'<div style="font-family:var(--mono);font-size:12px;font-weight:700;margin-top:4px;color:'+(p.pnl>=0?'var(--green)':'var(--red)')+'">'+(p.pnl>=0?'+':'')+'₹'+p.pnl+'</div>':'')
+        +(p.active?'<button onclick="manualExit(\"'+id+'\")" style="margin-top:6px;background:var(--rbg);border:1px solid var(--rbord);color:var(--red);padding:3px 10px;border-radius:var(--rs);font-family:var(--mono);font-size:9px;cursor:pointer">EXIT NOW</button>':'')
+        +'</div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:10px;padding:16px">Could not reach server</div>';}
+}
+
+async function manualExit(tradeId){
+  if(!confirm('Exit this position now at market price?'))return;
+  var sym=Q('ex-sym').value||'',tok=Q('ex-tok').value||'';
+  try{
+    var r=await fetch(SERVER_URL+'/exit/'+tradeId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol_token:tok,exchange:'NSE'}),signal:AbortSignal.timeout(10000)});
+    var d=await r.json();
+    toast(d.success?'✅ Exited — P&L ₹'+d.pnl:'❌ '+d.message,d.success);
+    setTimeout(loadActivePositions,2000);
+  }catch(e){toast('❌ Server error',false);}
+}
+
+async function emergencyExit(){
+  if(!confirm('EMERGENCY: Square off ALL positions at market price?'))return;
+  try{
+    var r=await fetch(SERVER_URL+'/squareoff',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(15000)});
+    var d=await r.json();
+    toast('🚨 Emergency exit: '+(d.closed||[]).join(', ')||'No positions',d.success);
+    setTimeout(loadActivePositions,3000);
+  }catch(e){toast('❌ Server error',false);}
+}
 
 /* ── INACTIVITY AUTO-LOGOUT ── */
 var _cdInterval=null;
