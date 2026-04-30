@@ -224,6 +224,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
       <span id="mkt-b" class="mkt-badge closed">CLOSED</span>
       <span class="tb-time" id="tb-time">--:--:--</span>
       <span id="fb-ind" style="font-size:11px;cursor:default;color:var(--muted)">☁</span>
+      <span id="inact-timer" title="Session timer" style="font-family:var(--mono);font-size:9px;color:var(--muted);cursor:default;white-space:nowrap">🔒 60m</span>
       <button class="ico-btn" onclick="lockApp()" title="Logout" style="background:rgba(255,61,107,.1);border-color:rgba(255,61,107,.3);color:var(--red);font-size:11px;padding:4px 8px">🔒 EXIT</button>
     </div>
   </div>
@@ -823,6 +824,20 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
   </div><!-- app-body -->
 </div><!-- app -->
 <div id="toast"></div>
+
+<!-- INACTIVITY WARNING MODAL -->
+<div id="inact-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:#0a0e18;border:1px solid rgba(255,170,0,.4);border-radius:12px;padding:28px 32px;max-width:340px;width:90%;text-align:center">
+    <div style="font-size:28px;margin-bottom:10px">⏱</div>
+    <div style="font-family:'Space Mono',monospace;font-size:12px;color:#ffaa00;letter-spacing:.5px;margin-bottom:8px">SESSION EXPIRING</div>
+    <div style="font-size:14px;color:#c8d8e8;margin-bottom:6px">Auto-logout in <strong style="font-family:'Space Mono',monospace;color:#ffaa00" id="inact-countdown">60</strong> seconds</div>
+    <div style="font-size:12px;color:#6b80a8;margin-bottom:20px">1 hour of inactivity detected</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="resetActivity()" style="flex:1;padding:11px;background:#4096ff;border:none;border-radius:7px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.3px">STAY LOGGED IN</button>
+      <button onclick="lockApp()" style="flex:1;padding:11px;background:rgba(255,61,107,.12);border:1px solid rgba(255,61,107,.3);border-radius:7px;color:#ff3d6b;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.3px">LOGOUT NOW</button>
+    </div>
+  </div>
+</div>
 <script>
 'use strict';
 /* ═══════════════════════════════════════
@@ -837,7 +852,12 @@ var TG_CHATID='785860467';
 var BASE_CAP=10000;
 var RISK_PCT=0.01;
 var SES_KEY='prism-ses3';
-var SES_TTL=24*3600*1000;
+var SES_TTL=24*3600*1000; /* absolute max */
+var INACTIVITY_TTL=60*60*1000; /* 1 hour of inactivity */
+var _lastActivity=Date.now();
+var _inactivityTimer=null;
+var _warningTimer=null;
+var _warningShown=false;
 
 /* ── STATE ── */
 var CAP=+(localStorage.getItem('prism-cap3')||BASE_CAP);
@@ -1003,7 +1023,7 @@ function verifyOTP(){
 
 /* ── SESSION ── */
 function unlockApp(){
-  localStorage.setItem(SES_KEY,JSON.stringify({ts:Date.now()}));
+  localStorage.setItem(SES_KEY,JSON.stringify({ts:Date.now(),lastActivity:Date.now()}));
   Q('gate').style.display='none';
   Q('app').style.display='flex';
   onAppStart();
@@ -1011,7 +1031,18 @@ function unlockApp(){
 function lockApp(){localStorage.removeItem(SES_KEY);location.reload();}
 function checkSession(){
   var s=JSON.parse(localStorage.getItem(SES_KEY)||'null');
-  if(s&&(Date.now()-s.ts)<SES_TTL){Q('gate').style.display='none';Q('app').style.display='flex';onAppStart();}
+  if(!s) return;
+  var now=Date.now();
+  var sinceLogin=now-s.ts;
+  var sinceActivity=now-(s.lastActivity||s.ts);
+  if(sinceLogin<SES_TTL && sinceActivity<INACTIVITY_TTL){
+    _lastActivity=s.lastActivity||now;
+    Q('gate').style.display='none';
+    Q('app').style.display='flex';
+    onAppStart();
+  } else {
+    localStorage.removeItem(SES_KEY);
+  }
 }
 
 /* ── APP START ── */
@@ -1040,6 +1071,8 @@ async function onAppStart(){
     }
   }catch(_){}
   checkMonthRollover();fetchLive();setInterval(fetchLive,60000);
+  startInactivityWatch();
+  setInterval(updateInactivityIndicator,1000);
 }
 
 /* ── CLOCK ── */
@@ -2030,6 +2063,122 @@ function saveVault(){var v={clientId:(Q('v-cid')||{value:''}).value.trim(),apiKe
 /* ── SETTINGS ── */
 function resetCap(){if(!confirm('Reset capital to ₹10,000?'))return;CAP=BASE_CAP;save();updateAll();toast('Reset to ₹10,000',true);}
 function clearAll(){if(!confirm('Delete ALL data?'))return;localStorage.clear();toast('Cleared',false);setTimeout(function(){location.reload();},1000);}
+
+/* ── INACTIVITY AUTO-LOGOUT ── */
+var _cdInterval=null;
+
+function startInactivityWatch(){
+  /* Track all user interactions */
+  ['mousemove','mousedown','keydown','touchstart','touchmove','scroll','click'].forEach(function(ev){
+    document.addEventListener(ev,throttleActivity,{passive:true});
+  });
+  scheduleInactivityCheck();
+}
+
+function throttleActivity(){
+  var now=Date.now();
+  if(now-_lastActivity>5000){ /* throttle to once per 5s */
+    recordActivity();
+  }
+}
+
+function recordActivity(){
+  _lastActivity=Date.now();
+  var s=JSON.parse(localStorage.getItem(SES_KEY)||'null');
+  if(s){s.lastActivity=_lastActivity;localStorage.setItem(SES_KEY,JSON.stringify(s));}
+  /* If warning is showing, dismiss it */
+  if(_warningShown) dismissWarning();
+}
+
+function resetActivity(){
+  recordActivity();
+  dismissWarning();
+  toast('✅ Session extended — 1 hour from now',true,3000);
+}
+
+function dismissWarning(){
+  _warningShown=false;
+  var ov=Q('inact-overlay');
+  if(ov)ov.style.display='none';
+  clearInterval(_cdInterval);
+  _cdInterval=null;
+}
+
+function scheduleInactivityCheck(){
+  clearTimeout(_inactivityTimer);
+  clearTimeout(_warningTimer);
+  var WARN_BEFORE=60*1000; /* show warning 60s before logout */
+  /* Warning fires at 59 minutes of inactivity */
+  _warningTimer=setTimeout(function(){
+    showInactivityWarning();
+  }, INACTIVITY_TTL - WARN_BEFORE);
+  /* Hard logout fires at 60 minutes */
+  _inactivityTimer=setTimeout(function(){
+    if(!_warningShown) return; /* already dismissed */
+    handleInactivityLogout();
+  }, INACTIVITY_TTL);
+}
+
+function showInactivityWarning(){
+  /* Double-check — user may have been active */
+  if(Date.now()-_lastActivity < INACTIVITY_TTL - 65000) {
+    scheduleInactivityCheck();
+    return;
+  }
+  _warningShown=true;
+  var ov=Q('inact-overlay');
+  if(ov)ov.style.display='flex';
+  var remaining=60;
+  var cd=Q('inact-countdown');
+  if(cd)cd.textContent=remaining;
+  clearInterval(_cdInterval);
+  _cdInterval=setInterval(function(){
+    remaining--;
+    if(cd)cd.textContent=remaining;
+    if(remaining<=0){
+      clearInterval(_cdInterval);
+      handleInactivityLogout();
+    }
+  },1000);
+  /* Re-schedule the watch for after warning */
+  clearTimeout(_inactivityTimer);
+  clearTimeout(_warningTimer);
+}
+
+function handleInactivityLogout(){
+  _warningShown=false;
+  clearInterval(_cdInterval);
+  clearTimeout(_inactivityTimer);
+  clearTimeout(_warningTimer);
+  var ov=Q('inact-overlay');
+  if(ov)ov.style.display='none';
+  tg('🔒 Auto-logout: 1 hour of inactivity\n'+new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST');
+  localStorage.removeItem(SES_KEY);
+  /* Fade out app */
+  var app=Q('app');
+  if(app){app.style.opacity='0';app.style.transition='opacity .4s';}
+  setTimeout(function(){location.reload();},450);
+}
+
+/* ── INACTIVITY TIMER DISPLAY IN TOPBAR ── */
+function updateInactivityIndicator(){
+  var el=Q('inact-timer');
+  if(!el)return;
+  var elapsed=Date.now()-_lastActivity;
+  var remaining=Math.max(0,INACTIVITY_TTL-elapsed);
+  var mins=Math.floor(remaining/60000);
+  var secs=Math.floor((remaining%60000)/1000);
+  if(remaining<300000){ /* last 5 min = show countdown */
+    el.textContent=mins+'m '+pad(secs)+'s';
+    el.style.color=remaining<120000?'var(--red)':remaining<300000?'var(--amber)':'var(--muted)';
+    el.title='Auto-logout in '+mins+'m '+pad(secs)+'s';
+  } else {
+    el.textContent='🔒 '+(Math.floor(remaining/60000))+'m';
+    el.style.color='var(--muted)';
+    el.title='Session active — auto-logout after 1 hour of inactivity';
+  }
+  scheduleInactivityCheck(); /* re-schedule on each tick to pick up activity */
+}
 
 /* ══ BOOT — THIS MUST BE THE LAST LINE ══ */
 checkSession();
