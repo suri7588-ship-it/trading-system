@@ -932,7 +932,13 @@ var TOKEN_MAP={
   'HEROMOTOCO':'1348','HINDALCO':'1363','INDUSINDBK':'5258','JSWSTEEL':'11723',
   'NTPC':'11630','ONGC':'2475','POWERGRID':'14977','TATACONSUM':'3426',
   'TATASTEEL':'3432','UPL':'11287','VEDL':'3063','ZOMATO':'5097',
-  'NIFTY':'26000','BANKNIFTY':'26009'
+  'NIFTY':'26000','BANKNIFTY':'26009',
+  /* MCX Commodities */
+  'GOLDM':'67694','GOLD':'67686','SILVERM':'67699','SILVER':'67697',
+  'CRUDEOIL':'67680','NATURALGAS':'67681','COPPER':'67676',
+  'ALUMINIUM':'67672','ZINC':'67701','LEAD':'67689',
+  /* Currency CDS - NSE */
+  'USDINR':'11536010','EURINR':'11537010','GBPINR':'11538010','JPYINR':'11539010'
 };
 var RISK_PCT=0.01;
 var SES_KEY='prism-ses3';
@@ -1851,9 +1857,27 @@ async function runScreener(){
     var col2=decision==='HEDGE BUY'?'var(--amber)':isBuy?'var(--green)':'var(--red)';
     results.push({sym,p,pct,score,signals,decision,isBuy,col:col2,sl:sl2,tgt:tgt2,qty:qty2});
   });
-  results.sort(function(a,b){return b.score-a.score;});
+  /* Calculate profit potential % of capital for each result */
+results.forEach(function(r){
+  var riskAmt=Math.abs(r.p-r.sl)*r.qty;
+  var profitAmt=Math.abs(r.tgt-r.p)*r.qty;
+  r.riskPct=+(riskAmt/CAP*100).toFixed(2);
+  r.profitPct=+(profitAmt/CAP*100).toFixed(2);
+  r.rr=riskAmt>0?+(profitAmt/riskAmt).toFixed(2):0;
+  r.highPotential=r.profitPct>=0.6; /* profit >= 60% of 1% risk = good R:R */
+  r.hotSignal=r.rr>=2&&r.profitPct>=0.6; /* R:R >= 2 AND potential >= 0.6% of capital */
+});
+/* Sort: hot signals first, then by R:R, then by score */
+results.sort(function(a,b){
+  if(b.hotSignal!==a.hotSignal)return b.hotSignal?1:-1;
+  if(b.rr!==a.rr)return b.rr-a.rr;
+  return b.score-a.score;
+});
   if(!results.length){if(res)res.innerHTML='<div class="card"><div class="cb"><div class="alert a-i"><span>ℹ</span><span>No setups found. Try a different strategy or sector.</span></div></div></div>';return;}
-  var html='<div class="card"><div class="ch"><span class="ct">'+results.length+' SETUPS — '+strat.toUpperCase()+'</span><span class="badge bb">'+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'})+'</span></div>';
+  var hotCount=results.filter(function(r){return r.hotSignal;}).length;
+var html='<div class="card"><div class="ch"><span class="ct">'+results.length+' SETUPS — '+strat.toUpperCase()+'</span>'
+  +(hotCount?'<span style="font-family:var(--mono);font-size:9px;padding:2px 10px;border-radius:20px;background:rgba(5,217,124,.15);color:var(--green);border:1px solid rgba(5,217,124,.3)">🔥 '+hotCount+' HOT</span>':'')
+  +'<span class="badge bb">'+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'})+'</span></div>';
   results.forEach(function(r2){var pc=gc(r2.pct);
     html+='<div style="border-bottom:1px solid var(--border2);padding:10px 14px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">'
@@ -1864,6 +1888,8 @@ async function runScreener(){
       +'<div><div class="tl">SL</div><span style="color:var(--red)">₹'+r2.sl+'</span></div>'
       +'<div><div class="tl">2R TARGET</div><span style="color:var(--green)">₹'+r2.tgt+'</span></div>'
       +'<div><div class="tl">QTY (1%)</div>'+r2.qty+'</div>'
+      +'<div><div class="tl">R:R RATIO</div><span style="color:'+(r2.rr>=2?'var(--green)':r2.rr>=1.5?'var(--amber)':'var(--red)')+'">'+(r2.rr>=2?'🔥 ':'')+r2.rr+'R</span></div>'
+      +'<div><div class="tl">PROFIT %CAP</div><span style="color:'+(r2.profitPct>=0.6?'var(--green)':'var(--muted)')+'">'+(r2.profitPct>=0.6?'★ ':'')+r2.profitPct+'%</span></div>'
       +'</div>'
       +'<button onclick="fillFromResult({sym:\''+r2.sym+'\',p:'+r2.p.toFixed(2)+',sl:'+r2.sl+',tgt:'+r2.tgt+',qty:'+r2.qty+',dir:\''+(r2.isBuy?'LONG':'SHORT')+'\'});" style="width:100%;margin-top:10px;padding:8px;background:rgba(5,217,124,.1);border:1px solid rgba(5,217,124,.3);border-radius:var(--rs);color:var(--green);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px">⚡ USE THIS SIGNAL → AUTO-FILL EXECUTE FORM</button>'
       +'</div>'
@@ -2223,10 +2249,22 @@ function calcExRisk(){
   var rr=risk>0?(pot/risk).toFixed(2):'—';
   var vix=LIVE['VIX']?LIVE['VIX'].p:18;
   var vixAdj=vix>30?'25%':vix>25?'50%':vix>20?'75%':'100%';
-  S('exr-risk','₹'+risk);C('exr-risk','var(--red)');
-  S('exr-pot','₹'+pot);C('exr-pot','var(--green)');
-  S('exr-rr','1:'+rr);C('exr-rr',+rr>=2?'var(--green)':+rr>=1?'var(--amber)':'var(--red)');
-  S('exr-vix',vixAdj);C('exr-vix',vix>25?'var(--red)':vix>20?'var(--amber)':'var(--green)');
+  var potPct=+(pot/CAP*100).toFixed(2);
+  var isHot=+rr>=2&&potPct>=0.6;
+  var riskPct=(risk/CAP*100).toFixed(2);
+  S('exr-risk','₹'+risk.toFixed(2)+' ('+riskPct+'%)');
+  C('exr-risk','var(--red)');
+  S('exr-pot','₹'+pot.toFixed(2)+' (+'+potPct+'%)'+(isHot?' 🔥':''));
+  C('exr-pot',isHot?'var(--green)':potPct>=0.6?'var(--green)':'var(--amber)');
+  S('exr-rr','1:'+rr+(+rr>=2?' ✅':''));
+  C('exr-rr',+rr>=2?'var(--green)':+rr>=1?'var(--amber)':'var(--red)');
+  S('exr-vix',vixAdj);
+  C('exr-vix',vix>25?'var(--red)':vix>20?'var(--amber)':'var(--green)');
+  var btn=Q('ex-btn');
+  if(btn&&en&&sl&&tgt){
+    if(isHot){btn.textContent='🔥 HOT SIGNAL — EXECUTE NOW';btn.style.boxShadow='0 0 20px rgba(5,217,124,.4)';}
+    else{btn.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';btn.style.boxShadow='none';}
+  }
 }
 
 function fillFromResult(r){
