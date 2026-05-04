@@ -920,6 +920,20 @@ var TG_CHATID='785860467';
 var SERVER_URL='https://143.110.183.26.nip.io'; /* DigitalOcean BLR1 — HTTPS via nip.io */
 var _serverOnline=false; /* server connectivity state */
 var BASE_CAP=10000;
+/* Angel One SmartAPI symbol tokens for common NSE stocks */
+var TOKEN_MAP={
+  'HDFCBANK':'1333','RELIANCE':'2885','INFY':'1594','TCS':'11536',
+  'ICICIBANK':'4963','KOTAKBANK':'1660','AXISBANK':'5900','SBIN':'3045',
+  'WIPRO':'3787','LT':'11483','TATAMOTORS':'3456','MARUTI':'10999',
+  'SUNPHARMA':'3351','DRREDDY':'881','TITAN':'3506','NESTLEIND':'17963',
+  'BAJFINANCE':'317','BAJAJFINSV':'16675','TECHM':'13538','ULTRACEMCO':'11532',
+  'HINDUNILVR':'1394','ASIANPAINT':'236','BRITANNIA':'547','CIPLA':'694',
+  'DIVISLAB':'10940','EICHERMOT':'910','GRASIM':'1232','HCLTECH':'7229',
+  'HEROMOTOCO':'1348','HINDALCO':'1363','INDUSINDBK':'5258','JSWSTEEL':'11723',
+  'NTPC':'11630','ONGC':'2475','POWERGRID':'14977','TATACONSUM':'3426',
+  'TATASTEEL':'3432','UPL':'11287','VEDL':'3063','ZOMATO':'5097',
+  'NIFTY':'26000','BANKNIFTY':'26009'
+};
 var RISK_PCT=0.01;
 var SES_KEY='prism-ses3';
 var SES_TTL=24*3600*1000; /* absolute max */
@@ -1850,7 +1864,10 @@ async function runScreener(){
       +'<div><div class="tl">SL</div><span style="color:var(--red)">₹'+r2.sl+'</span></div>'
       +'<div><div class="tl">2R TARGET</div><span style="color:var(--green)">₹'+r2.tgt+'</span></div>'
       +'<div><div class="tl">QTY (1%)</div>'+r2.qty+'</div>'
-      +'</div></div>';
+      +'</div>'
+      +'<button onclick="fillFromResult({sym:\''+r2.sym+'\',p:'+r2.p.toFixed(2)+',sl:'+r2.sl+',tgt:'+r2.tgt+',qty:'+r2.qty+',dir:\''+(r2.isBuy?'LONG':'SHORT')+'\'});" style="width:100%;margin-top:10px;padding:8px;background:rgba(5,217,124,.1);border:1px solid rgba(5,217,124,.3);border-radius:var(--rs);color:var(--green);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.5px">⚡ USE THIS SIGNAL → AUTO-FILL EXECUTE FORM</button>'
+      +'</div>'
+      +'</div>';
   });
   html+='</div>';if(res)res.innerHTML=html;
 }
@@ -2212,14 +2229,40 @@ function calcExRisk(){
   S('exr-vix',vixAdj);C('exr-vix',vix>25?'var(--red)':vix>20?'var(--amber)':'var(--green)');
 }
 
+function fillFromResult(r){
+  /* Fill execute form from screener result object */
+  var sym=r.sym||'';
+  if(Q('ex-sym'))Q('ex-sym').value=sym;
+  if(Q('ex-tok'))Q('ex-tok').value=TOKEN_MAP[sym]||'';
+  if(Q('ex-dir'))Q('ex-dir').value=r.dir||'LONG';
+  if(Q('ex-en'))Q('ex-en').value=r.p?r.p.toFixed(2):'';
+  if(Q('ex-sl'))Q('ex-sl').value=r.sl?r.sl.toFixed(2):'';
+  if(Q('ex-tgt'))Q('ex-tgt').value=r.tgt?r.tgt.toFixed(2):'';
+  if(Q('ex-qty'))Q('ex-qty').value=r.qty||1;
+  calcExRisk();
+  navTo('execute');
+  toast('✅ Signal loaded: '+sym+' '+r.dir+' | Scroll down to execute',true,5000);
+  /* Highlight the execute button */
+  var btn=Q('ex-btn');
+  if(btn){btn.style.animation='pulse 1s ease 3';setTimeout(function(){btn.style.animation='';},3000);}
+}
+
 function autoFillSignal(){
-  /* Pull top screener result into execute form */
+  /* Run screener silently and auto-populate top signal */
+  var btn=Q('ex-btn');
+  if(btn){btn.textContent='⏳ SCANNING MARKET…';btn.disabled=true;}
   navTo('screener');
   setTimeout(function(){
-    Q('sc-strat').value='mom';Q('sc-sec').value='all';
+    if(Q('sc-strat'))Q('sc-strat').value='mom';
+    if(Q('sc-sec'))Q('sc-sec').value='all';
+    toast('Running screener… tap ⚡ USE THIS SIGNAL on best setup',false,5000);
     runScreener();
-    toast('Run screener → copy top signal into Execute form',false,4000);
-  },300);
+    setTimeout(function(){
+      navTo('execute');
+      var eb=Q('ex-btn');
+      if(eb){eb.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';eb.disabled=false;}
+    },8000);
+  },400);
 }
 
 async function executeTrade(){
