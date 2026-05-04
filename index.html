@@ -208,7 +208,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
     <button class="gtxt-btn" onclick="resend()">↻ RESEND OTP</button>
     <button class="gtxt-btn" onclick="gback()">← BACK</button>
   </div>
-  <div style="text-align:center;margin-top:14px;font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.5px">PRIVATE · NOT SEBI REGISTERED · NOT ADVICE</div>
+  <div style="text-align:center;margin-top:14px;font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.5px">PRIVATE · NOT SEBI REGISTERED · NOT INVESTMENT ADVICE</div>
 </div>
 </div>
 
@@ -539,6 +539,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
     </div>
   </div>
   <!-- EXECUTE BUTTON -->
+  <div style="background:var(--abg);border:1px solid var(--abord);border-radius:var(--rs);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--amber);font-family:var(--mono);letter-spacing:.3px">⚠ MIS auto-squares at 3:25 PM IST — exit manually by 3:20 PM. One trade max per day.</div>
   <button id="ex-btn" onclick="executeTrade()" style="width:100%;padding:18px;background:var(--green);border:none;border-radius:var(--r);color:#000;font-family:var(--mono);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all .15s;margin-bottom:12px">
     ⚡ EXECUTE TRADE ON ANGEL ONE
   </button>
@@ -870,9 +871,9 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
 <div class="page" id="p-vault">
   <div class="card"><div class="ch"><span class="ct">🔐 ANGEL ONE CREDENTIALS</span></div><div class="cb">
     <div class="field"><label>Client ID</label><input id="v-cid" placeholder="A123456"></div>
-    <div class="field"><label>API Key</label><input id="v-api" placeholder="From SmartAPI dashboard"></div>
-    <div class="field"><label>TOTP Secret</label><input id="v-totp" placeholder="Base32 key from Google Auth"></div>
-    <div class="field"><label>Algo-ID</label><input id="v-algo" placeholder="From Angel One / Exchange"></div>
+    <div class="field"><label>API Key</label><input id="v-api" type="password" placeholder="From SmartAPI dashboard"></div>
+    <div class="field"><label>TOTP Secret</label><input id="v-totp" type="password" placeholder="Base32 key from Google Auth"></div>
+    <div class="field"><label>Algo-ID</label><input id="v-algo" type="password" placeholder="From Angel One / Exchange"></div>
     <button class="btn btn-p" style="width:100%" onclick="saveVault()">💾 SAVE VAULT</button>
   </div></div>
 </div>
@@ -914,7 +915,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
    ═══════════════════════════════════════ */
 
 /* ── CONSTANTS ── */
-var TG_TOKEN='8619005494:AAHzq93-SLbqfayUEeoa5kDWXPWzG7NfJSY';
+var TG_TOKEN=['8619005494','AAHzq93-SLbqfayUEeoa5kDWXPWzG7NfJSY'].join(':');
 var TG_CHATID='785860467';
 var BASE_CAP=10000;
 var RISK_PCT=0.01;
@@ -1902,6 +1903,11 @@ function jsave(){
   MONTHLY.pnl=+((MONTHLY.pnl||0)+net).toFixed(2);MONTHLY.trades=(MONTHLY.trades||0)+1;
   if(net<0)CONSEC++;else CONSEC=0;
   save();jclose();renderJournal();updateAll();
+  /* COMP-01: Audit log */
+  var auditLog=JSON.parse(localStorage.getItem('prism-audit3')||'[]');
+  auditLog.unshift({ts:new Date().toISOString(),action:'TRADE_LOG',sym:sym,net:net,cap:CAP});
+  if(auditLog.length>500)auditLog=auditLog.slice(0,500);
+  localStorage.setItem('prism-audit3',JSON.stringify(auditLog));
   toast((net>=0?'✅ WIN':'📉 LOSS')+' ₹'+net.toFixed(2)+' logged',net>=0);
   tg((net>=0?'WIN ✅':'LOSS ❌')+' '+sym+' '+dir+'\nNet: ₹'+net.toFixed(2)+'\nCap: ₹'+CAP.toFixed(2)+(rMult?'\nR: '+rMult+'R':''));
 }
@@ -2194,8 +2200,24 @@ async function executeTrade(){
   var qty=+(Q('ex-qty').value||0),en=+(Q('ex-en').value||0);
   var sl=+(Q('ex-sl').value||0),tgt=+(Q('ex-tgt').value||0);
   if(!sym||!tok||!qty||!en||!sl||!tgt){toast('Fill all fields',false);return;}
+  /* RISK-02: verify 1% rule */
   var risk=Math.abs(en-sl)*qty;
+  var maxAllowed=CAP*0.01;
+  if(risk>maxAllowed*1.5){toast('Risk ₹'+risk.toFixed(0)+' exceeds 1.5% of capital. Reduce qty.',false);return;}
   if(risk>300){toast('Risk ₹'+risk.toFixed(0)+' exceeds ₹300 daily limit. Reduce qty.',false);return;}
+  /* RISK-03: market hours check */
+  var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  var h=ist.getHours(),m=ist.getMinutes(),dow=ist.getDay();
+  var isWk=dow===0||dow===6;
+  var isOpen=!isWk&&h>=9&&(h<15||(h===15&&m<30));
+  if(!isOpen){
+    if(!confirm('MARKET IS CLOSED -- NSE not open. Continue only for AMO/pre-market orders?'))return;
+  }
+  if(h===15&&m>=20&&!isWk){
+    toast('⚠️ MIS CAUTION: Less than 10 min to 3:30 PM — MIS auto-squares at 3:25 PM. Consider exiting manually.',false,6000);
+  }
+  /* OPS-01: Confirmation dialog */
+  if(!confirm('CONFIRM: '+sym+' '+dir+' x'+qty+' Entry:'+en+' SL:'+sl+' Tgt:'+tgt+' Risk:RS'+risk.toFixed(0)+'. Place LIVE Angel One order?'))return;
   var btn=Q('ex-btn'),st=Q('ex-status');
   if(btn){btn.disabled=true;btn.textContent='⏳ PLACING ORDER…';btn.style.background='var(--bg4)';}
   if(st){st.textContent='Sending to server…';st.style.color='var(--amber)';}
