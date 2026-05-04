@@ -500,7 +500,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
   <div class="card" style="margin-bottom:12px">
     <div class="ch"><span class="ct">🖥 SERVER STATUS</span><button class="btn btn-g btn-sm" onclick="checkServer()">↻ CHECK</button></div>
     <div class="cb">
-      <div class="cr"><span class="cl">DigitalOcean BLR1</span><span class="cv" id="srv-ip">143.110.183.26:5000</span></div>
+      <div class="cr"><span class="cl">DigitalOcean BLR1</span><span class="cv" id="srv-ip">143.110.183.26.nip.io</span></div>
       <div class="cr"><span class="cl">Status</span><span class="cv" id="srv-status" style="color:var(--muted)">Checking…</span></div>
       <div class="cr"><span class="cl">Session</span><span class="cv" id="srv-session">—</span></div>
       <div class="cr"><span class="cl">Active positions</span><span class="cv" id="srv-pos">0</span></div>
@@ -917,6 +917,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
 /* ── CONSTANTS ── */
 var TG_TOKEN=['8619005494','AAHzq93-SLbqfayUEeoa5kDWXPWzG7NfJSY'].join(':');
 var TG_CHATID='785860467';
+var SERVER_URL='https://143.110.183.26.nip.io'; /* DigitalOcean BLR1 — HTTPS via nip.io */
 var BASE_CAP=10000;
 var RISK_PCT=0.01;
 var SES_KEY='prism-ses3';
