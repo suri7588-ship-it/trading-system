@@ -918,6 +918,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
 var TG_TOKEN=['8619005494','AAHzq93-SLbqfayUEeoa5kDWXPWzG7NfJSY'].join(':');
 var TG_CHATID='785860467';
 var SERVER_URL='https://143.110.183.26.nip.io'; /* DigitalOcean BLR1 — HTTPS via nip.io */
+var _serverOnline=false; /* server connectivity state */
 var BASE_CAP=10000;
 var RISK_PCT=0.01;
 var SES_KEY='prism-ses3';
@@ -2142,31 +2143,58 @@ function clearAll(){if(!confirm('Delete ALL data?'))return;localStorage.clear();
 
 async function checkServer(){
   var st=Q('srv-status'),se=Q('srv-session'),sp=Q('srv-pos');
-  if(st)st.textContent='Checking…';
+  if(st){st.textContent='Checking…';st.style.color='var(--muted)';}
+  var controller=new AbortController();
+  var timer=setTimeout(()=>controller.abort(),8000);
   try{
-    var r=await fetch(SERVER_URL+'/status',{signal:AbortSignal.timeout(5000)});
+    var r=await fetch(SERVER_URL+'/status',{
+      method:'GET',
+      mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      signal:controller.signal
+    });
+    clearTimeout(timer);
     var d=await r.json();
     _serverOnline=true;
     if(st){st.textContent='🟢 ONLINE';st.style.color='var(--green)';}
-    if(se)se.textContent=d.session_live?'Active ('+Math.floor(d.session_exp/60)+' min left)':'Expired — click LOGIN';
-    if(se)se.style.color=d.session_live?'var(--green)':'var(--red)';
-    if(sp)sp.textContent=d.active_pos;
+    if(se){
+      se.textContent=d.session_live
+        ?'Active ('+Math.floor(d.session_exp/60)+' min left)'
+        :'Expired — click LOGIN';
+      se.style.color=d.session_live?'var(--green)':'var(--red)';
+    }
+    if(sp)sp.textContent=d.active_pos||0;
   }catch(e){
+    clearTimeout(timer);
     _serverOnline=false;
-    if(st){st.textContent='🔴 OFFLINE — Start server on DigitalOcean';st.style.color='var(--red)';}
+    var reason=e.name==='AbortError'?'Timeout (8s)':e.message||'Network error';
+    if(st){st.textContent='🔴 OFFLINE — '+reason;st.style.color='var(--red)';}
+    console.error('checkServer error:',e.name,e.message,'URL:',SERVER_URL);
   }
 }
 
 async function serverLogin(){
   var sl=Q('srv-login-st');
-  if(sl){sl.textContent='Logging in…';sl.style.color='var(--muted)';}
+  if(sl){sl.textContent='Logging in to Angel One…';sl.style.color='var(--muted)';}
+  var controller=new AbortController();
+  var timer=setTimeout(()=>controller.abort(),15000);
   try{
-    var r=await fetch(SERVER_URL+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(15000)});
+    var r=await fetch(SERVER_URL+'/login',{
+      method:'POST',
+      mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body:'{}',
+      signal:controller.signal
+    });
+    clearTimeout(timer);
     var d=await r.json();
     if(sl){sl.textContent=d.success?'✅ '+d.message:'❌ '+d.message;sl.style.color=d.success?'var(--green)':'var(--red)';}
     if(d.success){toast('✅ Angel One session active',true);checkServer();}
   }catch(e){
-    if(sl){sl.textContent='❌ Server offline — start it on DigitalOcean';sl.style.color='var(--red)';}
+    clearTimeout(timer);
+    var reason=e.name==='AbortError'?'Timeout — server may be starting':'CORS or network error: '+e.message;
+    if(sl){sl.textContent='❌ '+reason;sl.style.color='var(--red)';}
+    console.error('serverLogin error:',e);
   }
 }
 
