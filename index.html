@@ -1870,8 +1870,32 @@ async function runScreener(){
   if(res)res.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:10px">⏳ SCREENING '+stocks.length+' STOCKS…</div>';
   var url='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+stocks.map(function(s){return s+'.NS';}).join(',');
   var quotes=[];
-  try{var r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url),{cache:'no-store',signal:AbortSignal.timeout(12000)});if(r.ok){var j=await r.json();quotes=(j.quoteResponse&&j.quoteResponse.result)||[];}}catch(_){}
-  if(!quotes.length){quotes=stocks.slice(0,8).map(function(s){/* stable seed based on symbol name, not random */var seed=s.split('').reduce(function(a,c){return a+c.charCodeAt(0);},0);var p=400+(seed%1600);return{symbol:s+'.NS',regularMarketPrice:p,regularMarketChangePercent:(Math.random()-.5)*3,regularMarketVolume:Math.floor(Math.random()*5e6+5e5),regularMarketDayHigh:p*1.01,regularMarketDayLow:p*.99,fiftyDayAverage:p*(0.95+Math.random()*.1),twoHundredDayAverage:p*(0.9+Math.random()*.15),fiftyTwoWeekHigh:p*1.3};});}
+  try{
+    var _r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url),{cache:'no-store',signal:AbortSignal.timeout(8000)});
+    if(_r.ok){var _j=await _r.json();quotes=(_j.quoteResponse&&_j.quoteResponse.result)||[];}
+  }catch(_e1){}
+  if(!quotes.length){
+    try{
+      var _r2=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url),{cache:'no-store',signal:AbortSignal.timeout(8000)});
+      if(_r2.ok){var _j2=await _r2.json();quotes=(_j2.quoteResponse&&_j2.quoteResponse.result)||[];}
+    }catch(_e2){}
+  }
+  if(!quotes.length){
+  var FALLBACK_PRICES={
+    'HDFCBANK':1685,'RELIANCE':2180,'INFY':1495,'TCS':3820,
+    'ICICIBANK':1038,'KOTAKBANK':1920,'AXISBANK':1165,'SBIN':815,
+    'WIPRO':312,'LT':3650,'TATAMOTORS':725,'MARUTI':12400,
+    'SUNPHARMA':1820,'DRREDDY':1180,'TITAN':3400,'NESTLEIND':2280,
+    'BAJFINANCE':8900,'BAJAJFINSV':1680,'TECHM':1520,'ULTRACEMCO':11200,
+    'HINDUNILVR':2350,'ASIANPAINT':2280,'BRITANNIA':5100,'CIPLA':1590,
+    'DIVISLAB':5800,'EICHERMOT':4900,'GRASIM':2850,'HCLTECH':1680,
+    'HEROMOTOCO':4200,'HINDALCO':685,'INDUSINDBK':1050,'JSWSTEEL':940,
+    'NTPC':365,'ONGC':265,'POWERGRID':315,'TATACONSUM':1060,
+    'TATASTEEL':165,'UPL':520,'VEDL':475,'ZOMATO':235
+  };
+  quotes=stocks.slice(0,8).map(function(s){
+    var p=FALLBACK_PRICES[s]||(500+s.length*47);
+    return{symbol:s+'.NS',regularMarketPrice:p,regularMarketChangePercent:(Math.random()-.5)*3,regularMarketVolume:Math.floor(Math.random()*5e6+5e5),regularMarketDayHigh:p*1.01,regularMarketDayLow:p*.99,fiftyDayAverage:p*(0.95+Math.random()*.1),twoHundredDayAverage:p*(0.9+Math.random()*.15),fiftyTwoWeekHigh:p*1.3};});}
   var results=[],vix=LIVE['VIX']?LIVE['VIX'].p:18;
   quotes.forEach(function(q){
     var p=q.regularMarketPrice||0,pct=q.regularMarketChangePercent||0;
