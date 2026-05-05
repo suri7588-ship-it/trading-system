@@ -2637,37 +2637,42 @@ function fillFromResult(r){
   if(Q('ex-tgt'))Q('ex-tgt').value=r.tgt?r.tgt.toFixed(2):'';
   if(Q('ex-qty'))Q('ex-qty').value=r.qty||1;
   calcExRisk();
-  navTo('execute');
-  toast('✅ Signal loaded: '+sym+' '+r.dir+' | Scroll down to execute',true,5000);
+  /* Only navigate if not already on execute page */
+  var activeP=document.querySelector('.page[style*="flex"]');
+  if(!activeP||activeP.id!=='p-execute')navTo('execute');
+  toast('✅ Signal loaded: '+sym+' '+r.dir+' | Review and execute',true,4000);
   /* Highlight the execute button */
   var btn=Q('ex-btn');
   if(btn){btn.style.animation='pulse 1s ease 3';setTimeout(function(){btn.style.animation='';},3000);}
 }
 
 function autoFillSignal(){
+  /* Run screener silently — stay on execute page, just update hot queue */
   var btn=Q('ex-btn');
   if(btn){btn.textContent='⏳ SCANNING…';btn.disabled=true;}
-  /* Run screener in background */
-  var savedPage=document.querySelector('.page.active');
-  navTo('screener');
-  setTimeout(function(){
-    if(Q('sc-strat'))Q('sc-strat').value='mom';
-    if(Q('sc-sec'))Q('sc-sec').value='all';
-    runScreener();
-    /* After screener runs, go back to execute with hot signals loaded */
-    setTimeout(function(){
-      navTo('execute');
-      var eb=Q('ex-btn');
-      if(eb){eb.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';eb.disabled=false;}
-      updateHotCycleBtn();
-      if(_hotSignals.length>0){
-        loadHotSignal(0); /* auto-load best signal */
-        toast('🔥 '+_hotSignals.length+' hot signal'+ (_hotSignals.length!==1?'s':'')+' found — best loaded automatically',true,5000);
-      } else {
-        toast('No hot signals right now — try again or check screener',false,4000);
-      }
-    },7000);
-  },400);
+  var qs=Q('hot-queue-status');
+  if(qs)qs.textContent='Scanning market…';
+
+  /* Run screener WITHOUT navigating away */
+  var savedStrat=Q('sc-strat')?Q('sc-strat').value:'mom';
+  var savedSec=Q('sc-sec')?Q('sc-sec').value:'all';
+  if(Q('sc-strat'))Q('sc-strat').value='mom';
+  if(Q('sc-sec'))Q('sc-sec').value='all';
+
+  /* Call runScreener and stay on current page */
+  runScreener().then(function(){
+    if(Q('sc-strat'))Q('sc-strat').value=savedStrat;
+    if(Q('sc-sec'))Q('sc-sec').value=savedSec;
+    var eb=Q('ex-btn');
+    if(eb){eb.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';eb.disabled=false;}
+    updateHotCycleBtn();
+    if(_hotSignals.length>0){
+      loadHotSignal(0);
+      toast('🔥 '+_hotSignals.length+' hot signal'+(_hotSignals.length!==1?'s':'')+' ready — queue updated',true,4000);
+    } else {
+      toast('No hot signals right now — market may be choppy',false,3000);
+    }
+  });
 }
 
 async function executeTrade(){
