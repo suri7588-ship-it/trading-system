@@ -2290,7 +2290,13 @@ async function checkServer(){
       signal:controller.signal
     });
     clearTimeout(timer);
-    var d=await r.json();
+    var _raw=await r.text();
+    var d;
+    try{d=JSON.parse(_raw);}catch(e){
+      _serverOnline=false;
+      if(st){st.textContent='🔴 Bad response from server — restart it';st.style.color='var(--red)';}
+      return;
+    }
     _serverOnline=true;
     if(st){st.textContent='🟢 ONLINE';st.style.color='var(--green)';}
     if(se){
@@ -2323,7 +2329,12 @@ async function serverLogin(){
       signal:controller.signal
     });
     clearTimeout(timer);
-    var d=await r.json();
+    var _loginRaw=await r.text();
+    var d;
+    try{d=JSON.parse(_loginRaw);}catch(e){
+      if(sl){sl.textContent='❌ Server error (HTTP '+r.status+') — restart server on DigitalOcean';sl.style.color='var(--red)';}
+      return;
+    }
     if(sl){sl.textContent=d.success?'✅ '+d.message:'❌ '+d.message;sl.style.color=d.success?'var(--green)':'var(--red)';}
     if(d.success){toast('✅ Angel One session active',true);checkServer();}
   }catch(e){
@@ -2759,7 +2770,17 @@ async function executeTrade(){
       body:JSON.stringify({symbol:sym,symbol_token:tok,exchange:exch,product:prod,direction:dir,qty:qty,entry:en,sl:sl,target:tgt}),
       signal:AbortSignal.timeout(15000)
     });
-    var d=await r.json();
+    var _rawResp=await r.text();
+    var d;
+    try{d=JSON.parse(_rawResp);}catch(pe){
+      var hint=r.status===429?'Rate limited — wait 60 seconds':
+               r.status===500?'Server error — check DigitalOcean logs':
+               'Server error (HTTP '+r.status+') — restart server';
+      if(st){st.textContent='❌ '+hint;st.style.color='var(--red)';}
+      toast('❌ '+hint,false,6000);
+      if(btn){btn.disabled=false;btn.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';btn.style.background='var(--green)';}
+      return;
+    };
     if(d.success){
       if(st){st.textContent='✅ ORDER PLACED · '+d.message;st.style.color='var(--green)';}
       toast('✅ Order placed: '+sym+' '+dir,true,5000);
