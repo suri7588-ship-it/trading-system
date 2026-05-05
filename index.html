@@ -502,13 +502,28 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
       <div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:.5px;margin-bottom:3px">🔥 HOT SIGNALS QUEUE</div>
         <div style="font-size:12px;color:var(--dim)" id="hot-cyc-label">0 hot signals found</div>
+        <div style="font-family:var(--mono);font-size:9px;margin-top:3px" id="hot-queue-status"></div>
       </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="prevHotSignal()" id="hot-prev" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--mono);font-size:10px;cursor:pointer">◀ PREV</button>
-        <button onclick="nextHotSignal()" id="hot-next" style="padding:6px 12px;background:var(--gbg);border:1px solid var(--gbord);border-radius:var(--rs);color:var(--green);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer">NEXT ▶</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="prevHotSignal()" id="hot-prev" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--mono);font-size:10px;cursor:pointer">◀</button>
+        <button onclick="nextHotSignal()" id="hot-next" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--mono);font-size:10px;cursor:pointer">▶</button>
+        <button onclick="skipCurrentSignal()" id="hot-skip-btn" style="padding:6px 12px;background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.3);border-radius:var(--rs);color:var(--amber);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer">⏭ SKIP</button>
+        <button onclick="startAutoQueue()" id="hot-queue-btn" style="padding:6px 14px;background:var(--gbg);border:1px solid var(--gbord);border-radius:var(--rs);color:var(--green);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.3px">🚀 AUTO QUEUE</button>
+        <button onclick="stopAutoQueue()" id="hot-stop-btn" style="display:none;padding:6px 14px;background:var(--rbg);border:1px solid var(--rbord);border-radius:var(--rs);color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer">⏹ STOP</button>
       </div>
     </div>
     <div id="hot-cyc-cards" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  <!-- Queue progress -->
+  <div id="hot-queue-progress" style="display:none;margin-top:10px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--green)" id="hot-q-step">Step 0/0</span>
+      <span style="font-family:var(--mono);font-size:9px" id="hot-q-state">READY</span>
+    </div>
+    <div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden">
+      <div id="hot-q-bar" style="height:4px;background:var(--green);border-radius:3px;width:0%;transition:width .5s ease"></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:4px" id="hot-q-msg">Ready to start</div>
+  </div>
   </div>
 
   <!-- Server status -->
@@ -2286,6 +2301,275 @@ function calcExRisk(){
   }
 }
 
+/* ── AUTO QUEUE ENGINE ─────────────────────────────────────────────── */
+var _queueRunning=false;
+var _queueIdx=0;
+var _queueResults=[];   /* completed trade results */
+var _queueDailyPnL=0;   /* running daily P&L for risk checks */
+var _queueCapital=0;    /* capital tracked during queue */
+var _queueMarginUsed=0; /* total margin currently locked in open positions */
+var _queueOpenTrades=0; /* number of currently open positions */
+var _skipMonitoring=false; /* set true to break out of current trade monitor */
+
+function skipCurrentSignal(){
+  if(!_hotSignals.length){toast('No signals to skip',false);return;}
+  var skipped=_hotSignals[_queueIdx];
+  if(!skipped){toast('No more signals',false);return;}
+  /* Mark as skipped */
+  _queueResults.push({sym:skipped.sym,status:'SKIPPED_MANUAL',reason:'Manually skipped by user'});
+  setQueueMsg('Skipped '+skipped.sym+' — loading next signal');
+  toast('⏭ Skipped '+skipped.sym,false,2000);
+  _queueIdx++;
+  if(_queueIdx>=_hotSignals.length){
+    toast('No more signals in queue',false,3000);
+    _queueIdx=_hotSignals.length-1; /* stay at last */
+    updateHotCycleBtn();
+    return;
+  }
+  /* If queue is running, continue to next automatically */
+  if(_queueRunning){
+    _skipMonitoring=true; /* break out of current monitoring loop */
+    setTimeout(function(){runNextInQueue();},500);
+  } else {
+    /* Just load next signal into form */
+    loadHotSignal(_queueIdx);
+    toast('⏭ Loaded next: '+_hotSignals[_queueIdx].sym,false,2500);
+  }
+  updateHotCycleBtn();
+}
+
+function startAutoQueue(){
+  if(!_serverOnline){toast('Server offline — check connection first',false);return;}
+  if(!_hotSignals.length){toast('No hot signals — run screener first',false);return;}
+  if(_queueRunning){toast('Queue already running',false);return;}
+
+  /* Governance check before starting */
+  if(_queueDailyPnL<=-300){
+    toast('Daily loss limit ₹300 reached — queue blocked',false,5000);return;
+  }
+  var remaining=_hotSignals.slice(_queueIdx);
+  if(!remaining.length){toast('All signals already processed',false);return;}
+
+  _queueRunning=true;
+  _queueResults=[];
+  _queueCapital=CAP;        /* snapshot capital at queue start */
+  _queueMarginUsed=0;
+  _queueOpenTrades=0;
+  _queueDailyPnL=0;
+  setQueueState('RUNNING');
+  updateQueueUI();
+
+  /* Show stop button, hide start */
+  var qBtn=Q('hot-queue-btn'),sBtn=Q('hot-stop-btn');
+  if(qBtn)qBtn.style.display='none';
+  if(sBtn)sBtn.style.display='inline-block';
+  if(Q('hot-queue-progress'))Q('hot-queue-progress').style.display='block';
+
+  toast('🚀 Auto Queue started — '+remaining.length+' signals | Capital: ₹'+_queueCapital.toFixed(0),true,4000);
+  tg('🚀 Auto Queue started\n'+remaining.length+' hot signals queued\nAvailable capital: ₹'+_queueCapital.toFixed(2)+'\nMax risk per trade: ₹'+(CAP*RISK_PCT).toFixed(0));
+  runNextInQueue();
+}
+
+function stopAutoQueue(){
+  _queueRunning=false;
+  setQueueState('STOPPED');
+  var qBtn=Q('hot-queue-btn'),sBtn=Q('hot-stop-btn');
+  if(qBtn){qBtn.style.display='inline-block';qBtn.textContent='🚀 AUTO QUEUE';}
+  if(sBtn)sBtn.style.display='none';
+  toast('Queue stopped — '+_queueResults.length+' trade'+ (_queueResults.length!==1?'s':'')+' completed',false,4000);
+  tg('⏹ Auto Queue stopped\nCompleted: '+_queueResults.length+' trades\nP&L: ₹'+_queueDailyPnL.toFixed(2));
+  updateQueueUI();
+}
+
+async function runNextInQueue(){
+  if(!_queueRunning)return;
+  if(_queueIdx>=_hotSignals.length){
+    setQueueState('COMPLETE');
+    _queueRunning=false;
+    var qBtn=Q('hot-queue-btn'),sBtn=Q('hot-stop-btn');
+    if(qBtn){qBtn.style.display='inline-block';qBtn.textContent='🔁 RUN AGAIN';}
+    if(sBtn)sBtn.style.display='none';
+    toast('✅ Queue complete — '+_queueResults.length+' trades executed',true,6000);
+    tg('✅ Queue COMPLETE\n'+_queueResults.length+' trades\nTotal P&L: ₹'+_queueDailyPnL.toFixed(2));
+    return;
+  }
+
+  /* ── CAPITAL CHECK — primary guard ── */
+  var availableCapital=_queueCapital+_queueDailyPnL-_queueMarginUsed;
+  var sig0=_hotSignals[_queueIdx];
+  var estMargin=sig0?(Math.abs(sig0.p)*sig0.qty):0; /* estimated margin for next trade */
+
+  if(availableCapital<=0){
+    setQueueMsg('❌ Capital exhausted (₹'+availableCapital.toFixed(0)+' left) — queue stopped');
+    tg('⚠ Queue stopped: Capital exhausted\nAvailable: ₹'+availableCapital.toFixed(2)+'\nTotal trades: '+_queueResults.length);
+    stopAutoQueue();return;
+  }
+  if(estMargin>availableCapital){
+    setQueueMsg('⚠ Insufficient capital for '+sig0.sym+' (need ₹'+estMargin.toFixed(0)+', have ₹'+availableCapital.toFixed(0)+') — skipping');
+    _queueResults.push({sym:sig0.sym,status:'SKIPPED',reason:'Insufficient capital'});
+    _queueIdx++;
+    updateQueueUI();
+    await new Promise(function(r){setTimeout(r,500);});
+    runNextInQueue();return;
+  }
+
+  /* ── DAILY LOSS GUARD ── */
+  if(_queueDailyPnL<=-300){
+    setQueueMsg('Daily loss limit ₹300 reached — queue stopped');
+    stopAutoQueue();return;
+  }
+
+  /* ── MAX 3 CONCURRENT POSITIONS ── */
+  if(_queueOpenTrades>=3){
+    setQueueMsg('Max 3 concurrent positions open — waiting for closure');
+    await new Promise(function(r){setTimeout(r,30000);}); /* wait 30s and retry */
+    runNextInQueue();return;
+  }
+
+  /* Market hours check */
+  var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  var h=ist.getHours(),m=ist.getMinutes(),dow=ist.getDay();
+  var isOpen=dow>0&&dow<6&&h>=9&&(h<15||(h===15&&m<30));
+  if(!isOpen){
+    setQueueMsg('Market closed — queue paused until market opens');
+    stopAutoQueue();return;
+  }
+  if(h===15&&m>=20){
+    setQueueMsg('3:20 PM — MIS auto-square risk. Queue stopped.');
+    stopAutoQueue();return;
+  }
+
+  var sig=_hotSignals[_queueIdx];
+  setQueueMsg('Executing: '+sig.sym+' '+sig.decision+' …');
+  setQueueState('EXECUTING #'+(_queueIdx+1));
+  updateQueueUI();
+
+  /* Load signal into form */
+  loadHotSignal(_queueIdx);
+
+  /* Small delay for form to populate */
+  await new Promise(function(r){setTimeout(r,800);});
+
+  /* Execute via server */
+  var sym=sig.sym,tok=TOKEN_MAP[sym]||'';
+  if(!tok){
+    setQueueMsg('No token for '+sym+' — skipping');
+    _queueIdx++;
+    _queueResults.push({sym:sym,status:'SKIPPED',reason:'No symbol token'});
+    updateQueueUI();
+    setTimeout(runNextInQueue,1000);
+    return;
+  }
+
+  var qty=sig.qty,en=sig.p,sl=sig.sl,tgt=sig.tgt,dir=sig.isBuy?'LONG':'SHORT';
+  var risk=Math.abs(en-sl)*qty;
+
+  try{
+    setQueueMsg('Placing order: '+sym+' '+dir+' x'+qty+' @ ₹'+en.toFixed(2));
+    var r=await fetch(SERVER_URL+'/execute',{
+      method:'POST',mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({symbol:sym,symbol_token:tok,exchange:'NSE',product:'MIS',
+        direction:dir,qty:qty,entry:+en.toFixed(2),sl:+sl.toFixed(2),target:+tgt.toFixed(2)}),
+      signal:(new AbortController()).signal
+    });
+    var d=await r.json();
+
+    if(d.success){
+      var marginLocked=Math.abs(en)*qty; /* approximate MIS margin */
+      _queueMarginUsed+=marginLocked;
+      _queueOpenTrades++;
+      setQueueMsg('✅ '+sym+' placed | Margin: ₹'+marginLocked.toFixed(0)+' | Available: ₹'+((_queueCapital+_queueDailyPnL-_queueMarginUsed).toFixed(0))+' | Press ⏭ SKIP to skip monitoring');
+      _queueResults.push({sym:sym,status:'PLACED',orderId:d.order_id,tradeId:d.trade_id,entry:en,sl:sl,tgt:tgt,dir:dir,margin:marginLocked});
+      toast('✅ Queue: '+sym+' '+dir+' | Margin ₹'+marginLocked.toFixed(0),true,3000);
+
+      /* Poll for trade completion before moving to next */
+      await waitForTradeCompletion(d.trade_id,sym,marginLocked);
+
+    }else{
+      setQueueMsg('❌ '+sym+' failed: '+d.message+' — moving to next');
+      _queueResults.push({sym:sym,status:'FAILED',reason:d.message});
+      toast('❌ Queue: '+sym+' failed — '+d.message,false,3000);
+    }
+  }catch(e){
+    setQueueMsg('❌ Network error on '+sym+': '+e.message);
+    _queueResults.push({sym:sym,status:'ERROR',reason:e.message});
+  }
+
+  _queueIdx++;
+  updateQueueUI();
+
+  /* Wait 3 seconds between trades */
+  await new Promise(function(res){setTimeout(res,3000);});
+  runNextInQueue();
+}
+
+async function waitForTradeCompletion(tradeId,sym,marginLocked){
+  marginLocked=marginLocked||0;
+  if(!tradeId)return;
+  setQueueMsg('Monitoring '+sym+' — waiting for target or SL …');
+  var maxWait=4*3600*1000; /* max 4 hours */
+  var start=Date.now();
+  _skipMonitoring=false;
+  while(_queueRunning&&!_skipMonitoring&&Date.now()-start<maxWait){
+    await new Promise(function(r){setTimeout(r,15000);});
+    try{
+      var r=await fetch(SERVER_URL+'/position/'+tradeId,{signal:(new AbortController()).signal});
+      var d=await r.json();
+      if(!d.active){
+        var pnl=d.pnl||0;
+        _queueDailyPnL+=pnl;
+        _queueMarginUsed=Math.max(0,_queueMarginUsed-marginLocked); /* release margin */
+        _queueOpenTrades=Math.max(0,_queueOpenTrades-1);
+        var newAvail=_queueCapital+_queueDailyPnL-_queueMarginUsed;
+        var pnlStr=(pnl>=0?'+':'')+' ₹'+pnl.toFixed(2);
+        setQueueMsg(sym+' CLOSED '+pnlStr+' | Available capital: ₹'+newAvail.toFixed(0));
+        tg('📊 Queue trade closed\n'+sym+' '+pnlStr+'\nAvailable capital: ₹'+newAvail.toFixed(0)+'\nTotal P&L: ₹'+_queueDailyPnL.toFixed(2));
+        updateQueueUI();
+        return;
+      }
+      var avail2=(_queueCapital+_queueDailyPnL-_queueMarginUsed).toFixed(0);
+      setQueueMsg('Monitoring '+sym+' — '+d.status+' | Available: ₹'+avail2);
+    }catch(e){/* continue monitoring */}
+  }
+}
+
+function setQueueState(state){
+  var el=Q('hot-q-state');
+  if(!el)return;
+  var col={RUNNING:'var(--green)',EXECUTING:'var(--amber)',STOPPED:'var(--red)',COMPLETE:'var(--green)',READY:'var(--muted)'};
+  el.textContent=state;
+  el.style.color=col[state.split(' ')[0]]||'var(--muted)';
+}
+
+function setQueueMsg(msg){
+  var el=Q('hot-q-msg');if(el)el.textContent=msg;
+  console.log('[QUEUE]',msg);
+}
+
+function updateQueueUI(){
+  var n=_hotSignals.length,done=_queueIdx,pct=n>0?Math.round(done/n*100):0;
+  var step=Q('hot-q-step'),bar=Q('hot-q-bar');
+  if(step)step.textContent='Step '+Math.min(done,n)+'/'+n;
+  if(bar)bar.style.width=pct+'%';
+  updateHotCycleBtn();
+  /* Update queue status in header */
+  var qs=Q('hot-queue-status');
+  if(qs&&_queueRunning){
+    var avail=(_queueCapital+_queueDailyPnL-_queueMarginUsed);
+    var capPct=_queueCapital>0?(avail/_queueCapital*100).toFixed(0):0;
+    qs.textContent='P&L: '+((_queueDailyPnL>=0?'+':'')+_queueDailyPnL.toFixed(0))
+      +' | Capital: ₹'+avail.toFixed(0)+' ('+capPct+'%) | '+Math.min(_queueIdx,n)+'/'+n+' done';
+    qs.style.color=avail<=0?'var(--red)':avail<_queueCapital*0.5?'var(--amber)':'var(--green)';
+  } else if(qs)qs.textContent='';
+}
+
+function tg(msg){
+  /* Send Telegram alert from client side using server relay */
+  fetch(SERVER_URL+'/tg',{method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:msg})}).catch(function(){});
+}
+
+/* ── END AUTO QUEUE ENGINE ─────────────────────────────────────────── */
 function updateHotCycleBtn(){
   var el=Q('hot-cycler');
   if(!el)return;
