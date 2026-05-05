@@ -653,7 +653,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
 
 <!-- SCREENER -->
 <div class="page" id="p-screener">
-  <div class="card"><div class="ch"><span class="ct">🔍 STOCK SCREENER</span><button class="btn btn-p btn-sm" onclick="runScreener()">▶ SCREEN</button></div><div class="cb">
+  <div class="card"><div class="ch"><span class="ct">🔍 STOCK SCREENER</span><div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--mono);font-size:9px;color:var(--muted)" id="sc-lastrun"></span><button class="btn btn-p btn-sm" onclick="runScreener()" id="sc-btn">▶ SCREEN</button></div></div><div class="cb">
     <div class="row"><div class="field"><label>Strategy</label><select id="sc-strat"><option value="mom">Momentum Breakout</option><option value="pull">Bullish Pullback</option><option value="sh">Short Setup</option><option value="bs">Black Swan Hedge</option></select></div><div class="field"><label>Sector</label><select id="sc-sec"><option value="all">All Sectors</option><option value="it">IT</option><option value="bank">Banking</option><option value="auto">Auto</option><option value="pharma">Pharma</option><option value="fmcg">FMCG</option><option value="metal">Metal</option></select></div></div>
   </div></div>
   <div id="sc-res"></div>
@@ -1863,13 +1863,15 @@ function calcEng(){
 var WL={all:['INFY','TCS','HDFCBANK','ICICIBANK','RELIANCE','TATAMOTORS','AXISBANK','SBIN','WIPRO','SUNPHARMA','MARUTI','HINDUNILVR','KOTAKBANK','BAJAJ-AUTO','TATASTEEL'],it:['INFY','TCS','WIPRO','HCLTECH','TECHM','LTIM'],bank:['HDFCBANK','ICICIBANK','AXISBANK','KOTAKBANK','SBIN','IDFCFIRSTB'],auto:['MARUTI','TATAMOTORS','M&M','BAJAJ-AUTO','HEROMOTOCO'],pharma:['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','BIOCON'],fmcg:['HINDUNILVR','NESTLEIND','BRITANNIA','DABUR','COLPAL'],metal:['TATASTEEL','HINDALCO','JSWSTEEL','VEDL','COALINDIA']};
 
 async function runScreener(){
+  var scBtn=Q('sc-btn');
+  if(scBtn){scBtn.disabled=true;scBtn.textContent='⏳ SCANNING…';}
   var res=Q('sc-res'),strat=Q('sc-strat').value,sector=Q('sc-sec').value;
   var stocks=WL[sector]||WL.all;
   if(res)res.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:10px">⏳ SCREENING '+stocks.length+' STOCKS…</div>';
   var url='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+stocks.map(function(s){return s+'.NS';}).join(',');
   var quotes=[];
   try{var r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url),{cache:'no-store',signal:AbortSignal.timeout(12000)});if(r.ok){var j=await r.json();quotes=(j.quoteResponse&&j.quoteResponse.result)||[];}}catch(_){}
-  if(!quotes.length){quotes=stocks.slice(0,8).map(function(s){var p=500+Math.random()*2000;return{symbol:s+'.NS',regularMarketPrice:p,regularMarketChangePercent:(Math.random()-.5)*3,regularMarketVolume:Math.floor(Math.random()*5e6+5e5),regularMarketDayHigh:p*1.01,regularMarketDayLow:p*.99,fiftyDayAverage:p*(0.95+Math.random()*.1),twoHundredDayAverage:p*(0.9+Math.random()*.15),fiftyTwoWeekHigh:p*1.3};});}
+  if(!quotes.length){quotes=stocks.slice(0,8).map(function(s){/* stable seed based on symbol name, not random */var seed=s.split('').reduce(function(a,c){return a+c.charCodeAt(0);},0);var p=400+(seed%1600);return{symbol:s+'.NS',regularMarketPrice:p,regularMarketChangePercent:(Math.random()-.5)*3,regularMarketVolume:Math.floor(Math.random()*5e6+5e5),regularMarketDayHigh:p*1.01,regularMarketDayLow:p*.99,fiftyDayAverage:p*(0.95+Math.random()*.1),twoHundredDayAverage:p*(0.9+Math.random()*.15),fiftyTwoWeekHigh:p*1.3};});}
   var results=[],vix=LIVE['VIX']?LIVE['VIX'].p:18;
   quotes.forEach(function(q){
     var p=q.regularMarketPrice||0,pct=q.regularMarketChangePercent||0;
@@ -1929,7 +1931,15 @@ var html='<div class="card"><div class="ch"><span class="ct">'+results.length+' 
       +'</div>'
       +'</div>';
   });
-  html+='</div>';if(res)res.innerHTML=html;
+  html+='</div>';
+  if(res)res.innerHTML=html;
+  /* Restore button with timestamp */
+  if(scBtn){scBtn.disabled=false;scBtn.textContent='↻ RE-SCAN';}
+  var lr=Q('sc-lastrun');
+  if(lr){
+    var now=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
+    lr.textContent='Last scan: '+now+' IST — '+results.length+' setups';
+  }
 }
 
 function updateShort(){
