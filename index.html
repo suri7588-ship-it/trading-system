@@ -2409,7 +2409,10 @@ function skipCurrentSignal(){
 }
 
 function startAutoQueue(){
-  if(!_serverOnline){toast('Server offline — check connection first',false);return;}
+  if(!_serverOnline){
+    toast('Server offline — click ↻ CHECK first',false,4000);
+    checkServer();return;
+  }
   if(!_hotSignals.length){toast('No hot signals — run screener first',false);return;}
   if(_queueRunning){toast('Queue already running',false);return;}
 
@@ -2748,6 +2751,24 @@ async function executeTrade(){
   var maxAllowed=CAP*0.01;
   if(risk>maxAllowed*1.5){toast('Risk ₹'+risk.toFixed(0)+' exceeds 1.5% of capital. Reduce qty.',false);return;}
   if(risk>300){toast('Risk ₹'+risk.toFixed(0)+' exceeds ₹300 daily limit. Reduce qty.',false);return;}
+  /* Auto-refresh session before placing order */
+  try{
+    var _sv=await fetch(SERVER_URL+'/status',{mode:'cors',signal:AbortSignal.timeout(3000)});
+    var _sd=JSON.parse(await _sv.text());
+    if(!_sd.session_live){
+      if(st)st.textContent='⏳ Session expired — auto-logging in…';
+      var _lr=await fetch(SERVER_URL+'/login',{method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(10000)});
+      var _ld=JSON.parse(await _lr.text());
+      if(!_ld.success){
+        toast('❌ Angel One session expired — click LOGIN TO ANGEL ONE',false,6000);
+        if(st){st.textContent='❌ Session expired';st.style.color='var(--red)';}
+        if(btn){btn.disabled=false;btn.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';btn.style.background='var(--green)';}
+        return;
+      }
+      toast('✅ Session refreshed',true,1500);
+    }
+  }catch(_se){/* Proceed if status check times out */}
+
   /* RISK-03: market hours check */
   var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
   var h=ist.getHours(),m=ist.getMinutes(),dow=ist.getDay();
@@ -2772,13 +2793,23 @@ async function executeTrade(){
     });
     var _rawResp=await r.text();
     var d;
-    try{d=JSON.parse(_rawResp);}catch(pe){
-      var hint=r.status===429?'Rate limited — wait 60 seconds':
-               r.status===500?'Server error — check DigitalOcean logs':
-               'Server error (HTTP '+r.status+') — restart server';
+    try{
+      if(!_rawResp||!_rawResp.trim()){throw new Error('Empty response — server may have crashed');}
+      d=JSON.parse(_rawResp);
+    }catch(pe){
+      var hint;
+      if(!_rawResp||!_rawResp.trim())hint='Server returned empty response — session may be expired. Click LOGIN TO ANGEL ONE then retry.';
+      else if(r.status===429)hint='Rate limited — wait 60 seconds and retry';
+      else if(r.status===401)hint='Session expired — click LOGIN TO ANGEL ONE';
+      else if(r.status===500)hint='Server crashed — check DigitalOcean logs: tail -20 /root/prism/log.txt';
+      else hint='Server error (HTTP '+r.status+') — '+pe.message;
       if(st){st.textContent='❌ '+hint;st.style.color='var(--red)';}
-      toast('❌ '+hint,false,6000);
+      toast('❌ '+hint,false,8000);
       if(btn){btn.disabled=false;btn.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';btn.style.background='var(--green)';}
+      /* Auto-try login if session issue */
+      if(r.status===401||(!_rawResp&&r.status!==429)){
+        setTimeout(function(){serverLogin();},1000);
+      }
       return;
     };
     if(d.success){
