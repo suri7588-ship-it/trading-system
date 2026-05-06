@@ -501,7 +501,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
       <div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:.5px;margin-bottom:3px">🔥 HOT SIGNALS QUEUE</div>
-        <div style="font-size:12px;color:var(--dim)" id="hot-cyc-label">0 hot signals found</div>
+        <div style="font-size:13px;font-weight:600" id="hot-cyc-label">0 hot signals found</div>
         <div style="font-family:var(--mono);font-size:9px;margin-top:3px" id="hot-queue-status"></div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -2668,7 +2668,10 @@ function updateHotCycleBtn(){
   var n=_hotSignals.length;
   el.style.display=n>0?'block':'none';
   var lbl=Q('hot-cyc-label');
-  if(lbl)lbl.textContent=n+' hot signal'+(n!==1?'s':'')+' found — viewing '+(n>0?(_hotIdx+1)+' of '+n:'none');
+  if(lbl){
+    if(n>0){lbl.textContent=n+' hot signal'+(n!==1?'s':'')+' — viewing '+(_hotIdx+1)+' of '+n;lbl.style.color='var(--green)';}
+    else{lbl.textContent='No hot signals yet — click AUTO-FILL FROM SCREENER';lbl.style.color='var(--muted)';}
+  }
   /* Render mini signal cards */
   var cards=Q('hot-cyc-cards');
   if(cards){
@@ -2733,7 +2736,7 @@ function autoFillSignal(){
   var btn=Q('ex-btn');
   if(btn){btn.textContent='⏳ SCANNING…';btn.disabled=true;}
   var qs=Q('hot-queue-status');
-  if(qs)qs.textContent='Scanning market…';
+  if(qs){qs.textContent='⏳ Scanning market…';qs.style.color='var(--amber)';}
 
   /* Run screener WITHOUT navigating away */
   var savedStrat=Q('sc-strat')?Q('sc-strat').value:'mom';
@@ -2748,11 +2751,15 @@ function autoFillSignal(){
     var eb=Q('ex-btn');
     if(eb){eb.textContent='⚡ EXECUTE TRADE ON ANGEL ONE';eb.disabled=false;}
     updateHotCycleBtn();
+    var _qs2=Q('hot-queue-status');
+    var _t=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'});
     if(_hotSignals.length>0){
       loadHotSignal(0);
-      toast('🔥 '+_hotSignals.length+' hot signal'+(_hotSignals.length!==1?'s':'')+' ready — queue updated',true,4000);
+      if(_qs2){_qs2.textContent='✅ READY · Scan '+_t+' IST · '+_hotSignals.length+' signal'+(_hotSignals.length!==1?'s':'')+' · Best loaded ↓';_qs2.style.color='var(--green)';}
+      toast('🔥 '+_hotSignals.length+' hot signals ready — scroll down and tap EXECUTE',true,6000);
     } else {
-      toast('No hot signals right now — market may be choppy',false,3000);
+      if(_qs2){_qs2.textContent='⚠ No hot signals at '+_t+' — retry in 5 min';_qs2.style.color='var(--amber)';}
+      toast('No hot signals right now — auto-retry in 5 min',false,4000);
     }
   });
 }
