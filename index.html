@@ -253,7 +253,7 @@ window.fbLoad=async function(){try{var s=await getDoc(ref);return s.exists()?s.d
       <div class="ni" data-p="execute" style="background:rgba(5,217,124,.06);border:1px solid rgba(5,217,124,.15)"><span class="ni-ico">⚡</span><span style="color:#05d97c;font-weight:700">One-Tap Execute</span></div>
       <div class="ni" data-p="governance"><span class="ni-ico">🛡</span>Governance</div>
       <div class="ni" data-p="engine"><span class="ni-ico">⚡</span>Trade Engine</div>
-      <div class="ni" data-p="screener"><span class="ni-ico">🔍</span>Screener</div>
+      <div class="ni" data-p="screener"><span class="ni-ico">🔍</span>Screener <span id="hot-count" style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:10px;background:rgba(5,217,124,.15);color:var(--green);display:none"></span></div>
       <div class="ni" data-p="short"><span class="ni-ico">📉</span>Short Selling</div>
       <div class="ni" data-p="journal"><span class="ni-ico">📓</span>Journal</div>
       <div class="ni" data-p="portfolio"><span class="ni-ico">🏦</span>Portfolio</div>
@@ -1171,6 +1171,25 @@ function checkSession(){
 async function onAppStart(){
   loadTheme();loadTGUI();loadVaultUI();
   startClock();wireNav();navTo('dashboard');
+  /* ── AUTO SCREENER: re-scan every 5 min during market hours (10AM-3:20PM) ── */
+  setInterval(function(){
+    try{
+      var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+      var h=ist.getHours(),m=ist.getMinutes(),dow=ist.getDay();
+      var inSession=dow>0&&dow<6&&(h>=10)&&(h<15||(h===15&&m<=20));
+      if(!inSession)return;
+      /* Don't re-scan if user is actively on screener page */
+      var ap=document.querySelector('.page[style*="flex"]');
+      if(ap&&ap.id==='p-screener')return;
+      runScreener().catch(function(){});
+      /* Update hot signal badge count in nav */
+      var badge=Q('hot-count');
+      if(badge){
+        if(_hotSignals.length>0){badge.textContent=_hotSignals.length;badge.style.display='inline';}
+        else{badge.style.display='none';}
+      }
+    }catch(_){}
+  }, 5*60*1000);
   useFallback();updateAll();renderJournal();refreshMD();
   renderSwanMonitor();renderScenarios();renderPlaybooks();renderHistory();renderBarbell();
   try{
@@ -2773,9 +2792,17 @@ async function executeTrade(){
   var ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
   var h=ist.getHours(),m=ist.getMinutes(),dow=ist.getDay();
   var isWk=dow===0||dow===6;
+  /* No trading first 45 mins — market too volatile 9:15-10:00 AM */
+  var tradingOpen=!isWk&&(h>10||(h===10&&m>=0))&&(h<15||(h===15&&m<30));
+  var preOpenWait=!isWk&&h===9&&m>=15;
+  var earlyWindow=!isWk&&h===10&&m<1;
   var isOpen=!isWk&&h>=9&&(h<15||(h===15&&m<30));
   if(!isOpen){
-    if(!confirm('MARKET IS CLOSED -- NSE not open. Continue only for AMO/pre-market orders?'))return;
+    toast('❌ Market is CLOSED — NSE hours Mon-Fri 9:15AM-3:30PM IST',false,5000);return;
+  }
+  if(h===9||(h===10&&m<0)){
+    toast('⏳ Wait until 10:00 AM IST — first 45 mins too volatile. Current: '+h+':'+String(m).padStart(2,'0')+' IST',false,6000);
+    return;
   }
   if(h===15&&m>=20&&!isWk){
     toast('⚠️ MIS CAUTION: Less than 10 min to 3:30 PM — MIS auto-squares at 3:25 PM. Consider exiting manually.',false,6000);
